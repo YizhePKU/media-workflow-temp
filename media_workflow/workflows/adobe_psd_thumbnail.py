@@ -18,11 +18,10 @@ class Workflow:
     """Generate a PNG thumbnail from a PSD file.
 
     Params:
-        url: URL for the PSD file
-        callback: (optional) URL to post the return values
+        file: URL for the PSD file
 
     Returns:
-        url: URL for the generated PNG file
+        file: URL for the generated PNG file
     """
 
     @workflow.run
@@ -31,7 +30,8 @@ class Workflow:
         start = functools.partial(
             workflow.start_activity, start_to_close_timeout=timeout
         )
-        return await start("psd2png", params["url"])
+        url = await start("psd2png", params["file"])
+        return {"file": url}
 
 
 def image2png(image: Image) -> bytes:
@@ -42,9 +42,9 @@ def image2png(image: Image) -> bytes:
 
 @activity.defn
 async def psd2png(url: str) -> str:
-    psd_bytes = requests.get(url).content
-    psd = PSDImage.open(BytesIO(psd_bytes))
-    image = psd.composite()
-    png_bytes = image2png(image)
     key = f"{uuid4()}.png"
-    return upload(key, png_bytes)
+    psd = PSDImage.open(BytesIO(requests.get(url).content))
+    if psd.has_thumbnail():
+        return upload(key, image2png(psd.thumbnail()))
+    else:
+        return upload(key, image2png(psd.composite()))
