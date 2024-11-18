@@ -14,7 +14,7 @@ with workflow.unsafe.imports_passed_through():
 
 
 @workflow.defn(name="image-thumbnail")
-class ImageThumbnail:
+class Workflow:
     """Generate a PNG thumbnail from an image.
 
     If `size` is given, the image will be resized to be no larger than `size`, preserving the
@@ -47,7 +47,7 @@ def image2png(image) -> bytes:
 @activity.defn
 async def image_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
     key = f"{uuid4()}.png"
-    image = Image.open(requests.get(url).content)
+    image = Image.open(BytesIO(requests.get(url).content))
     if size:
         image.thumbnail(size)
     return upload(key, image2png(image))

@@ -4,7 +4,8 @@ import os
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from media_workflow.workflows import adobe_psd_thumbnail as psd
+import media_workflow.workflows.adobe_psd_thumbnail as adobe_psd_thumbnail
+import media_workflow.workflows.image_thumbnail as image_thumbnail
 
 
 async def main():
@@ -12,8 +13,8 @@ async def main():
     worker = Worker(
         client,
         task_queue="default",
-        workflows=[psd.Workflow],
-        activities=[psd.psd_thumbnail],
+        workflows=[adobe_psd_thumbnail.Workflow, image_thumbnail.Workflow],
+        activities=[adobe_psd_thumbnail.psd_thumbnail, image_thumbnail.image_thumbnail],
     )
     await worker.run()
 
