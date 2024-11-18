@@ -28,3 +28,18 @@ class PdfThumbnail:
                 "pdf_thumbnail", args=[params["file"], params.get("size")]
             )
         }
+
+
+@workflow.defn(name="image-detail")
+class ImageDetail:
+    @workflow.run
+    async def run(self, params):
+        inputs = {
+            "language": params["language"],
+            "image": {
+                "type": "image",
+                "transfer_method": "remote_url",
+                "url": params["file"],
+            },
+        }
+        return await start("dify", args=["DIFY_IMAGE_DETAIL_KEY", inputs])

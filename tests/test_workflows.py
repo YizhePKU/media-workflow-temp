@@ -33,3 +33,15 @@ async def test_pdf_thumbnail():
     image = Image.open(BytesIO(requests.get(output["file"]).content))
     assert image.size[0] <= 200
     assert image.size[1] <= 200
+
+
+async def test_image_detail():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/cat.jpg",
+        "language": "Simplified Chinese",
+    }
+    output = await client.execute_workflow(
+        "image-detail", arg, id=f"{uuid4()}", task_queue="default"
+    )
+    assert "title" in output
