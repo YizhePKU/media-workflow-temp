@@ -17,6 +17,7 @@ boto3 = "^1.35.63"
 requests = "^2.32.3"
 python-dotenv = "^1.0.1"
 pytest-asyncio = "^0.24.0"
+pillow-avif-plugin = "^1.4.6"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
