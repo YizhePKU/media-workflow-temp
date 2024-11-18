@@ -17,14 +17,3 @@ class ImageThumbnail:
                 "image_thumbnail", args=[params["file"], params.get("size")]
             )
         }
-
-
-@workflow.defn(name="adobe-photoshop-thumbnail")
-class AdobePhotoshopThumbnail:
-    @workflow.run
-    async def run(self, params):
-        return {
-            "file": await start(
-                "adobe_photoshop_thumbnail", args=[params["file"], params.get("size")]
-            )
-        }

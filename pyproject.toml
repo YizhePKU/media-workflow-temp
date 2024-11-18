@@ -7,7 +7,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-psd-tools = "^1.10.2"
 pytest = "^8.3.3"
 pillow = "^11.0.0"
 pillow-heif = "^0.20.0"
