@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "media-workflow"
+version = "0.1.0"
+description = ""
+authors = ["sunyizhe <sunyizhe@tezign.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+psd-tools = "^1.10.2"
+pytest = "^8.3.3"
+pillow = "^11.0.0"
+pillow-heif = "^0.20.0"
+cairosvg = "^2.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
