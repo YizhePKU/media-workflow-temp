@@ -31,13 +31,7 @@ class Workflow:
         start = functools.partial(
             workflow.start_activity, start_to_close_timeout=timeout
         )
-
-        png_url = await start("psd2png", params["url"])
-        try:
-            await start("callback", args=[params["callback"], png_url])
-        except KeyError:
-            pass
-        return png_url
+        return await start("psd2png", params["url"])
 
 
 def image2png(image: Image) -> bytes:
@@ -54,8 +48,3 @@ async def psd2png(url: str) -> str:
     png_bytes = image2png(image)
     key = f"{uuid4()}.png"
     return upload(key, png_bytes)
-
-
-@activity.defn
-async def callback(url: str, data):
-    requests.post(url, data=data)
