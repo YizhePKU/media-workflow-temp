@@ -14,21 +14,8 @@ with workflow.unsafe.imports_passed_through():
     from media_workflow.s3 import upload
 
 
-@workflow.defn(name="adobe-psd-thumbnail")
+@workflow.defn(name="adobe-photoshop-thumbnail")
 class Workflow:
-    """Generate a PNG thumbnail from a PSD file.
-
-    If `size` is given, the image will be resized to be no larger than `size`, preserving the
-    aspect of the image.
-
-    Params:
-        file: URL for the PSD file
-        size: (optional) the requested size in pixels, as a 2-tuple: (width, height)
-
-    Returns:
-        file: URL for the generated PNG file
-    """
-
     @workflow.run
     async def run(self, params) -> str:
         timeout = timedelta(seconds=60)

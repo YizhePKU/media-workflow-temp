@@ -15,19 +15,6 @@ with workflow.unsafe.imports_passed_through():
 
 @workflow.defn(name="image-thumbnail")
 class Workflow:
-    """Generate a PNG thumbnail from an image.
-
-    If `size` is given, the image will be resized to be no larger than `size`, preserving the
-    aspect of the image.
-
-    Params:
-        file: URL for the PSD file
-        size: (optional) the requested size in pixels, as a 2-tuple: (width, height)
-
-    Returns:
-        file: URL for the generated PNG file
-    """
-
     @workflow.run
     async def run(self, params):
         timeout = timedelta(seconds=60)

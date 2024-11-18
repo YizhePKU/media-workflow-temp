@@ -3,7 +3,7 @@ from io import BytesIO
 import requests
 from PIL import Image
 
-from media_workflow.workflows.adobe_psd_thumbnail import psd_thumbnail
+from media_workflow.workflows.adobe_photoshop_thumbnail import psd_thumbnail
 
 
 async def test_psd_thumbnail():
