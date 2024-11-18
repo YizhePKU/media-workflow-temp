@@ -17,3 +17,14 @@ class ImageThumbnail:
                 "image_thumbnail", args=[params["file"], params.get("size")]
             )
         }
+
+
+@workflow.defn(name="pdf-thumbnail")
+class PdfThumbnail:
+    @workflow.run
+    async def run(self, params):
+        return {
+            "file": await start(
+                "pdf_thumbnail", args=[params["file"], params.get("size")]
+            )
+        }
