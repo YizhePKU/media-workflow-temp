@@ -14,7 +14,7 @@ with workflow.unsafe.imports_passed_through():
 
 
 @workflow.defn(name="adobe-psd-thumbnail")
-class PsdThumbnail:
+class Workflow:
     """Generate a PNG thumbnail from a PSD file.
 
     Params:
@@ -33,8 +33,10 @@ class PsdThumbnail:
         )
 
         png_url = await start("psd2png", params["url"])
-        if params["callback"] is not None:
+        try:
             await start("callback", args=[params["callback"], png_url])
+        except KeyError:
+            pass
         return png_url
 
 
@@ -50,7 +52,7 @@ async def psd2png(url: str) -> str:
     psd = PSDImage.open(BytesIO(psd_bytes))
     image = psd.composite()
     png_bytes = image2png(image)
-    key = str(uuid4())
+    key = f"{uuid4()}.png"
     return upload(key, png_bytes)
 
 
