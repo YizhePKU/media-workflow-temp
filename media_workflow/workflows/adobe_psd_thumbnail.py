@@ -35,7 +35,7 @@ class Workflow:
         start = functools.partial(
             workflow.start_activity, start_to_close_timeout=timeout
         )
-        url = await start("psd2png", args=[params["file"], params.get("size")])
+        url = await start("psd_thumbnail", args=[params["file"], params.get("size")])
         return {"file": url}
 
 
@@ -46,7 +46,7 @@ def image2png(image: Image) -> bytes:
 
 
 @activity.defn
-async def psd2png(url: str, size: Tuple[int, int] | None) -> str:
+async def psd_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
     key = f"{uuid4()}.png"
     psd = PSDImage.open(BytesIO(requests.get(url).content))
     image = psd.thumbnail() if psd.has_thumbnail() else psd.composite()

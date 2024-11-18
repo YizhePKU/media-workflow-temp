@@ -13,7 +13,7 @@ async def main():
         client,
         task_queue="default",
         workflows=[psd.Workflow],
-        activities=[psd.psd2png],
+        activities=[psd.psd_thumbnail],
     )
     await worker.run()
 
