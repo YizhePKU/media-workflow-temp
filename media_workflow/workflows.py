@@ -42,15 +42,20 @@ class PdfThumbnail:
 class ImageDetail:
     @workflow.run
     async def run(self, params):
-        inputs = {
-            "language": params["language"],
-            "image": {
-                "type": "image",
-                "transfer_method": "remote_url",
-                "url": params["file"],
-            },
-        }
-        result = await start("dify", args=["DIFY_IMAGE_DETAIL_KEY", inputs])
+        result = await start("image_detail", args=[params["file"], params["language"]])
+        result["id"] = workflow.info().workflow_id
+        if callback_url := params.get("callback_url"):
+            await start("callback", args=[callback_url, result])
+        return result
+
+
+@workflow.defn(name="image-detail-basic")
+class ImageDetailBasic:
+    @workflow.run
+    async def run(self, params):
+        result = await start(
+            "image_detail_basic", args=[params["file"], params["language"]]
+        )
         result["id"] = workflow.info().workflow_id
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])

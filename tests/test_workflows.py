@@ -79,3 +79,15 @@ async def test_image_detail():
         "image-detail", arg, id=f"{uuid4()}", task_queue="default"
     )
     assert "title" in output
+
+
+async def test_image_detail_basic():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/cat.jpg",
+        "language": "Simplified Chinese",
+    }
+    output = await client.execute_workflow(
+        "image-detail-basic", arg, id=f"{uuid4()}", task_queue="default"
+    )
+    assert "title" in output

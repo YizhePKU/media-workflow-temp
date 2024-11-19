@@ -55,19 +55,49 @@ async def pdf_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
 
 
 @activity.defn
-async def dify(api_key_env_var, inputs):
-    url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
-    headers = {"Authorization": f"Bearer {os.environ[api_key_env_var]}"}
-    _json = {
-        "inputs": inputs,
+async def image_detail(file_url: str, language: str):
+    headers = {"Authorization": f"Bearer {os.environ["DIFY_IMAGE_DETAIL_KEY"]}"}
+    json = {
+        "inputs": {
+            "language": language,
+            "image": {
+                "type": "image",
+                "transfer_method": "remote_url",
+                "url": file_url,
+            },
+        },
         "user": os.environ["DIFY_USER"],
         "response_mode": "blocking",
     }
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, headers=headers, json=_json) as r:
-            data = await r.json()
+        url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
+        async with session.post(url, headers=headers, json=json) as r:
+            result = await r.json()
+    assert result["data"]["status"] == "succeeded"
+    assert isinstance(result["data"]["outputs"]["tags"], str)
+    return result["data"]["outputs"]
 
-    if data["data"]["status"] == "succeeded":
-        return data["data"]["outputs"]
-    else:
-        raise Exception("Failed to get basic image detail")
+
+@activity.defn
+async def image_detail_basic(file_url: str, language: str):
+    headers = {"Authorization": f"Bearer {os.environ["DIFY_IMAGE_DETAIL_BASIC_KEY"]}"}
+    json = {
+        "inputs": {
+            "language": language,
+            "image": {
+                "type": "image",
+                "transfer_method": "remote_url",
+                "url": file_url,
+            },
+            "use_local": "true",
+        },
+        "user": os.environ["DIFY_USER"],
+        "response_mode": "blocking",
+    }
+    async with aiohttp.ClientSession() as session:
+        url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
+        async with session.post(url, headers=headers, json=json) as r:
+            result = await r.json()
+    assert result["data"]["status"] == "succeeded"
+    assert isinstance(result["data"]["outputs"]["tags"], str)
+    return result["data"]["outputs"]
