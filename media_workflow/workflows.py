@@ -2,9 +2,14 @@ import functools
 from datetime import timedelta
 
 from temporalio import workflow
+from temporalio.common import RetryPolicy
 
 start = functools.partial(
-    workflow.start_activity, start_to_close_timeout=timedelta(seconds=60)
+    workflow.start_activity,
+    start_to_close_timeout=timedelta(seconds=60),
+    retry_policy=RetryPolicy(
+        non_retryable_error_types=["KeyError", "ValueError"],
+    ),
 )
 
 
