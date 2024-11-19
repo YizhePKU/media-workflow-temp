@@ -8,7 +8,6 @@ from temporalio import activity, workflow
 with workflow.unsafe.imports_passed_through():
     import aiohttp
     import pymupdf
-    import requests
     from PIL import Image
 
     from media_workflow.s3 import upload
@@ -28,7 +27,9 @@ def page2image(page: pymupdf.Page) -> Image.Image:
 @activity.defn
 async def image_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
     key = f"{uuid4()}.png"
-    image = Image.open(BytesIO(requests.get(url).content))
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            image = Image.open(BytesIO(await response.read()))
     if size:
         image.thumbnail(size)
     return upload(key, image2png(image))
@@ -37,8 +38,10 @@ async def image_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
 @activity.defn
 async def pdf_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
     key = f"{uuid4()}.png"
-    with pymupdf.Document(stream=requests.get(url).content) as doc:
-        image = page2image(doc[0])
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            with pymupdf.Document(stream=await response.read()) as doc:
+                image = page2image(doc[0])
     if size:
         image.thumbnail(size)
     return upload(key, image2png(image))

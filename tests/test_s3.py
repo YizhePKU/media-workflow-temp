@@ -1,10 +1,12 @@
-import requests
+import aiohttp
 
 from media_workflow.s3 import upload
 
 
-def test_upload():
+async def test_upload():
     data = b"Hello world!"
     url = upload("my-key", data)
-    retrived_data = requests.get(url).content
+    async with aiohttp.ClientSession() as client:
+        async with client.get(url) as response:
+            retrived_data = await response.read()
     assert retrived_data == data

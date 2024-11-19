@@ -2,7 +2,7 @@ import os
 from io import BytesIO
 from uuid import uuid4
 
-import requests
+import aiohttp
 from PIL import Image
 from temporalio.client import Client
 
@@ -16,7 +16,9 @@ async def test_image_thumbnail():
     output = await client.execute_workflow(
         "image-thumbnail", arg, id=f"{uuid4()}", task_queue="default"
     )
-    image = Image.open(BytesIO(requests.get(output["file"]).content))
+    async with aiohttp.ClientSession() as client:
+        async with client.get(output["file"]) as response:
+            image = Image.open(BytesIO(await response.read()))
     assert image.size[0] <= 200
     assert image.size[1] <= 200
 
@@ -30,7 +32,9 @@ async def test_pdf_thumbnail():
     output = await client.execute_workflow(
         "pdf-thumbnail", arg, id=f"{uuid4()}", task_queue="default"
     )
-    image = Image.open(BytesIO(requests.get(output["file"]).content))
+    async with aiohttp.ClientSession() as client:
+        async with client.get(output["file"]) as response:
+            image = Image.open(BytesIO(await response.read()))
     assert image.size[0] <= 200
     assert image.size[1] <= 200
 
