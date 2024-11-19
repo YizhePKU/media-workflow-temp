@@ -3,6 +3,7 @@ from io import BytesIO
 from uuid import uuid4
 
 import aiohttp
+from aiohttp import web
 from PIL import Image
 from temporalio.client import Client
 
@@ -21,6 +22,35 @@ async def test_image_thumbnail():
             image = Image.open(BytesIO(await response.read()))
     assert image.size[0] <= 200
     assert image.size[1] <= 200
+
+
+async def test_image_thumbnail_with_callback():
+    async def handler(request: web.Request):
+        json = await request.json()
+        async with aiohttp.ClientSession() as client:
+            async with client.get(json["file"]) as response:
+                image = Image.open(BytesIO(await response.read()))
+                assert image.size[0] <= 200
+                assert image.size[1] <= 200
+        return web.Response()
+
+    app = web.Application()
+    app.add_routes([web.post("/", handler)])
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "localhost", "8000")
+    await site.start()
+
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/cat.jpg",
+        "size": (200, 200),
+        "callback_url": "http://localhost:8000",
+    }
+    output = await client.execute_workflow(
+        "image-thumbnail", arg, id=f"{uuid4()}", task_queue="default"
+    )
+    assert "file" in output
 
 
 async def test_pdf_thumbnail():

@@ -25,6 +25,13 @@ def page2image(page: pymupdf.Page) -> Image.Image:
 
 
 @activity.defn
+async def callback(url: str, json):
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=json) as response:
+            assert response.status == 200
+
+
+@activity.defn
 async def image_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
     key = f"{uuid4()}.png"
     async with aiohttp.ClientSession() as session:
