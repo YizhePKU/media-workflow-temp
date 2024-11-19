@@ -91,3 +91,17 @@ async def test_image_detail_basic():
         "image-detail-basic", arg, id=f"{uuid4()}", task_queue="default"
     )
     assert "title" in output
+
+
+async def test_video_sprite():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/SampleVideo_720x480_10mb.mp4",
+        "interval": 1.5,
+        "layout": [6, 5],
+        "width": 1000,
+    }
+    output = await client.execute_workflow(
+        "video-sprite", arg, id=f"{uuid4()}", task_queue="default"
+    )
+    assert len(output["files"]) == 2

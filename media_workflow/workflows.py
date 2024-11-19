@@ -60,3 +60,26 @@ class ImageDetailBasic:
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
         return result
+
+
+@workflow.defn(name="video-sprite")
+class VideoSprite:
+    @workflow.run
+    async def run(self, params):
+        result = {
+            "id": workflow.info().workflow_id,
+            "files": await start(
+                "video_sprite",
+                args=[
+                    params["file"],
+                    params.get("interval"),
+                    params.get("layout"),
+                    params.get("width"),
+                    params.get("height"),
+                    params.get("count"),
+                ],
+            ),
+        }
+        if callback_url := params.get("callback_url"):
+            await start("callback", args=[callback_url, result])
+        return result

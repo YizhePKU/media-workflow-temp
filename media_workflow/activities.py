@@ -1,5 +1,7 @@
 import os
 from io import BytesIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Tuple
 from uuid import uuid4
 
@@ -7,6 +9,7 @@ from temporalio import activity, workflow
 
 with workflow.unsafe.imports_passed_through():
     import aiohttp
+    import ffmpeg
     import pymupdf
     from PIL import Image
 
@@ -101,3 +104,41 @@ async def image_detail_basic(file_url: str, language: str):
     assert result["data"]["status"] == "succeeded"
     assert isinstance(result["data"]["outputs"]["tags"], str)
     return result["data"]["outputs"]
+
+
+@activity.defn
+async def video_sprite(
+    video_url: str,
+    interval: float,
+    layout: Tuple[int, int] = None,
+    width: int = None,
+    height: int = None,
+    count: int = None,
+) -> list[str]:
+    with TemporaryDirectory() as dir:
+        stream = ffmpeg.input(video_url)
+
+        if interval:
+            expr = f"floor((t - prev_selected_t) / {interval})"
+            stream = stream.filter("select", expr=expr)
+
+        if layout:
+            stream = stream.filter("tile", layout=f"{layout[0]}x{layout[1]}")
+
+        stream = stream.filter("scale", width=width or -1, height=height or -1)
+
+        filename = f"{dir}/%03d.png"
+        if count:
+            stream = stream.output(filename, fps_mode="passthrough", vframes=count)
+        else:
+            stream = stream.output(filename, fps_mode="passthrough")
+
+        stream.run()
+
+        paths = list(Path(dir).iterdir())
+        paths.sort(key=lambda p: int(p.stem))
+        result = []
+        for path in paths:
+            with open(path, "rb") as file:
+                result.append(upload(path.name, file.read()))
+        return result
