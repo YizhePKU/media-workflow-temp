@@ -38,25 +38,23 @@ async def callback(url: str, json):
 
 @activity.defn
 async def image_thumbnail(params) -> str:
-    key = f"{uuid4()}.png"
     async with aiohttp.ClientSession() as session:
         async with session.get(params["file"]) as response:
             image = Image.open(BytesIO(await response.read()))
     if size := params.get("size"):
         image.thumbnail(size)
-    return upload(key, image2png(image))
+    return upload(f"{uuid4()}.png", image2png(image))
 
 
 @activity.defn
 async def pdf_thumbnail(params) -> str:
-    key = f"{uuid4()}.png"
     async with aiohttp.ClientSession() as session:
         async with session.get(params["file"]) as response:
             with pymupdf.Document(stream=await response.read()) as doc:
                 image = page2image(doc[0])
     if size := params.get("size"):
         image.thumbnail(size)
-    return upload(key, image2png(image))
+    return upload(f"{uuid4()}.png", image2png(image))
 
 
 @activity.defn
@@ -137,7 +135,7 @@ async def video_sprite(params) -> list[str]:
         result = []
         for path in paths:
             with open(path, "rb") as file:
-                result.append(upload(path.name, file.read()))
+                result.append(upload(f"{uuid4()}.png", file.read()))
         return result
 
 
