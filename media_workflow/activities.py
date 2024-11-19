@@ -2,7 +2,6 @@ import os
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Tuple
 from uuid import uuid4
 
 from temporalio import activity, workflow
@@ -35,38 +34,38 @@ async def callback(url: str, json):
 
 
 @activity.defn
-async def image_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
+async def image_thumbnail(params) -> str:
     key = f"{uuid4()}.png"
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.get(params["file"]) as response:
             image = Image.open(BytesIO(await response.read()))
-    if size:
+    if size := params.get("size"):
         image.thumbnail(size)
     return upload(key, image2png(image))
 
 
 @activity.defn
-async def pdf_thumbnail(url: str, size: Tuple[int, int] | None) -> str:
+async def pdf_thumbnail(params) -> str:
     key = f"{uuid4()}.png"
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.get(params["file"]) as response:
             with pymupdf.Document(stream=await response.read()) as doc:
                 image = page2image(doc[0])
-    if size:
+    if size := params.get("size"):
         image.thumbnail(size)
     return upload(key, image2png(image))
 
 
 @activity.defn
-async def image_detail(file_url: str, language: str):
+async def image_detail(params) -> dict:
     headers = {"Authorization": f"Bearer {os.environ["DIFY_IMAGE_DETAIL_KEY"]}"}
     json = {
         "inputs": {
-            "language": language,
+            "language": params["language"],
             "image": {
                 "type": "image",
                 "transfer_method": "remote_url",
-                "url": file_url,
+                "url": params["file"],
             },
         },
         "user": os.environ["DIFY_USER"],
@@ -82,15 +81,15 @@ async def image_detail(file_url: str, language: str):
 
 
 @activity.defn
-async def image_detail_basic(file_url: str, language: str):
+async def image_detail_basic(params) -> dict:
     headers = {"Authorization": f"Bearer {os.environ["DIFY_IMAGE_DETAIL_BASIC_KEY"]}"}
     json = {
         "inputs": {
-            "language": language,
+            "language": params["language"],
             "image": {
                 "type": "image",
                 "transfer_method": "remote_url",
-                "url": file_url,
+                "url": params["file"],
             },
             "use_local": "true",
         },
@@ -107,28 +106,23 @@ async def image_detail_basic(file_url: str, language: str):
 
 
 @activity.defn
-async def video_sprite(
-    video_url: str,
-    interval: float,
-    layout: Tuple[int, int] = None,
-    width: int = None,
-    height: int = None,
-    count: int = None,
-) -> list[str]:
+async def video_sprite(params) -> list[str]:
     with TemporaryDirectory() as dir:
-        stream = ffmpeg.input(video_url)
+        stream = ffmpeg.input(params["file"])
 
-        if interval:
+        if interval := params.get("interval"):
             expr = f"floor((t - prev_selected_t) / {interval})"
             stream = stream.filter("select", expr=expr)
 
-        if layout:
+        if layout := params.get("layout"):
             stream = stream.filter("tile", layout=f"{layout[0]}x{layout[1]}")
 
-        stream = stream.filter("scale", width=width or -1, height=height or -1)
+        stream = stream.filter(
+            "scale", width=params.get("width", -1), height=params.get("height", -1)
+        )
 
         filename = f"{dir}/%03d.png"
-        if count:
+        if count := params.get("count"):
             stream = stream.output(filename, fps_mode="passthrough", vframes=count)
         else:
             stream = stream.output(filename, fps_mode="passthrough")

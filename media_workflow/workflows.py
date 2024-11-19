@@ -14,9 +14,7 @@ class ImageThumbnail:
     async def run(self, params):
         result = {
             "id": workflow.info().workflow_id,
-            "file": await start(
-                "image_thumbnail", args=[params["file"], params.get("size")]
-            ),
+            "file": await start("image_thumbnail", params),
         }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
@@ -29,9 +27,7 @@ class PdfThumbnail:
     async def run(self, params):
         result = {
             "id": workflow.info().workflow_id,
-            "file": await start(
-                "pdf_thumbnail", args=[params["file"], params.get("size")]
-            ),
+            "file": await start("pdf_thumbnail", params),
         }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
@@ -42,7 +38,7 @@ class PdfThumbnail:
 class ImageDetail:
     @workflow.run
     async def run(self, params):
-        result = await start("image_detail", args=[params["file"], params["language"]])
+        result = await start("image_detail", params)
         result["id"] = workflow.info().workflow_id
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
@@ -53,9 +49,7 @@ class ImageDetail:
 class ImageDetailBasic:
     @workflow.run
     async def run(self, params):
-        result = await start(
-            "image_detail_basic", args=[params["file"], params["language"]]
-        )
+        result = await start("image_detail_basic", params)
         result["id"] = workflow.info().workflow_id
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
@@ -68,17 +62,7 @@ class VideoSprite:
     async def run(self, params):
         result = {
             "id": workflow.info().workflow_id,
-            "files": await start(
-                "video_sprite",
-                args=[
-                    params["file"],
-                    params.get("interval"),
-                    params.get("layout"),
-                    params.get("width"),
-                    params.get("height"),
-                    params.get("count"),
-                ],
-            ),
+            "files": await start("video_sprite", params),
         }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
