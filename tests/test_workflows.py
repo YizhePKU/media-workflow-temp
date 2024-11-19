@@ -105,3 +105,16 @@ async def test_video_sprite():
         "video-sprite", arg, id=f"{uuid4()}", task_queue="default"
     )
     assert len(output["files"]) == 2
+
+
+async def test_audio_waveform():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/SampleVideo_720x480_10mb.mp4",
+        "num_samples": 1000,
+    }
+    output = await client.execute_workflow(
+        "audio-waveform", arg, id=f"{uuid4()}", task_queue="default"
+    )
+    assert len(output["waveform"]) == 1000
+    assert max(output["waveform"]) == 1.0

@@ -67,3 +67,16 @@ class VideoSprite:
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
         return result
+
+
+@workflow.defn(name="audio-waveform")
+class AudioWaveform:
+    @workflow.run
+    async def run(self, params):
+        result = {
+            "id": workflow.info().workflow_id,
+            "waveform": await start("audio_waveform", params),
+        }
+        if callback_url := params.get("callback_url"):
+            await start("callback", args=[callback_url, result])
+        return result

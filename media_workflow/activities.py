@@ -1,3 +1,4 @@
+import math
 import os
 from io import BytesIO
 from pathlib import Path
@@ -9,8 +10,10 @@ from temporalio import activity, workflow
 with workflow.unsafe.imports_passed_through():
     import aiohttp
     import ffmpeg
+    import numpy as np
     import pymupdf
     from PIL import Image
+    from pydub import AudioSegment
 
     from media_workflow.s3 import upload
 
@@ -136,3 +139,21 @@ async def video_sprite(params) -> list[str]:
             with open(path, "rb") as file:
                 result.append(upload(path.name, file.read()))
         return result
+
+
+@activity.defn
+async def audio_waveform(params) -> list[float]:
+    async with aiohttp.ClientSession() as client:
+        async with client.get(params["file"]) as r:
+            payload = await r.read()
+    audio = AudioSegment.from_file(BytesIO(payload))
+    data = np.array(audio.get_array_of_samples())
+
+    samples = np.zeros(params["num_samples"])
+    step = math.ceil(len(data) / params["num_samples"])
+    for i in range(0, len(data), step):
+        samples[i // step] = np.max(np.abs(data[i : i + step]))
+
+    # Normalize the data
+    samples = samples / np.max(samples)
+    return samples.tolist()
