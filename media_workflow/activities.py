@@ -142,6 +142,23 @@ async def video_sprite(params) -> list[str]:
 
 
 @activity.defn
+async def video_transcode(params) -> str:
+    with TemporaryDirectory() as dir:
+        stream = ffmpeg.input(params["file"])
+
+        path = Path(f"{dir}/{uuid4()}.{params.get("container", "mp4")}")
+        kwargs = {
+            "codec:v": params.get("video-codec", "h264"),
+            "codec:a": params.get("audio-codec", "libopus"),
+        }
+        stream = stream.output(str(path), **kwargs)
+        stream.run()
+
+        with open(path, "rb") as file:
+            return upload(path.name, file.read())
+
+
+@activity.defn
 async def audio_waveform(params) -> list[float]:
     async with aiohttp.ClientSession() as client:
         async with client.get(params["file"]) as r:

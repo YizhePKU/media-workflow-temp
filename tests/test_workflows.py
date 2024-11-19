@@ -107,6 +107,20 @@ async def test_video_sprite():
     assert len(output["files"]) == 2
 
 
+async def test_video_transcode():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/SampleVideo_720x480_10mb.mp4",
+        "video-codec": "hevc",
+        "audio-codec": "aac",
+        "container": "mkv",
+    }
+    output = await client.execute_workflow(
+        "video-transcode", arg, id=f"{uuid4()}", task_queue="default"
+    )
+    assert "file" in output
+
+
 async def test_audio_waveform():
     client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
     arg = {
