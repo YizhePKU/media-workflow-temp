@@ -15,7 +15,7 @@ async def test_image_thumbnail():
         "size": (200, 200),
     }
     output = await client.execute_workflow(
-        "image-thumbnail", arg, id=f"{uuid4()}", task_queue="default"
+        "image-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
     )
     async with aiohttp.ClientSession() as client:
         async with client.get(output["file"]) as response:
@@ -48,7 +48,7 @@ async def test_image_thumbnail_with_callback():
         "callback_url": "http://localhost:8000",
     }
     output = await client.execute_workflow(
-        "image-thumbnail", arg, id=f"{uuid4()}", task_queue="default"
+        "image-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
     )
     assert "file" in output
 
@@ -60,7 +60,7 @@ async def test_pdf_thumbnail():
         "size": (200, 200),
     }
     output = await client.execute_workflow(
-        "pdf-thumbnail", arg, id=f"{uuid4()}", task_queue="default"
+        "pdf-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
     )
     async with aiohttp.ClientSession() as client:
         async with client.get(output["file"]) as response:
@@ -76,7 +76,7 @@ async def test_image_detail():
         "language": "Simplified Chinese",
     }
     output = await client.execute_workflow(
-        "image-detail", arg, id=f"{uuid4()}", task_queue="default"
+        "image-detail", arg, id=f"{uuid4()}", task_queue="media"
     )
     assert "title" in output
 
@@ -88,7 +88,7 @@ async def test_image_detail_basic():
         "language": "Simplified Chinese",
     }
     output = await client.execute_workflow(
-        "image-detail-basic", arg, id=f"{uuid4()}", task_queue="default"
+        "image-detail-basic", arg, id=f"{uuid4()}", task_queue="media"
     )
     assert "title" in output
 
@@ -102,7 +102,7 @@ async def test_video_sprite():
         "width": 1000,
     }
     output = await client.execute_workflow(
-        "video-sprite", arg, id=f"{uuid4()}", task_queue="default"
+        "video-sprite", arg, id=f"{uuid4()}", task_queue="media"
     )
     assert len(output["files"]) == 2
 
@@ -116,7 +116,7 @@ async def test_video_transcode():
         "container": "mkv",
     }
     output = await client.execute_workflow(
-        "video-transcode", arg, id=f"{uuid4()}", task_queue="default"
+        "video-transcode", arg, id=f"{uuid4()}", task_queue="media"
     )
     assert "file" in output
 
@@ -128,7 +128,7 @@ async def test_audio_waveform():
         "num_samples": 1000,
     }
     output = await client.execute_workflow(
-        "audio-waveform", arg, id=f"{uuid4()}", task_queue="default"
+        "audio-waveform", arg, id=f"{uuid4()}", task_queue="media"
     )
     assert len(output["waveform"]) == 1000
     assert max(output["waveform"]) == 1.0

@@ -23,7 +23,7 @@ async def main():
     client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
     worker = Worker(
         client,
-        task_queue="default",
+        task_queue="media",
         workflows=workflows,
         activities=activities,
     )
