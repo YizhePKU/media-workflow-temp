@@ -189,7 +189,11 @@ async def minicpm(prompt: str, image_url: str, postprocess=None):
             "messages": [{"role": "user", "content": prompt, "images": [b64image]}],
         }
         async with client.post(url, headers=headers, json=json) as r:
-            content = (await r.json())["message"]["content"]
+            json = await r.json()
+
+        if error := json.get("error"):
+            raise Exception(error)
+        content = json["message"]["content"]
         if postprocess:
             content = postprocess(content)
         return content
