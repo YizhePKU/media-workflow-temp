@@ -48,14 +48,21 @@ async def image_thumbnail(params) -> str:
 
 
 @activity.defn
-async def pdf_thumbnail(params) -> str:
+async def pdf_thumbnail(params) -> list[str]:
+    images = []
     async with aiohttp.ClientSession() as session:
         async with session.get(params["file"]) as response:
             with pymupdf.Document(stream=await response.read()) as doc:
-                image = page2image(doc[0])
+                if pages := params.get("pages"):
+                    for i in pages:
+                        images.append(page2image(doc[i]))
+                else:
+                    for page in doc.pages():
+                        images.append(page2image(page))
     if size := params.get("size"):
-        image.thumbnail(size)
-    return upload(f"{uuid4()}.png", image2png(image))
+        for image in images:
+            image.thumbnail(size)
+    return [upload(f"{uuid4()}.png", image2png(image)) for image in images]
 
 
 @activity.defn

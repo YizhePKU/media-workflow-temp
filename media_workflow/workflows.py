@@ -32,7 +32,7 @@ class PdfThumbnail:
     async def run(self, params):
         result = {
             "id": workflow.info().workflow_id,
-            "file": await start("pdf_thumbnail", params),
+            "files": await start("pdf_thumbnail", params),
         }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
@@ -46,7 +46,7 @@ class DocumentThumbnail:
         pdf = await start("convert_to_pdf", params)
         result = {
             "id": workflow.info().workflow_id,
-            "file": await start("pdf_thumbnail", {**params, "file": pdf}),
+            "files": await start("pdf_thumbnail", {**params, "file": pdf}),
         }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
