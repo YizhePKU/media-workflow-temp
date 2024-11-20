@@ -69,6 +69,22 @@ async def test_pdf_thumbnail():
     assert image.size[1] <= 200
 
 
+async def test_document_thumbnail():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/samplepptx.pptx",
+        "size": (200, 200),
+    }
+    output = await client.execute_workflow(
+        "document-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    async with aiohttp.ClientSession() as client:
+        async with client.get(output["file"]) as response:
+            image = Image.open(BytesIO(await response.read()))
+    assert image.size[0] <= 200
+    assert image.size[1] <= 200
+
+
 async def test_image_detail():
     client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
     arg = {

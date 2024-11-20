@@ -39,6 +39,20 @@ class PdfThumbnail:
         return result
 
 
+@workflow.defn(name="document-thumbnail")
+class DocumentThumbnail:
+    @workflow.run
+    async def run(self, params):
+        pdf = await start("convert_to_pdf", params)
+        result = {
+            "id": workflow.info().workflow_id,
+            "file": await start("pdf_thumbnail", {**params, "file": pdf}),
+        }
+        if callback_url := params.get("callback_url"):
+            await start("callback", args=[callback_url, result])
+        return result
+
+
 @workflow.defn(name="image-detail")
 class ImageDetail:
     @workflow.run

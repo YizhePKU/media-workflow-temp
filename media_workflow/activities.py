@@ -1,5 +1,6 @@
 import math
 import os
+import subprocess
 from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -172,3 +173,18 @@ async def audio_waveform(params) -> list[float]:
     # Normalize the data
     samples = samples / np.max(samples)
     return samples.tolist()
+
+
+@activity.defn
+async def convert_to_pdf(params) -> str:
+    with TemporaryDirectory() as dir:
+        stem = str(uuid4())
+        input = f"{dir}/{stem}"
+        async with aiohttp.ClientSession() as client:
+            async with client.get(params["file"]) as r:
+                with open(input, "wb") as file:
+                    file.write(await r.read())
+        subprocess.run(["soffice", "--convert-to", "pdf", "--outdir", dir, input])
+        output = f"{input}.pdf"
+        with open(output, "rb") as file:
+            return upload(f"{stem}.pdf", file.read())
