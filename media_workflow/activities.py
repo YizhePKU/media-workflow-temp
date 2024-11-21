@@ -21,8 +21,7 @@ with workflow.unsafe.imports_passed_through():
     from pydub import AudioSegment
 
     from media_workflow.font import preview
-    from media_workflow.image_loader import image_open
-    from media_workflow.s3 import upload
+    from media_workflow.utils import image_open, upload
 
 
 def image2png(image: Image.Image) -> bytes:
