@@ -17,10 +17,11 @@ with workflow.unsafe.imports_passed_through():
     import ffmpeg
     import numpy as np
     import pymupdf
+    from fontTools.ttLib import TTFont
     from PIL import Image
     from pydub import AudioSegment
 
-    from media_workflow.font import preview
+    from media_workflow.font import metadata, preview
     from media_workflow.utils import image_open, upload
 
 
@@ -81,6 +82,17 @@ async def font_thumbnail(params) -> str:
         font_size=params.get("font_size", 200),
     )
     return upload(f"{uuid4()}.png", image2png(image))
+
+
+@activity.defn
+async def font_metadata(params) -> str:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(params["file"]) as response:
+            font = await response.read()
+    return metadata(
+        TTFont(BytesIO(font)),
+        language=params.get("language", "English"),
+    )
 
 
 @activity.defn

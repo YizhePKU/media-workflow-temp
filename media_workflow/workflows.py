@@ -48,6 +48,19 @@ class FontThumbnail:
         return result
 
 
+@workflow.defn(name="font-metadata")
+class FontMetadata:
+    @workflow.run
+    async def run(self, params):
+        result = {
+            "id": workflow.info().workflow_id,
+            **await start("font_metadata", params),
+        }
+        if callback_url := params.get("callback_url"):
+            await start("callback", args=[callback_url, result])
+        return result
+
+
 @workflow.defn(name="document-thumbnail")
 class DocumentThumbnail:
     @workflow.run
