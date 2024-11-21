@@ -124,6 +124,20 @@ async def test_font_metadata():
     assert "font_family" in output
 
 
+async def test_font_detail():
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/%E5%BE%AE%E8%BD%AF%E9%9B%85%E9%BB%91.ttf",
+        "language": "Simplified Chinese",
+    }
+    output = await client.execute_workflow(
+        "font-detail", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    assert "description" in output
+
+
 async def test_document_thumbnail():
     client = await Client.connect(
         os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]

@@ -50,7 +50,7 @@ async def image_thumbnail(params) -> str:
             image = image_open(BytesIO(await response.read()))
     if size := params.get("size"):
         image.thumbnail(size)
-    return upload(f"{uuid4()}.png", image2png(image))
+    return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
 
 
 @activity.defn
@@ -68,7 +68,10 @@ async def pdf_thumbnail(params) -> list[str]:
     if size := params.get("size"):
         for image in images:
             image.thumbnail(size)
-    return [upload(f"{uuid4()}.png", image2png(image)) for image in images]
+    return [
+        upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
+        for image in images
+    ]
 
 
 @activity.defn
@@ -81,7 +84,7 @@ async def font_thumbnail(params) -> str:
         size=params.get("size", (800, 600)),
         font_size=params.get("font_size", 200),
     )
-    return upload(f"{uuid4()}.png", image2png(image))
+    return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
 
 
 @activity.defn
@@ -120,6 +123,39 @@ async def image_detail(params) -> dict:
 
 
 @activity.defn
+async def font_detail(params) -> dict:
+    headers = {"Authorization": f"Bearer {os.environ["DIFY_FONT_DETAIL_KEY"]}"}
+    json = {
+        "inputs": {
+            "language": params["language"],
+            "basic_info": params["basic_info"],
+            "image": {
+                "type": "image",
+                "transfer_method": "remote_url",
+                "url": params["file"],
+            },
+        },
+        "user": os.environ["DIFY_USER"],
+        "response_mode": "blocking",
+    }
+    async with aiohttp.ClientSession() as session:
+        url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
+        async with session.post(url, headers=headers, json=json) as r:
+            r.raise_for_status()
+            result = await r.json()
+    print(result, params["file"])
+    assert result["data"]["status"] == "succeeded"
+    output = result["data"]["outputs"]
+
+    assert isinstance(output["description"], str)
+    assert isinstance(output["tags"], str)
+    assert isinstance(output["font_category"], str)
+    assert isinstance(output["stroke_characteristics"], str)
+    assert isinstance(output["historical_period"], str)
+    return output
+
+
+@activity.defn
 async def video_sprite(params) -> list[str]:
     with TemporaryDirectory() as dir:
         stream = ffmpeg.input(params["file"])
@@ -148,7 +184,9 @@ async def video_sprite(params) -> list[str]:
         result = []
         for path in paths:
             with open(path, "rb") as file:
-                result.append(upload(f"{uuid4()}.png", file.read()))
+                result.append(
+                    upload(f"{uuid4()}.png", file.read(), content_type="image/png")
+                )
         return result
 
 
@@ -157,7 +195,8 @@ async def video_transcode(params) -> str:
     with TemporaryDirectory() as dir:
         stream = ffmpeg.input(params["file"])
 
-        path = Path(f"{dir}/{uuid4()}.{params.get("container", "mp4")}")
+        container = params.get("container", "mp4")
+        path = Path(f"{dir}/{uuid4()}.{container}")
         kwargs = {
             "codec:v": params.get("video-codec", "h264"),
             "codec:a": params.get("audio-codec", "libopus"),
@@ -166,7 +205,7 @@ async def video_transcode(params) -> str:
         stream.run()
 
         with open(path, "rb") as file:
-            return upload(path.name, file.read())
+            return upload(path.name, file.read(), content_type=f"video/{container}")
 
 
 @activity.defn
@@ -199,7 +238,7 @@ async def convert_to_pdf(params) -> str:
         subprocess.run(["soffice", "--convert-to", "pdf", "--outdir", dir, input])
         output = f"{input}.pdf"
         with open(output, "rb") as file:
-            return upload(f"{stem}.pdf", file.read())
+            return upload(f"{stem}.pdf", file.read(), content_type="application/pdf")
 
 
 async def minicpm(prompt: str, image_url: str, postprocess=None):

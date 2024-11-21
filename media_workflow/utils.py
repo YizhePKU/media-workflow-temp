@@ -34,10 +34,12 @@ def image_open(file: BinaryIO) -> Image:
         raise
 
 
-def upload(key: str, data: bytes):
+def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):
     """Upload data to S3-compatible storage. Return a presigned URL that downloads the file."""
     s3 = boto3.client("s3", endpoint_url=os.environ["S3_ENDPOINT_URL"])
-    s3.put_object(Bucket=os.environ["S3_BUCKET"], Key=key, Body=data)
+    s3.put_object(
+        Bucket=os.environ["S3_BUCKET"], Key=key, Body=data, ContentType=content_type
+    )
     return s3.generate_presigned_url(
         "get_object", Params=dict(Bucket=os.environ["S3_BUCKET"], Key=key)
     )
