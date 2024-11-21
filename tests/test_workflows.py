@@ -24,6 +24,22 @@ async def test_image_thumbnail():
     assert image.size[1] <= 200
 
 
+async def test_image_thumbnail_svg():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://f002.backblazeb2.com/file/sunyizhe/cocktail.svg",
+        "size": (200, 200),
+    }
+    output = await client.execute_workflow(
+        "image-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    async with aiohttp.ClientSession() as client:
+        async with client.get(output["file"]) as response:
+            image = Image.open(BytesIO(await response.read()))
+    assert image.size[0] <= 200
+    assert image.size[1] <= 200
+
+
 async def test_image_thumbnail_with_callback():
     async def handler(request: web.Request):
         json = await request.json()

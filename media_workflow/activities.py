@@ -21,6 +21,7 @@ with workflow.unsafe.imports_passed_through():
     from pydub import AudioSegment
 
     from media_workflow.font import preview
+    from media_workflow.image_loader import image_open
     from media_workflow.s3 import upload
 
 
@@ -46,7 +47,7 @@ async def callback(url: str, json):
 async def image_thumbnail(params) -> str:
     async with aiohttp.ClientSession() as session:
         async with session.get(params["file"]) as response:
-            image = Image.open(BytesIO(await response.read()))
+            image = image_open(BytesIO(await response.read()))
     if size := params.get("size"):
         image.thumbnail(size)
     return upload(f"{uuid4()}.png", image2png(image))

@@ -9,8 +9,8 @@ from pillow_heif import register_heif_opener
 register_heif_opener()
 
 
-def load_image(file: BinaryIO) -> Image:
-    """Load an image as an PIL.Image instance.
+def image_open(file: BinaryIO) -> Image:
+    """Open an image as an PIL.Image instance.
 
     In addition to formats natively supported by PIL.Image (see [1] for the full list), this
     function also supports the following formats:
