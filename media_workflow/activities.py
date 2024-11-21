@@ -20,6 +20,7 @@ with workflow.unsafe.imports_passed_through():
     from PIL import Image
     from pydub import AudioSegment
 
+    from media_workflow.font import preview
     from media_workflow.s3 import upload
 
 
@@ -67,6 +68,19 @@ async def pdf_thumbnail(params) -> list[str]:
         for image in images:
             image.thumbnail(size)
     return [upload(f"{uuid4()}.png", image2png(image)) for image in images]
+
+
+@activity.defn
+async def font_thumbnail(params) -> str:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(params["file"]) as response:
+            font = await response.read()
+    image = preview(
+        BytesIO(font),
+        size=params.get("size", (800, 600)),
+        font_size=params.get("font_size", 200),
+    )
+    return upload(f"{uuid4()}.png", image2png(image))
 
 
 @activity.defn

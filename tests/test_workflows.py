@@ -70,6 +70,18 @@ async def test_pdf_thumbnail():
     assert image.size[1] <= 200
 
 
+async def test_font_thumbnail():
+    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/%E5%BE%AE%E8%BD%AF%E9%9B%85%E9%BB%91.ttf",
+        "size": (800, 600),
+    }
+    output = await client.execute_workflow(
+        "font-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    assert "file" in output
+
+
 async def test_document_thumbnail():
     client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
     arg = {

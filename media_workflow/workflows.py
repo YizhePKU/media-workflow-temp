@@ -35,6 +35,19 @@ class PdfThumbnail:
         return result
 
 
+@workflow.defn(name="font-thumbnail")
+class FontThumbnail:
+    @workflow.run
+    async def run(self, params):
+        result = {
+            "id": workflow.info().workflow_id,
+            "file": await start("font_thumbnail", params),
+        }
+        if callback_url := params.get("callback_url"):
+            await start("callback", args=[callback_url, result])
+        return result
+
+
 @workflow.defn(name="document-thumbnail")
 class DocumentThumbnail:
     @workflow.run
