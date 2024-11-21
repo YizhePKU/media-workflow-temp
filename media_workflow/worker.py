@@ -20,7 +20,9 @@ for _name, fn in inspect.getmembers(media_workflow.activities):
 
 
 async def main():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     worker = Worker(
         client,
         task_queue="media",

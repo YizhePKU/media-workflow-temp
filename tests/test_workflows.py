@@ -3,13 +3,16 @@ from io import BytesIO
 from uuid import uuid4
 
 import aiohttp
+import pytest
 from aiohttp import web
 from PIL import Image
 from temporalio.client import Client
 
 
 async def test_image_thumbnail():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/%E5%BC%B9%E6%A1%8612.psd",
         "size": (200, 200),
@@ -25,7 +28,9 @@ async def test_image_thumbnail():
 
 
 async def test_image_thumbnail_svg():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://f002.backblazeb2.com/file/sunyizhe/cocktail.svg",
         "size": (200, 200),
@@ -40,6 +45,7 @@ async def test_image_thumbnail_svg():
     assert image.size[1] <= 200
 
 
+@pytest.mark.skip(reason="we don't have an API endpoint for the callback")
 async def test_image_thumbnail_with_callback():
     async def handler(request: web.Request):
         json = await request.json()
@@ -57,7 +63,9 @@ async def test_image_thumbnail_with_callback():
     site = web.TCPSite(runner, "localhost", "8000")
     await site.start()
 
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/cat.jpg",
         "size": (200, 200),
@@ -70,7 +78,9 @@ async def test_image_thumbnail_with_callback():
 
 
 async def test_pdf_thumbnail():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/sample-3.pdf",
         "size": (200, 200),
@@ -87,7 +97,9 @@ async def test_pdf_thumbnail():
 
 
 async def test_font_thumbnail():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/%E5%BE%AE%E8%BD%AF%E9%9B%85%E9%BB%91.ttf",
         "size": (800, 600),
@@ -99,7 +111,9 @@ async def test_font_thumbnail():
 
 
 async def test_document_thumbnail():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/samplepptx.pptx",
         "size": (200, 200),
@@ -111,7 +125,9 @@ async def test_document_thumbnail():
 
 
 async def test_image_detail():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/cat.jpg",
         "language": "Simplified Chinese",
@@ -123,7 +139,9 @@ async def test_image_detail():
 
 
 async def test_image_detail_basic():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/cat.jpg",
         "language": "Simplified Chinese",
@@ -135,7 +153,9 @@ async def test_image_detail_basic():
 
 
 async def test_video_sprite():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/SampleVideo_720x480_10mb.mp4",
         "interval": 1.5,
@@ -149,7 +169,9 @@ async def test_video_sprite():
 
 
 async def test_video_transcode():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/SampleVideo_720x480_10mb.mp4",
         "video-codec": "hevc",
@@ -163,7 +185,9 @@ async def test_video_transcode():
 
 
 async def test_audio_waveform():
-    client = await Client.connect(os.environ["TEMPORAL_SERVER_HOST"])
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/SampleVideo_720x480_10mb.mp4",
         "num_samples": 1000,
