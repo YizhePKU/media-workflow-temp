@@ -221,6 +221,10 @@ async def image_analysis_basic(params):
         json = json_loads(content)
         assert isinstance(json["title"], str)
         assert isinstance(json["description"], str)
+        if json["title"].isascii() or json["description"].isascii():
+            raise Exception(
+                "Model generated English result when the requested language is not English"
+            )
         return json
 
     prompt = cleandoc(
@@ -270,6 +274,14 @@ async def image_analysis_tags(params):
             json[key] = list(
                 subvalue for value in json[key] for subvalue in re.split(",|，", value)
             )
+        # reject English results if the language is not set to English
+        if params["language"].lower() != "english":
+            for tags in json.values():
+                for tag in tags:
+                    if tag.isascii():
+                        raise Exception(
+                            "Model generated English result when the requested language is not English"
+                        )
         return json
 
     prompt = cleandoc(
