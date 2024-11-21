@@ -203,6 +203,8 @@ async def minicpm(prompt: str, image_url: str, postprocess=None):
             "messages": [{"role": "user", "content": prompt, "images": [b64image]}],
         }
         async with client.post(url, headers=headers, json=json) as r:
+            if r.status != 200:
+                raise Exception(f"Ollama returned status {r.status}: {await r.text}")
             json = await r.json()
 
         if error := json.get("error"):
