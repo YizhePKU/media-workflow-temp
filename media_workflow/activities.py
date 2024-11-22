@@ -21,8 +21,10 @@ with workflow.unsafe.imports_passed_through():
     from PIL import Image
     from pydub import AudioSegment
 
+    from media_workflow.color import rgb2hex
     from media_workflow.font import metadata, preview
     from media_workflow.utils import image_open, upload
+    from pylette.color_extraction import extract_colors
 
 
 def image2png(image: Image.Image) -> bytes:
@@ -411,3 +413,12 @@ async def image_analysis_details(params):
         """
     )
     return await minicpm(prompt, params["file"], postprocess)
+
+
+@activity.defn
+async def image_color_palette(params) -> list:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(params["file"]) as response:
+            bytes = await response.read()
+    palette = extract_colors(bytes, params.get("count", 10))
+    return [{"color": rgb2hex(color.rgb), "frequency": color.freq} for color in palette]

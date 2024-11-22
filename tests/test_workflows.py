@@ -225,3 +225,17 @@ async def test_audio_waveform():
     )
     assert len(output["waveform"]) == 1000
     assert max(output["waveform"]) == 1.0
+
+
+async def test_image_color_palette():
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
+    arg = {
+        "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/cat.jpg",
+        "count": 5,
+    }
+    output = await client.execute_workflow(
+        "image-color-palette", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    assert len(output["colors"]) == 5

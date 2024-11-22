@@ -167,3 +167,16 @@ class ImageDetailBasic:
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
         return result
+
+
+@workflow.defn(name="image-color-palette")
+class ImageColorPalette:
+    @workflow.run
+    async def run(self, params):
+        result = {
+            "id": workflow.info().workflow_id,
+            "colors": await start("image_color_palette", params),
+        }
+        if callback_url := params.get("callback_url"):
+            await start("callback", args=[callback_url, result])
+        return result
