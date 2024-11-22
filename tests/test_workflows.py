@@ -239,3 +239,16 @@ async def test_image_color_palette():
         "image-color-palette", arg, id=f"{uuid4()}", task_queue="media"
     )
     assert len(output["colors"]) == 5
+
+
+async def test_color_fixed_palette():
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
+    arg = {
+        "colors": ["#000001", "#fffffd"],
+    }
+    output = await client.execute_workflow(
+        "color-fixed-palette", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    assert output["colors"] == ["#000000", "#FFFFFF"]
