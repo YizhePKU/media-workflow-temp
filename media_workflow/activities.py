@@ -39,8 +39,9 @@ def page2image(page: pymupdf.Page) -> Image.Image:
 @activity.defn
 async def callback(url: str, json):
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=json) as response:
-            assert response.status == 200
+        async with session.post(url, json=json) as r:
+            if r.status != 200:
+                raise Exception(f"callback failed: {await r.text()}")
 
 
 @activity.defn
@@ -49,7 +50,7 @@ async def image_thumbnail(params) -> str:
         async with session.get(params["file"]) as response:
             image = image_open(BytesIO(await response.read()))
     if size := params.get("size"):
-        image.thumbnail(size)
+        image.thumbnail(size, resample=Image.LANCZOS)
     return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
 
 
@@ -67,7 +68,7 @@ async def pdf_thumbnail(params) -> list[str]:
                         images.append(page2image(page))
     if size := params.get("size"):
         for image in images:
-            image.thumbnail(size)
+            image.thumbnail(size, resample=Image.LANCZOS)
     return [
         upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
         for image in images

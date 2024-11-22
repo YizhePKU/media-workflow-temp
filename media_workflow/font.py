@@ -39,7 +39,7 @@ def preview(font: str | BinaryIO, size, font_size) -> Image.Image:
         sample = ENGLISH_SAMPLE
 
     font.seek(0)
-    font = ImageFont.FreeTypeFont(font, size=font_size)
+    font = ImageFont.truetype(font, size=font_size)
 
     # Calculate how large the image needs to be.
     bbox = ImageDraw.Draw(Image.new("RGB", (0, 0))).multiline_textbbox(
@@ -67,8 +67,10 @@ def metadata(font: TTFont, language: str):
     encoding_id = 1  # Unicode BMP
     if language == "Simplified Chinese":
         language_id = 2052  # Simplified Chinese
-    else:
+    elif language == "English":
         language_id = 1033  # English
+    else:
+        raise Exception(f"unsupported language: {language}")
 
     indices = {
         "copyright_notice": 0,

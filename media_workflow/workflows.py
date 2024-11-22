@@ -79,8 +79,10 @@ class DocumentThumbnail:
 class ImageDetail:
     @workflow.run
     async def run(self, params):
-        result = await start("image_detail", params)
-        result["id"] = workflow.info().workflow_id
+        result = {
+            "id": workflow.info().workflow_id,
+            **await start("image_detail", params),
+        }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
         return result
@@ -149,7 +151,7 @@ class AudioWaveform:
 
 
 @workflow.defn(name="image-detail-basic")
-class ImageDetailLocal:
+class ImageDetailBasic:
     @workflow.run
     async def run(self, params):
         basic = await start("image_analysis_basic", params)
@@ -162,10 +164,6 @@ class ImageDetailLocal:
             "tags": ",".join(value for values in tags.values() for value in values),
             "detailed_description": [{k: v} for k, v in details.items()],
         }
-
-        # replace Chinese comma `，` with regular comma `,`
-        result["tags"] = result["tags"].replace("，", ",")
-
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
         return result
