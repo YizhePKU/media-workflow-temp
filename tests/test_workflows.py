@@ -241,6 +241,20 @@ async def test_image_color_palette():
     assert len(output["colors"]) == 5
 
 
+async def test_image_color_palette_svg():
+    client = await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+    )
+    arg = {
+        "file": "https://f002.backblazeb2.com/file/sunyizhe/cocktail.svg",
+        "count": 5,
+    }
+    output = await client.execute_workflow(
+        "image-color-palette", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    assert len(output["colors"]) == 5
+
+
 async def test_color_fixed_palette():
     client = await Client.connect(
         os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]

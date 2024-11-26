@@ -11,6 +11,9 @@ from pillow_heif import register_heif_opener
 
 register_heif_opener()
 
+# Monkey patch PIL.Image.open with our own version
+original_image_open = Image.open
+
 
 def image_open(file: BinaryIO) -> Image:
     """Open an image as an PIL.Image instance.
@@ -25,14 +28,17 @@ def image_open(file: BinaryIO) -> Image:
     [1]: https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
     """
     try:
-        return Image.open(file)
+        return original_image_open(file)
     except UnidentifiedImageError:
         try:
             file.seek(0)
-            return Image.open(BytesIO(svg2png(file_obj=file)))
+            return original_image_open(BytesIO(svg2png(file_obj=file)))
         except:
             pass
         raise
+
+
+Image.open = image_open
 
 
 def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):

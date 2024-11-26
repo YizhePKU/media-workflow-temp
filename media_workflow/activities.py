@@ -23,7 +23,7 @@ with workflow.unsafe.imports_passed_through():
 
     from media_workflow.color import rgb2hex, snap_to_palette
     from media_workflow.font import metadata, preview
-    from media_workflow.utils import image_open, upload
+    from media_workflow.utils import upload
     from pylette.color_extraction import extract_colors
 
 
@@ -50,7 +50,7 @@ async def callback(url: str, json):
 async def image_thumbnail(params) -> str:
     async with aiohttp.ClientSession() as session:
         async with session.get(params["file"]) as response:
-            image = image_open(BytesIO(await response.read()))
+            image = Image.open(BytesIO(await response.read()))
     if size := params.get("size"):
         image.thumbnail(size, resample=Image.LANCZOS)
     return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
