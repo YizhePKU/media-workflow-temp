@@ -146,7 +146,6 @@ async def font_detail(params) -> dict:
         async with session.post(url, headers=headers, json=json) as r:
             r.raise_for_status()
             result = await r.json()
-    print(result, params["file"])
     assert result["data"]["status"] == "succeeded"
     output = result["data"]["outputs"]
 
