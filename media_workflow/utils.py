@@ -4,6 +4,7 @@ from typing import BinaryIO
 
 import boto3
 import pillow_avif
+from botocore.config import Config
 from cairosvg import svg2png
 from PIL import Image, UnidentifiedImageError
 from pillow_heif import register_heif_opener
@@ -36,7 +37,11 @@ def image_open(file: BinaryIO) -> Image:
 
 def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):
     """Upload data to S3-compatible storage. Return a presigned URL that downloads the file."""
-    s3 = boto3.client("s3", endpoint_url=os.environ["S3_ENDPOINT_URL"])
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=os.environ["S3_ENDPOINT_URL"],
+        config=Config(region_name=os.environ["S3_REGION"], signature_version="v4"),
+    )
     s3.put_object(
         Bucket=os.environ["S3_BUCKET"], Key=key, Body=data, ContentType=content_type
     )
