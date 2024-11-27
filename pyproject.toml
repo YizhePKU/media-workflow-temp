@@ -13,7 +13,6 @@ pillow-heif = "^0.20.0"
 cairosvg = "^2.7.1"
 temporalio = { extras = ["opentelemetry"], version = "^1.8.0" }
 boto3 = "^1.35.63"
-python-dotenv = "^1.0.1"
 pytest-asyncio = "^0.24.0"
 pillow-avif-plugin = "^1.4.6"
 pymupdf = "^1.24.13"
