@@ -3,6 +3,7 @@ import inspect
 import os
 
 from temporalio.client import Client
+from temporalio.contrib.opentelemetry import TracingInterceptor
 from temporalio.worker import Worker
 
 import media_workflow.activities
@@ -19,10 +20,17 @@ for _name, fn in inspect.getmembers(media_workflow.activities):
         activities.append(fn)
 
 
-async def main():
-    client = await Client.connect(
-        os.environ["TEMPORAL_SERVER_HOST"], namespace=os.environ["TEMPORAL_NAMESPACE"]
+async def get_client():
+    tracing_interceptor = TracingInterceptor()
+    return await Client.connect(
+        os.environ["TEMPORAL_SERVER_HOST"],
+        namespace=os.environ["TEMPORAL_NAMESPACE"],
+        interceptors=[tracing_interceptor],
     )
+
+
+async def main():
+    client = await get_client()
     worker = Worker(
         client,
         task_queue="media",
