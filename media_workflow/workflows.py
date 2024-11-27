@@ -5,7 +5,7 @@ from json import dumps as json_dumps
 from temporalio import workflow
 
 start = functools.partial(
-    workflow.start_activity, start_to_close_timeout=timedelta(seconds=60)
+    workflow.start_activity, start_to_close_timeout=timedelta(minutes=2)
 )
 
 
@@ -117,7 +117,9 @@ class VideoSprite:
     async def run(self, params):
         result = {
             "id": workflow.info().workflow_id,
-            "files": await start("video_sprite", params),
+            "files": await start(
+                "video_sprite", params, start_to_close_timeout=timedelta(hours=2)
+            ),
         }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
@@ -130,7 +132,9 @@ class VideoTranscode:
     async def run(self, params):
         result = {
             "id": workflow.info().workflow_id,
-            "file": await start("video_transcode", params),
+            "file": await start(
+                "video_transcode", params, start_to_close_timeout=timedelta(hours=2)
+            ),
         }
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
