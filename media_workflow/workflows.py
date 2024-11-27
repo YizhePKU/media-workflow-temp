@@ -118,7 +118,7 @@ class VideoSprite:
         result = {
             "id": workflow.info().workflow_id,
             "files": await start(
-                "video_sprite", params, start_to_close_timeout=timedelta(hours=2)
+                "video_sprite", params, start_to_close_timeout=timedelta(minutes=30)
             ),
         }
         if callback_url := params.get("callback_url"):
@@ -133,7 +133,7 @@ class VideoTranscode:
         result = {
             "id": workflow.info().workflow_id,
             "file": await start(
-                "video_transcode", params, start_to_close_timeout=timedelta(hours=2)
+                "video_transcode", params, start_to_close_timeout=timedelta(minutes=30)
             ),
         }
         if callback_url := params.get("callback_url"):

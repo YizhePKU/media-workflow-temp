@@ -162,9 +162,9 @@ async def video_sprite(params) -> list[str]:
     with TemporaryDirectory() as dir:
         stream = ffmpeg.input(params["file"])
 
-        if interval := params.get("interval"):
-            expr = f"floor((t - prev_selected_t) / {interval})"
-            stream = stream.filter("select", expr=expr)
+        interval = params.get("interval", 5)
+        expr = f"floor((t - prev_selected_t) / {interval})"
+        stream = stream.filter("select", expr=expr)
 
         if layout := params.get("layout"):
             stream = stream.filter("tile", layout=f"{layout[0]}x{layout[1]}")
