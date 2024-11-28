@@ -5,7 +5,7 @@ from json import dumps as json_dumps
 from temporalio import workflow
 
 start = functools.partial(
-    workflow.start_activity, start_to_close_timeout=timedelta(minutes=2)
+    workflow.start_activity, start_to_close_timeout=timedelta(minutes=10)
 )
 
 
