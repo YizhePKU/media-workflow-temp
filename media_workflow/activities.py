@@ -28,6 +28,11 @@ with workflow.unsafe.imports_passed_through():
 
 
 def image2png(image: Image.Image) -> bytes:
+    # If the image is in floating point mode, scale the value by 255
+    # See https://github.com/python-pillow/Pillow/issues/3159
+    if image.mode == "F":
+        image = Image.fromarray((np.array(image) * 255).astype(np.uint8), mode="L")
+
     buffer = BytesIO()
     image.convert("RGB").save(buffer, format="png")
     return buffer.getvalue()
