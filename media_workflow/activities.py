@@ -29,7 +29,7 @@ with workflow.unsafe.imports_passed_through():
 
 def image2png(image: Image.Image) -> bytes:
     buffer = BytesIO()
-    image.save(buffer, format="png")
+    image.convert("RGB").save(buffer, format="png")
     return buffer.getvalue()
 
 
