@@ -27,9 +27,9 @@ with workflow.unsafe.imports_passed_through():
     from pylette.color_extraction import extract_colors
 
 
-def image2jpeg(image: Image.Image) -> bytes:
+def image2png(image: Image.Image) -> bytes:
     buffer = BytesIO()
-    image.convert("RGB").save(buffer, format="jpeg")
+    image.convert("RGB").save(buffer, format="png")
     return buffer.getvalue()
 
 
@@ -53,7 +53,7 @@ async def image_thumbnail(params) -> str:
             image = Image.open(BytesIO(await response.read()))
     if size := params.get("size"):
         image.thumbnail(size, resample=Image.LANCZOS)
-    return upload(f"{uuid4()}.jpeg", image2jpeg(image), content_type="image/jpeg")
+    return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
 
 
 @activity.defn
@@ -72,7 +72,7 @@ async def pdf_thumbnail(params) -> list[str]:
         for image in images:
             image.thumbnail(size, resample=Image.LANCZOS)
     return [
-        upload(f"{uuid4()}.jpeg", image2jpeg(image), content_type="image/jpeg")
+        upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
         for image in images
     ]
 
@@ -87,7 +87,7 @@ async def font_thumbnail(params) -> str:
         size=params.get("size", (800, 600)),
         font_size=params.get("font_size", 200),
     )
-    return upload(f"{uuid4()}.jpeg", image2jpeg(image), content_type="image/jpeg")
+    return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
 
 
 @activity.defn
@@ -173,7 +173,7 @@ async def video_sprite(params) -> list[str]:
             "scale", width=params.get("width", -1), height=params.get("height", -1)
         )
 
-        filename = f"{dir}/%03d.jpeg"
+        filename = f"{dir}/%03d.png"
         if count := params.get("count"):
             stream = stream.output(filename, fps_mode="passthrough", vframes=count)
         else:
@@ -187,7 +187,7 @@ async def video_sprite(params) -> list[str]:
         for path in paths:
             with open(path, "rb") as file:
                 result.append(
-                    upload(f"{uuid4()}.jpeg", file.read(), content_type="image/jpeg")
+                    upload(f"{uuid4()}.png", file.read(), content_type="image/png")
                 )
         return result
 
