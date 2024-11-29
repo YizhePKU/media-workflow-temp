@@ -33,7 +33,7 @@ def preview(font: str | BinaryIO, size, font_size) -> Image.Image:
     margin = int(font_size * 0.5)
     spacing = int(font_size * 0.25)
 
-    if supports_chinese(TTFont(font)):
+    if supports_chinese(TTFont(font, fontNumber=0)):
         sample = CHINESE_SAMPLE
     else:
         sample = ENGLISH_SAMPLE

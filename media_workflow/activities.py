@@ -96,7 +96,7 @@ async def font_metadata(params) -> str:
         async with session.get(params["file"]) as response:
             font = await response.read()
     return metadata(
-        TTFont(BytesIO(font)),
+        TTFont(BytesIO(font), fontNumber=0),
         language=params.get("language", "English"),
     )
 
