@@ -14,22 +14,11 @@ register_heif_opener()
 # Remove image file size limit
 Image.MAX_IMAGE_PIXELS = None
 
-# Monkey patch PIL.Image.open with our own version
+# Monkey patch PIL.Image.open with our own version that supports SVG
 original_image_open = Image.open
 
 
-def image_open(file: BinaryIO) -> Image:
-    """Open an image as an PIL.Image instance.
-
-    In addition to formats natively supported by PIL.Image (see [1] for the full list), this
-    function also supports the following formats:
-
-    HEIC: High Efficiency Image File
-    AVIF: AV1 Image File Format
-    SVG: Scalable Vector Graphics
-
-    [1]: https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
-    """
+def _image_open(file: BinaryIO) -> Image:
     try:
         return original_image_open(file)
     except UnidentifiedImageError:
@@ -41,7 +30,7 @@ def image_open(file: BinaryIO) -> Image:
         raise
 
 
-Image.open = image_open
+Image.open = _image_open
 
 
 def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):
