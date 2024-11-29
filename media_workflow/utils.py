@@ -11,6 +11,9 @@ from pillow_heif import register_heif_opener
 
 register_heif_opener()
 
+# Remove image file size limit
+Image.MAX_IMAGE_PIXELS = None
+
 # Monkey patch PIL.Image.open with our own version
 original_image_open = Image.open
 
