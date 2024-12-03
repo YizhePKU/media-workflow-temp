@@ -6,6 +6,7 @@ import pytest
 from aiohttp import web
 from PIL import Image
 
+from media_workflow.utils import imread
 from media_workflow.worker import get_client
 
 
@@ -18,9 +19,7 @@ async def test_image_thumbnail():
     output = await client.execute_workflow(
         "image-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
     )
-    async with aiohttp.ClientSession() as client:
-        async with client.get(output["file"]) as response:
-            image = Image.open(BytesIO(await response.read()))
+    image = await imread(output["file"])
     assert image.size[0] <= 200
     assert image.size[1] <= 200
 
@@ -34,9 +33,7 @@ async def test_image_thumbnail_svg():
     output = await client.execute_workflow(
         "image-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
     )
-    async with aiohttp.ClientSession() as client:
-        async with client.get(output["file"]) as response:
-            image = Image.open(BytesIO(await response.read()))
+    image = await imread(output["file"])
     assert image.size[0] <= 200
     assert image.size[1] <= 200
 
@@ -50,9 +47,7 @@ async def test_image_thumbnail_hdr():
     output = await client.execute_workflow(
         "image-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
     )
-    async with aiohttp.ClientSession() as client:
-        async with client.get(output["file"]) as response:
-            image = Image.open(BytesIO(await response.read()))
+    image = await imread(output["file"])
     assert image.size[0] <= 200
     assert image.size[1] <= 200
 
@@ -61,11 +56,9 @@ async def test_image_thumbnail_hdr():
 async def test_image_thumbnail_with_callback():
     async def handler(request: web.Request):
         json = await request.json()
-        async with aiohttp.ClientSession() as client:
-            async with client.get(json["file"]) as response:
-                image = Image.open(BytesIO(await response.read()))
-                assert image.size[0] <= 200
-                assert image.size[1] <= 200
+        image = await imread(output["file"])
+        assert image.size[0] <= 200
+        assert image.size[1] <= 200
         return web.Response()
 
     app = web.Application()

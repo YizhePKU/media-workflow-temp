@@ -23,7 +23,7 @@ with workflow.unsafe.imports_passed_through():
 
     from media_workflow.color import rgb2hex, snap_to_palette
     from media_workflow.font import metadata, preview
-    from media_workflow.utils import imread, upload
+    from media_workflow.utils import fetch, imread, upload
     from pylette.color_extraction import extract_colors
 
 
@@ -62,15 +62,13 @@ async def image_thumbnail(params) -> str:
 @activity.defn
 async def pdf_thumbnail(params) -> list[str]:
     images = []
-    async with aiohttp.ClientSession() as session:
-        async with session.get(params["file"]) as response:
-            with pymupdf.Document(stream=await response.read()) as doc:
-                if pages := params.get("pages"):
-                    for i in pages:
-                        images.append(page2image(doc[i]))
-                else:
-                    for page in doc.pages():
-                        images.append(page2image(page))
+    with pymupdf.Document(stream=await fetch(params["file"])) as doc:
+        if pages := params.get("pages"):
+            for i in pages:
+                images.append(page2image(doc[i]))
+        else:
+            for page in doc.pages():
+                images.append(page2image(page))
     if size := params.get("size"):
         for image in images:
             image.thumbnail(size, resample=Image.LANCZOS)
@@ -82,11 +80,9 @@ async def pdf_thumbnail(params) -> list[str]:
 
 @activity.defn
 async def font_thumbnail(params) -> str:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(params["file"]) as response:
-            font = await response.read()
+    bytes = await fetch(params["file"])
     image = preview(
-        BytesIO(font),
+        BytesIO(bytes),
         size=params.get("size", (800, 600)),
         font_size=params.get("font_size", 200),
     )
@@ -95,11 +91,9 @@ async def font_thumbnail(params) -> str:
 
 @activity.defn
 async def font_metadata(params) -> str:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(params["file"]) as response:
-            font = await response.read()
+    bytes = await fetch(params["file"])
     return metadata(
-        TTFont(BytesIO(font), fontNumber=0),
+        TTFont(BytesIO(bytes), fontNumber=0),
         language=params.get("language", "English"),
     )
 
@@ -215,10 +209,8 @@ async def video_transcode(params) -> str:
 
 @activity.defn
 async def audio_waveform(params) -> list[float]:
-    async with aiohttp.ClientSession() as client:
-        async with client.get(params["file"]) as r:
-            payload = await r.read()
-    audio = AudioSegment.from_file(BytesIO(payload))
+    bytes = await fetch(params["file"])
+    audio = AudioSegment.from_file(BytesIO(bytes))
     data = np.array(audio.get_array_of_samples())
 
     samples = np.zeros(params["num_samples"])
@@ -236,10 +228,8 @@ async def convert_to_pdf(params) -> str:
     with TemporaryDirectory() as dir:
         stem = str(uuid4())
         input = f"{dir}/{stem}"
-        async with aiohttp.ClientSession() as client:
-            async with client.get(params["file"]) as r:
-                with open(input, "wb") as file:
-                    file.write(await r.read())
+        with open(input, "wb") as file:
+            file.write(await fetch(params["file"]))
         subprocess.run(["soffice", "--convert-to", "pdf", "--outdir", dir, input])
         output = f"{input}.pdf"
         with open(output, "rb") as file:
