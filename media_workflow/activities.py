@@ -23,7 +23,7 @@ with workflow.unsafe.imports_passed_through():
 
     from media_workflow.color import rgb2hex, snap_to_palette
     from media_workflow.font import metadata, preview
-    from media_workflow.utils import upload
+    from media_workflow.utils import imread, upload
     from pylette.color_extraction import extract_colors
 
 
@@ -53,9 +53,7 @@ async def callback(url: str, json):
 
 @activity.defn
 async def image_thumbnail(params) -> str:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(params["file"]) as response:
-            image = Image.open(BytesIO(await response.read()))
+    image = await imread(params["file"])
     if size := params.get("size"):
         image.thumbnail(size, resample=Image.LANCZOS)
     return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
@@ -421,10 +419,8 @@ async def image_analysis_details(params):
 
 @activity.defn
 async def image_color_palette(params) -> list:
-    async with aiohttp.ClientSession() as session:
-        async with session.get(params["file"]) as response:
-            bytes = await response.read()
-    palette = extract_colors(bytes, params.get("count", 10))
+    image = await imread(params["file"])
+    palette = extract_colors(image.convert("RGB"), params.get("count", 10))
     return [{"color": rgb2hex(color.rgb), "frequency": color.freq} for color in palette]
 
 

@@ -1,44 +1,54 @@
 import os
 from io import BytesIO
-from typing import BinaryIO
 
+import aiohttp
 import boto3
-import pillow_avif
+import imageio.v3 as iio
 from botocore.config import Config
 from cairosvg import svg2png
-from PIL import Image, UnidentifiedImageError
-from pillow_heif import register_heif_opener
+from PIL import Image
 from psd_tools import PSDImage
 
-register_heif_opener()
-
-# Remove image file size limit
+# remove image size limit
 Image.MAX_IMAGE_PIXELS = None
 
-# Monkey patch PIL.Image.open with our own version that supports SVG
-original_image_open = Image.open
 
-
-def _image_open(file: BinaryIO) -> Image:
+async def fetch(uri) -> bytes:
+    """Fetch bytes from a URI or a local path."""
+    assert not isinstance(uri, bytes)
     try:
-        return original_image_open(file)
-    except UnidentifiedImageError:
-        # Use cargosvg to open SVG.
-        try:
-            file.seek(0)
-            return original_image_open(BytesIO(svg2png(file_obj=file)))
-        except:
-            pass
-        # Use PsdTools to open PSD and PSB.
-        try:
-            file.seek(0)
-            return PSDImage.open(file).composite()
-        except:
-            pass
-        raise
+        async with aiohttp.ClientSession() as session:
+            async with session.get(uri) as response:
+                return await response.read()
+    except aiohttp.client_exceptions.InvalidUrlClientError:
+        with open(uri, "rb") as file:
+            return file.read()
 
 
-Image.open = _image_open
+async def imread(uri: str, **kwargs) -> Image:
+    """Read an image from a URI or a local path."""
+    bytes = await fetch(uri)
+
+    # open the image with imageio
+    try:
+        return Image.fromarray(iio.imread(bytes, **kwargs))
+    except:
+        pass
+
+    # open the image with psd-tools
+    try:
+        return PSDImage.open(BytesIO(bytes)).composite()
+    except:
+        pass
+
+    # open the image with cairosvg
+    try:
+        return Image.open(BytesIO(svg2png(file_obj=BytesIO(bytes))))
+    except:
+        pass
+
+    # give up
+    raise ValueError(f"Failed to open image {uri}")
 
 
 def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):

@@ -19,6 +19,7 @@ class ImageType(str, Enum):
     PATH = "path"
     BYTES = "bytes"
     ARRAY = "array"
+    IMAGE = "image"
     NONE = "none"
 
 
@@ -72,6 +73,8 @@ def _parse_image_type(image: ImageType_T) -> ImageType:
             image_type = ImageType.PATH
         case bytes():
             image_type = ImageType.BYTES
+        case Image.Image():
+            image_type = ImageType.IMAGE
         case str():
             image_type = ImageType.PATH
         case _:
@@ -116,6 +119,8 @@ def extract_colors(
             img = Image.open(BytesIO(image)).convert("RGB")
         case ImageType.ARRAY:
             img = Image.fromarray(image).convert("RGB")
+        case ImageType.IMAGE:
+            img = image
         case ImageType.NONE:
             raise ValueError(
                 f"Unable to parse image source. Got image type {type(image)}"

@@ -41,6 +41,22 @@ async def test_image_thumbnail_svg():
     assert image.size[1] <= 200
 
 
+async def test_image_thumbnail_hdr():
+    client = await get_client()
+    arg = {
+        "file": "https://f002.backblazeb2.com/file/sunyizhe/apartment.hdr",
+        "size": (200, 200),
+    }
+    output = await client.execute_workflow(
+        "image-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    async with aiohttp.ClientSession() as client:
+        async with client.get(output["file"]) as response:
+            image = Image.open(BytesIO(await response.read()))
+    assert image.size[0] <= 200
+    assert image.size[1] <= 200
+
+
 @pytest.mark.skip(reason="we don't have an API endpoint for the callback")
 async def test_image_thumbnail_with_callback():
     async def handler(request: web.Request):
