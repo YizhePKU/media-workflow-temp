@@ -8,6 +8,7 @@ from botocore.config import Config
 from cairosvg import svg2png
 from PIL import Image, UnidentifiedImageError
 from pillow_heif import register_heif_opener
+from psd_tools import PSDImage
 
 register_heif_opener()
 
@@ -22,9 +23,16 @@ def _image_open(file: BinaryIO) -> Image:
     try:
         return original_image_open(file)
     except UnidentifiedImageError:
+        # Use cargosvg to open SVG.
         try:
             file.seek(0)
             return original_image_open(BytesIO(svg2png(file_obj=file)))
+        except:
+            pass
+        # Use PsdTools to open PSD and PSB.
+        try:
+            file.seek(0)
+            return PSDImage.open(file).composite()
         except:
             pass
         raise
