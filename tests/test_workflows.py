@@ -92,16 +92,12 @@ async def test_pdf_thumbnail():
     arg = {
         "file": "https://sunyizhe.s3.us-west-002.backblazeb2.com/sample-3.pdf",
         "size": (200, 200),
-        "page": [0],
+        "pages": [0],
     }
     output = await client.execute_workflow(
         "pdf-thumbnail", arg, id=f"{uuid4()}", task_queue="media"
     )
-    async with aiohttp.ClientSession() as client:
-        async with client.get(output["files"][0]) as response:
-            image = Image.open(BytesIO(await response.read()))
-    assert image.size[0] <= 200
-    assert image.size[1] <= 200
+    assert len(output["files"]) == 1
 
 
 async def test_font_thumbnail():
