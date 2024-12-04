@@ -23,6 +23,7 @@ with workflow.unsafe.imports_passed_through():
 
     from media_workflow.color import rgb2hex, snap_to_palette
     from media_workflow.font import metadata, preview
+    from media_workflow.trace import tracer
     from media_workflow.utils import fetch, imread, upload
     from pylette.color_extraction import extract_colors
 
@@ -54,8 +55,9 @@ async def callback(url: str, json):
 @activity.defn
 async def image_thumbnail(params) -> str:
     image = await imread(params["file"])
-    if size := params.get("size"):
-        image.thumbnail(size, resample=Image.LANCZOS)
+    with tracer.start_as_current_span("make-thumbnail"):
+        if size := params.get("size"):
+            image.thumbnail(size, resample=Image.LANCZOS)
     return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
 
 

@@ -9,10 +9,13 @@ from cairosvg import svg2png
 from PIL import Image
 from psd_tools import PSDImage
 
+from media_workflow.trace import tracer
+
 # remove image size limit
 Image.MAX_IMAGE_PIXELS = None
 
 
+@tracer.start_as_current_span("fetch")
 async def fetch(uri) -> bytes:
     """Fetch bytes from a URI or a local path."""
     assert not isinstance(uri, bytes)
@@ -25,6 +28,7 @@ async def fetch(uri) -> bytes:
             return file.read()
 
 
+@tracer.start_as_current_span("imread")
 async def imread(uri: str, **kwargs) -> Image:
     """Read an image from a URI or a local path."""
     bytes = await fetch(uri)
@@ -51,6 +55,7 @@ async def imread(uri: str, **kwargs) -> Image:
     raise ValueError(f"Failed to open image {uri}")
 
 
+@tracer.start_as_current_span("upload")
 def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):
     """Upload data to S3-compatible storage. Return a presigned URL that downloads the file."""
     s3 = boto3.client(
