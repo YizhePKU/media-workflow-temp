@@ -1,3 +1,5 @@
+import os
+
 from opentelemetry import trace
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
@@ -10,7 +12,7 @@ _provider = TracerProvider(
 _processor = BatchSpanProcessor(
     OTLPSpanExporter(
         endpoint=f"https://api.honeycomb.io/v1/traces",
-        headers={"x-honeycomb-team": "rBVMZEaZzB10Ako9n0iP1C"},
+        headers={"x-honeycomb-team": os.environ["HONEYCOMB_KEY"]},
     )
 )
 _provider.add_span_processor(_processor)
