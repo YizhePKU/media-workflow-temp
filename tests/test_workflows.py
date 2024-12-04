@@ -1,12 +1,9 @@
-from io import BytesIO
 from uuid import uuid4
 
-import aiohttp
 import pytest
 from aiohttp import web
-from PIL import Image
 
-from media_workflow.utils import imread
+from media_workflow.imread import imread
 from media_workflow.worker import get_client
 
 

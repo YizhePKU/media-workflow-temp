@@ -23,8 +23,9 @@ with workflow.unsafe.imports_passed_through():
 
     from media_workflow.color import rgb2hex, snap_to_palette
     from media_workflow.font import metadata, preview
+    from media_workflow.imread import imread
     from media_workflow.trace import tracer
-    from media_workflow.utils import fetch, imread, upload
+    from media_workflow.utils import fetch, upload
     from pylette.color_extraction import extract_colors
 
 
