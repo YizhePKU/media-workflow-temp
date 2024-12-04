@@ -18,3 +18,8 @@ _provider.add_span_processor(_processor)
 trace.set_tracer_provider(_provider)
 
 tracer = trace.get_tracer("media-workflow")
+
+
+def span_attribute(key, value):
+    span = trace.get_current_span()
+    span.set_attribute(key, value)

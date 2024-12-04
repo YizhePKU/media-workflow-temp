@@ -9,7 +9,7 @@ from cairosvg import svg2png
 from PIL import Image
 from psd_tools import PSDImage
 
-from media_workflow.trace import tracer
+from media_workflow.trace import span_attribute, tracer
 
 # remove image size limit
 Image.MAX_IMAGE_PIXELS = None
@@ -18,6 +18,7 @@ Image.MAX_IMAGE_PIXELS = None
 @tracer.start_as_current_span("fetch")
 async def fetch(uri) -> bytes:
     """Fetch bytes from a URI or a local path."""
+    span_attribute("uri", uri)
     assert not isinstance(uri, bytes)
     try:
         async with aiohttp.ClientSession() as session:
@@ -58,6 +59,9 @@ async def imread(uri: str, **kwargs) -> Image:
 @tracer.start_as_current_span("upload")
 def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):
     """Upload data to S3-compatible storage. Return a presigned URL that downloads the file."""
+    span_attribute("key", key)
+    span_attribute("content_type", content_type)
+
     s3 = boto3.client(
         "s3",
         endpoint_url=os.environ["S3_ENDPOINT_URL"],
@@ -66,6 +70,9 @@ def upload(key: str, data: bytes, content_type: str = "binary/octet-stream"):
     s3.put_object(
         Bucket=os.environ["S3_BUCKET"], Key=key, Body=data, ContentType=content_type
     )
-    return s3.generate_presigned_url(
+    presigned_url = s3.generate_presigned_url(
         "get_object", Params=dict(Bucket=os.environ["S3_BUCKET"], Key=key)
     )
+
+    span_attribute("presigned_url", presigned_url)
+    return presigned_url
