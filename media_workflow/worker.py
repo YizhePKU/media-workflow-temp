@@ -8,6 +8,7 @@ from temporalio.worker import Worker
 
 import media_workflow.activities
 import media_workflow.workflows
+from media_workflow.utils import get_worker_specific_task_queue
 
 workflows = []
 for _name, cls in inspect.getmembers(media_workflow.workflows):
@@ -31,13 +32,22 @@ async def get_client():
 
 async def main():
     client = await get_client()
-    worker = Worker(
+    worker_specific_task_queue = get_worker_specific_task_queue()
+
+    scheduler = Worker(
         client,
         task_queue="media",
         workflows=workflows,
         activities=activities,
     )
-    await worker.run()
+    worker = Worker(
+        client,
+        task_queue=worker_specific_task_queue,
+        workflows=workflows,
+        activities=activities,
+    )
+    print(f"starting worker with task queue: {worker_specific_task_queue}")
+    await asyncio.gather(scheduler.run(), worker.run())
 
 
 if __name__ == "__main__":

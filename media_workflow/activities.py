@@ -1,7 +1,9 @@
 import math
+import mimetypes
 import os
 import re
 import subprocess
+import tempfile
 from base64 import b64encode
 from inspect import cleandoc
 from io import BytesIO
@@ -14,17 +16,20 @@ from temporalio import activity, workflow
 
 with workflow.unsafe.imports_passed_through():
     import aiohttp
+    import boto3
     import ffmpeg
     import numpy as np
     import pymupdf
+    from botocore.config import Config
     from fontTools.ttLib import TTFont
     from PIL import Image
     from pydub import AudioSegment
 
+    import media_workflow.utils
     from media_workflow.color import rgb2hex, snap_to_palette
     from media_workflow.font import metadata, preview
     from media_workflow.imread import imread
-    from media_workflow.trace import tracer
+    from media_workflow.trace import span_attribute, tracer
     from media_workflow.utils import fetch, upload
     from pylette.color_extraction import extract_colors
 
@@ -53,13 +58,13 @@ async def callback(url: str, json):
                 raise Exception(f"callback failed: {await r.text()}")
 
 
-@activity.defn
-async def image_thumbnail(params) -> str:
-    image = await imread(params["file"])
-    with tracer.start_as_current_span("make-thumbnail"):
-        if size := params.get("size"):
-            image.thumbnail(size, resample=Image.LANCZOS)
-    return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
+# @activity.defn
+# async def image_thumbnail(params) -> str:
+#     image = await imread(params["file"])
+#     with tracer.start_as_current_span("make-thumbnail"):
+#         if size := params.get("size"):
+#             image.thumbnail(size, resample=Image.LANCZOS)
+#     return upload(f"{uuid4()}.png", image2png(image), content_type="image/png")
 
 
 @activity.defn
@@ -420,3 +425,64 @@ async def image_color_palette(params) -> list:
 @activity.defn
 async def color_fixed_palette(params) -> list:
     return snap_to_palette(params["colors"])
+
+
+@activity.defn
+async def download(url) -> str:
+    """Download a file from a URL. Return the file path.
+
+    The filename is randomly generated. If the server returns a Content-Type header, it will be
+    used to attach a file extension."""
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            mimetype = response.headers.get("Content-Type")
+            data = await response.read()
+
+    dir = tempfile.gettempdir()
+    filename = str(uuid4())
+    if mimetype and (ext := mimetypes.guess_extension(mimetype)):
+        filename += ext
+    path = os.path.join(dir, filename)
+
+    with open(path, "wb") as file:
+        file.write(data)
+
+    span_attribute("url", url)
+    span_attribute("path", path)
+    return path
+
+
+@activity.defn
+async def upload(path: str, content_type: str = "binary/octet-stream"):
+    """Upload file to S3-compatible storage. Return a presigned URL that can be used to download
+    the file."""
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=os.environ["S3_ENDPOINT_URL"],
+        config=Config(region_name=os.environ["S3_REGION"], signature_version="v4"),
+    )
+    with open(path, "rb") as file:
+        key = Path(path).name
+        data = file.read()
+        s3.put_object(
+            Bucket=os.environ["S3_BUCKET"],
+            Key=key,
+            Body=data,
+            ContentType=content_type,
+        )
+    presigned_url = s3.generate_presigned_url(
+        "get_object", Params=dict(Bucket=os.environ["S3_BUCKET"], Key=key)
+    )
+    span_attribute("key", key)
+    span_attribute("path", path)
+    span_attribute("content_type", content_type)
+    span_attribute("presigned_url", presigned_url)
+    return presigned_url
+
+
+@activity.defn(name="image-thumbnail")
+async def image_thumbnail(params) -> str:
+    image = media_workflow.utils.imread(params["file"])
+    if size := params.get("size"):
+        image.thumbnail(size, resample=Image.LANCZOS)
+    return media_workflow.utils.imwrite(image)

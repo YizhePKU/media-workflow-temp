@@ -4,6 +4,9 @@ from json import dumps as json_dumps
 
 from temporalio import workflow
 
+with workflow.unsafe.imports_passed_through():
+    from media_workflow.utils import get_worker_specific_task_queue
+
 start = functools.partial(
     workflow.start_activity, start_to_close_timeout=timedelta(minutes=5)
 )
@@ -197,3 +200,27 @@ class ColorFixedPalette:
         if callback_url := params.get("callback_url"):
             await start("callback", args=[callback_url, result])
         return result
+
+
+@workflow.defn(name="file-analysis")
+class FileAnalysis:
+    @workflow.run
+    async def run(self, params):
+        start = functools.partial(
+            workflow.start_activity,
+            task_queue=get_worker_specific_task_queue(),
+            schedule_to_close_timeout=timedelta(minutes=5),
+        )
+        id = workflow.info().workflow_id
+        params = {
+            "file": await start("download", params["file"]),
+            **params.get("params", {}),
+        }
+        thumbnail = await start("image-thumbnail", params)
+        return {
+            "id": id,
+            "request": params,
+            "result": {
+                "image-thumbnail": await start("upload", thumbnail),
+            },
+        }
