@@ -1,8 +1,13 @@
+import os
 from inspect import cleandoc
 from typing import BinaryIO
 
+import aiohttp
 from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
+from temporalio import activity
+
+from media_workflow.utils import imwrite
 
 CHINESE_SAMPLE = cleandoc(
     """
@@ -28,8 +33,8 @@ def supports_chinese(font: TTFont) -> bool:
     return all(ord(char) in cmap for char in CHINESE_SAMPLE if not char.isspace())
 
 
-def preview(font: str | BinaryIO, size, font_size) -> Image.Image:
-    """Generate a preview image for the font."""
+def thumbnail(font: str | BinaryIO, size, font_size) -> Image.Image:
+    """Generate a thumbnail for the font."""
     margin = int(font_size * 0.5)
     spacing = int(font_size * 0.25)
 
@@ -114,3 +119,53 @@ def metadata(font: TTFont, language: str):
         meta["sx_height"] = None
 
     return meta
+
+
+@activity.defn(name="font-thumbnail")
+async def font_thumbnail(params) -> str:
+    image = thumbnail(
+        params["file"],
+        size=params.get("size", (800, 600)),
+        font_size=params.get("font_size", 200),
+    )
+    return imwrite(image)
+
+
+@activity.defn(name="font-metadata")
+async def font_metadata(params) -> str:
+    return metadata(
+        TTFont(params["file"], fontNumber=0),
+        language=params.get("language", "English"),
+    )
+
+
+@activity.defn(name="font-detail")
+async def font_detail(params) -> dict:
+    headers = {"Authorization": f"Bearer {os.environ["DIFY_FONT_DETAIL_KEY"]}"}
+    json = {
+        "inputs": {
+            "language": params["language"],
+            "basic_info": params["basic_info"],
+            "image": {
+                "type": "image",
+                "transfer_method": "remote_url",
+                "url": params["file"],
+            },
+        },
+        "user": os.environ["DIFY_USER"],
+        "response_mode": "blocking",
+    }
+    async with aiohttp.ClientSession() as session:
+        url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
+        async with session.post(url, headers=headers, json=json) as r:
+            r.raise_for_status()
+            result = await r.json()
+    assert result["data"]["status"] == "succeeded"
+    output = result["data"]["outputs"]
+
+    assert isinstance(output["description"], str)
+    assert isinstance(output["tags"], str)
+    assert isinstance(output["font_category"], str)
+    assert isinstance(output["stroke_characteristics"], str)
+    assert isinstance(output["historical_period"], str)
+    return output

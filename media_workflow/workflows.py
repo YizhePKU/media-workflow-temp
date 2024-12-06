@@ -1,94 +1,22 @@
+import asyncio
 import functools
+import inspect
+import sys
 from datetime import timedelta
 from json import dumps as json_dumps
 
 from temporalio import workflow
 
 with workflow.unsafe.imports_passed_through():
+    from media_workflow.activities import names as all_activities
     from media_workflow.utils import get_worker_specific_task_queue
 
+
 start = functools.partial(
-    workflow.start_activity, start_to_close_timeout=timedelta(minutes=5)
+    workflow.start_activity,
+    task_queue=get_worker_specific_task_queue(),
+    schedule_to_close_timeout=timedelta(minutes=5),
 )
-
-
-@workflow.defn(name="image-thumbnail")
-class ImageThumbnail:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "file": await start("image_thumbnail", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="pdf-thumbnail")
-class PdfThumbnail:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "files": await start("pdf_thumbnail", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="font-thumbnail")
-class FontThumbnail:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "file": await start("font_thumbnail", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="font-metadata")
-class FontMetadata:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            **await start("font_metadata", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="document-thumbnail")
-class DocumentThumbnail:
-    @workflow.run
-    async def run(self, params):
-        pdf = await start("convert_to_pdf", params)
-        result = {
-            "id": workflow.info().workflow_id,
-            "files": await start("pdf_thumbnail", {**params, "file": pdf}),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="image-detail")
-class ImageDetail:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            **await start("image_detail", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
 
 
 @workflow.defn(name="font-detail")
@@ -114,49 +42,6 @@ class FontDetail:
         return result
 
 
-@workflow.defn(name="video-sprite")
-class VideoSprite:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "files": await start(
-                "video_sprite", params, start_to_close_timeout=timedelta(minutes=30)
-            ),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="video-transcode")
-class VideoTranscode:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "file": await start(
-                "video_transcode", params, start_to_close_timeout=timedelta(minutes=30)
-            ),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="audio-waveform")
-class AudioWaveform:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "waveform": await start("audio_waveform", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
 @workflow.defn(name="image-detail-basic")
 class ImageDetailBasic:
     @workflow.run
@@ -176,51 +61,42 @@ class ImageDetailBasic:
         return result
 
 
-@workflow.defn(name="image-color-palette")
-class ImageColorPalette:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "colors": await start("image_color_palette", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
-@workflow.defn(name="color-fixed-palette")
-class ColorFixedPalette:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            "colors": await start("color_fixed_palette", params),
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
-
-
 @workflow.defn(name="file-analysis")
 class FileAnalysis:
     @workflow.run
-    async def run(self, params):
-        start = functools.partial(
-            workflow.start_activity,
-            task_queue=get_worker_specific_task_queue(),
-            schedule_to_close_timeout=timedelta(minutes=5),
-        )
+    async def run(self, request):
         id = workflow.info().workflow_id
-        params = {
-            "file": await start("download", params["file"]),
-            **params.get("params", {}),
+        file = await start("download", request["file"])
+        params = request.get("params", {})
+
+        # TODO: filter down activities based on file type
+        activities = request.get("activities", all_activities)
+
+        # post-process result from activities
+        postprocess = {
+            "image-thumbnail": lambda path: start("upload", args=[path, "image/png"])
         }
-        thumbnail = await start("image-thumbnail", params)
+
+        async def run_activity_with_callback(activity):
+            result = await start(activity, {"file": file, **params.get(activity, {})})
+            if fn := postprocess.get(activity):
+                result = await fn(result)
+            if callback := request.get("callback"):
+                data = {"id": id, "request": request, "result": {activity: result}}
+                await start("callback", args=[callback, data])
+            return result
+
+        tasks = [run_activity_with_callback(activity) for activity in activities]
+        results = await asyncio.gather(*tasks)
+
         return {
             "id": id,
-            "request": params,
-            "result": {
-                "image-thumbnail": await start("upload", thumbnail),
-            },
+            "request": request,
+            "result": dict(zip(activities, results)),
         }
+
+
+workflows = []
+for _name, fn in inspect.getmembers(sys.modules[__name__]):
+    if hasattr(fn, "__temporal_workflow_definition"):
+        workflows.append(fn)

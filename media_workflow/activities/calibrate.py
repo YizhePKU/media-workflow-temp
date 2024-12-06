@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+from temporalio import activity
 
 
 def rgb2hex(rgb: list[int]) -> str:
@@ -17,21 +18,22 @@ def distance(arr1, arr2):
     return np.linalg.norm(arr1.astype(np.int64) - arr2.astype(np.int64))
 
 
-def snap_to_palette(colors: list[str]) -> list[str]:
+@activity.defn
+async def calibrate(colors: list[str]) -> dict[str, str]:
     # Load the fixed palette from file, which is in BGR, and convert it to LAB.
     palette = np.load("colors.npy").astype(np.uint8)
     palette = cv2.cvtColor(palette, cv2.COLOR_BGR2Lab)[0]
 
     # Convert the colors to LAB as well.
     # NOTE: `cv2.cvtColor` requires the input array to be 3-dimentional.
-    colors = np.stack([hex2rgb(color) for color in colors])
-    colors = cv2.cvtColor(colors.reshape((1, -1, 3)), cv2.COLOR_RGB2Lab)[0]
+    colors_array = np.stack([hex2rgb(color) for color in colors])
+    colors_lab = cv2.cvtColor(colors_array.reshape((1, -1, 3)), cv2.COLOR_RGB2Lab)[0]
 
     # For each color, find the closest approximation in the fixed palette.
-    closest = np.array(
-        [min(palette, key=lambda x: distance(x, color)) for color in colors]
+    targets = np.array(
+        [min(palette, key=lambda x: distance(x, color)) for color in colors_lab]
     )
 
     # Convert it back to RGB.
-    closest = cv2.cvtColor(closest.reshape((1, -1, 3)), cv2.COLOR_Lab2RGB)[0]
-    return [rgb2hex(closest) for closest in closest]
+    targets = cv2.cvtColor(targets.reshape((1, -1, 3)), cv2.COLOR_Lab2RGB)[0]
+    return {color: rgb2hex(target) for (color, target) in zip(colors, targets)}
