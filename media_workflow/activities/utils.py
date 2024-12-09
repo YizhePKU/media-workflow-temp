@@ -20,6 +20,7 @@ async def download(url) -> str:
     used to attach a file extension."""
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
+            response.raise_for_status()
             mimetype = response.headers.get("Content-Type")
             data = await response.read()
 
