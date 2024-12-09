@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 pytest = "^8.3.3"
-imageio = "^2.36.1"
+imageio = {extras = ["all-plugins"], version = "^2.36.1"}
 pillow = "^11.0.0"
 cairosvg = "^2.7.1"
 psd-tools = "^1.10.4"
