@@ -23,18 +23,17 @@ async def download(url) -> str:
 
     The filename is randomly generated, but if the original URL contains a file extension, it will
     be retained."""
-    timeout = aiohttp.ClientTimeout(sock_read=5)
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.get(url) as response:
-            response.raise_for_status()
-            data = await response.read()
-
     dir = tempfile.gettempdir()
     filename = str(uuid4()) + url2ext(url)
     path = os.path.join(dir, filename)
 
     with open(path, "wb") as file:
-        file.write(data)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response.raise_for_status()
+                async for chunk, _ in response.content.iter_chunks():
+                    file.write(chunk)
+                    activity.heartbeat()
 
     span_attribute("url", url)
     span_attribute("path", path)
