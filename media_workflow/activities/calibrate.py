@@ -4,7 +4,7 @@ from temporalio import activity
 
 
 def rgb2hex(rgb: list[int]) -> str:
-    return f"#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
+    return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
 
 
 def hex2rgb(hex: str) -> np.array:

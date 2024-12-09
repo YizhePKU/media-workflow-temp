@@ -3,7 +3,6 @@ import functools
 import inspect
 import sys
 from datetime import timedelta
-from json import dumps as json_dumps
 
 from temporalio import workflow
 
@@ -19,46 +18,46 @@ start = functools.partial(
 )
 
 
-@workflow.defn(name="font-detail")
-class FontDetail:
-    @workflow.run
-    async def run(self, params):
-        image = await start("font_thumbnail", params)
-        meta = await start("font_metadata", params)
-        basic_info = {
-            "name": meta["full_name"],
-            "designer": meta["designer"],
-            "description": meta["description"],
-            "supports_kerning": meta["kerning"],
-            "supports_chinese": meta["chinese"],
-        }
-        result = await start(
-            "font_detail",
-            {**params, "file": image, "basic_info": json_dumps(basic_info)},
-        )
-        result["id"] = workflow.info().workflow_id
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
+# @workflow.defn(name="font-detail")
+# class FontDetail:
+#     @workflow.run
+#     async def run(self, params):
+#         image = await start("font_thumbnail", params)
+#         meta = await start("font_metadata", params)
+#         basic_info = {
+#             "name": meta["full_name"],
+#             "designer": meta["designer"],
+#             "description": meta["description"],
+#             "supports_kerning": meta["kerning"],
+#             "supports_chinese": meta["chinese"],
+#         }
+#         result = await start(
+#             "font_detail",
+#             {**params, "file": image, "basic_info": json_dumps(basic_info)},
+#         )
+#         result["id"] = workflow.info().workflow_id
+#         if callback_url := params.get("callback_url"):
+#             await start("callback", args=[callback_url, result])
+#         return result
 
 
-@workflow.defn(name="image-detail-basic")
-class ImageDetailBasic:
-    @workflow.run
-    async def run(self, params):
-        basic = await start("image_analysis_basic", params)
-        tags = await start("image_analysis_tags", params)
-        details = await start("image_analysis_details", params)
-        result = {
-            "id": workflow.info().workflow_id,
-            "title": basic["title"],
-            "description": basic["description"],
-            "tags": ",".join(value for values in tags.values() for value in values),
-            "detailed_description": [{k: v} for k, v in details.items()],
-        }
-        if callback_url := params.get("callback_url"):
-            await start("callback", args=[callback_url, result])
-        return result
+# @workflow.defn(name="image-detail-basic")
+# class ImageDetailBasic:
+#     @workflow.run
+#     async def run(self, params):
+#         basic = await start("image_analysis_basic", params)
+#         tags = await start("image_analysis_tags", params)
+#         details = await start("image_analysis_details", params)
+#         result = {
+#             "id": workflow.info().workflow_id,
+#             "title": basic["title"],
+#             "description": basic["description"],
+#             "tags": ",".join(value for values in tags.values() for value in values),
+#             "detailed_description": [{k: v} for k, v in details.items()],
+#         }
+#         if callback_url := params.get("callback_url"):
+#             await start("callback", args=[callback_url, result])
+#         return result
 
 
 @workflow.defn(name="file-analysis")
@@ -107,24 +106,11 @@ class FileAnalysis:
         }
 
 
-@workflow.defn
-class Yizhe:
-    def __init__(self):
-        self.results = {}
-
+@workflow.defn(name="color-calibrate")
+class ColorCalibrate:
     @workflow.run
-    async def run(self):
-        await workflow.wait_condition(lambda: "stop" in self.results)
-        return "OK"
-
-    @workflow.update
-    async def set(self, key, value):
-        self.results[key] = value
-
-    @workflow.update
-    async def get(self, key):
-        await workflow.wait_condition(lambda: key in self.results)
-        return self.results[key]
+    async def run(self, colors):
+        return await start("calibrate", colors)
 
 
 workflows = []

@@ -5,7 +5,6 @@ import pytest
 from media_workflow.worker import get_client
 
 
-@pytest.mark.skip
 async def test_color_calibrate():
     client = await get_client()
     arg = ["#000001", "#fffffd"]
