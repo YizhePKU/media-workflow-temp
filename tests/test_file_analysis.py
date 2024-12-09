@@ -84,7 +84,11 @@ async def test_streaming_via_update():
     params = {
         "file": images[0],
         "activities": ["image-thumbnail"],
-        "params": {"image-thumbnail": {"size": [400, 400]}},
+        "params": {
+            "image-thumbnail": {
+                "size": [400, 400],
+            },
+        },
     }
     handle = await client.start_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
@@ -102,7 +106,11 @@ async def test_image_thumbnail(file):
     params = {
         "file": file,
         "activities": ["image-thumbnail"],
-        "params": {"image-thumbnail": {"size": [400, 400]}},
+        "params": {
+            "image-thumbnail": {
+                "size": [400, 400],
+            },
+        },
     }
     result = await client.execute_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
@@ -115,7 +123,7 @@ async def test_image_thumbnail(file):
 
 @pytest.mark.skip
 @pytest.mark.parametrize("file", images)
-async def test_image_detail(file, language):
+async def test_image_detail(file):
     client = await get_client()
     params = {
         "file": file,
@@ -130,8 +138,160 @@ async def test_image_detail(file, language):
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
     title = result["result"]["image-detail"]["title"]
-    if language != "English":
-        assert not title.isascii()
+    assert not title.isascii()
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", images)
+async def test_image_detail_basic(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["image-detail-basic"],
+        "params": {
+            "image-detail": {
+                "language": "Simplified Chinese",
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
+    title = result["result"]["image-detail-basic"]["title"]
+    assert not title.isascii()
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", images)
+async def test_image_color_palette(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["image-color-palette"],
+        "params": {
+            "image-color-palette": {
+                "count": 5,
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
+    assert len(result["result"]["image-color-palette"]) == 5
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", documents)
+async def test_pdf_thumbnail(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["pdf-thumbnail"],
+        "params": {
+            "pdf-thumbnail": {
+                "size": (800, 600),
+                "pages": [0, 1],
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
+    assert len(result["result"]["pdf-thumbnail"]) == 2
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", documents)
+async def test_document_thumbnail(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["document-thumbnail"],
+        "params": {
+            "document-thumbnail": {
+                "size": [800, 600],
+                "pages": [0, 1],
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
+    assert len(result["result"]["document-thumbnail"]) == 2
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", fonts)
+async def test_font_thumbnail(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["font-thumbnail"],
+        "params": {
+            "font-thumbnail": {
+                "size": [400, 400],
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
+    image = imread(await download(result["result"]["font-thumbnail"]))
+    assert image.mode == "RGB"
+    assert image.size[0] <= 400
+    assert image.size[1] <= 400
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", fonts)
+async def test_font_metadata(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["font-metadata"],
+        "params": {
+            "font-metadata": {
+                "language": "Simplified Chinese",
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
+    assert "font_family" in result["result"]["font-metadata"]
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", fonts)
+async def test_font_detail(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["font-detail"],
+        "params": {
+            "font-detail": {
+                "language": "Simplified Chinese",
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "font-detail", params, id=f"{uuid4()}", task_queue="media"
+    )
+    description = result["result"]["font-detail"]["description"]
+    assert not description.isascii()
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", videos)
+async def test_video_sprite(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["video-sprite"],
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
 
 
 @pytest.mark.parametrize("file", videos)
@@ -144,4 +304,25 @@ async def test_video_transcode(file):
     result = await client.execute_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
-    _path = await download(result["result"]["video-transcode"])
+    await download(result["result"]["video-transcode"])
+
+
+@pytest.mark.skip
+@pytest.mark.parametrize("file", audios)
+async def test_audio_waveform(file):
+    client = await get_client()
+    arg = {
+        "file": file,
+        "activities": ["audio-waveform"],
+        "params": {
+            "audio-waveform": {
+                "num_samples": 1000,
+            }
+        },
+    }
+    result = await client.execute_workflow(
+        "audio-waveform", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    waveform = result["result"]["audio-waveform"]
+    assert len(waveform) == 1000
+    assert max(waveform) == 1.0
