@@ -1,7 +1,7 @@
-import mimetypes
 import os
 import tempfile
 from pathlib import Path
+from urllib.parse import urlparse
 from uuid import uuid4
 
 import aiohttp
@@ -12,22 +12,24 @@ from temporalio import activity
 from media_workflow.trace import span_attribute
 
 
+def url2ext(url) -> str:
+    path = urlparse(url).path
+    return os.path.splitext(path)[1]
+
+
 @activity.defn
 async def download(url) -> str:
     """Download a file from a URL. Return the file path.
 
-    The filename is randomly generated. If the server returns a Content-Type header, it will be
-    used to attach a file extension."""
+    The filename is randomly generated, but if the original URL contains a file extension, it will
+    be retained."""
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             response.raise_for_status()
-            mimetype = response.headers.get("Content-Type")
             data = await response.read()
 
     dir = tempfile.gettempdir()
-    filename = str(uuid4())
-    if mimetype and (ext := mimetypes.guess_extension(mimetype)):
-        filename += ext
+    filename = str(uuid4()) + url2ext(url)
     path = os.path.join(dir, filename)
 
     with open(path, "wb") as file:
