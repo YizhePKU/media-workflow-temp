@@ -30,7 +30,10 @@ def imread(path: str) -> Image:
     """Read an image from a local path."""
     # open the image with imageio
     try:
-        return Image.fromarray(iio.imread(path))
+        arr = iio.imread(path)
+        if arr.dtype != np.uint8:
+            arr = (arr * 256 / np.max(arr)).astype(np.uint8)
+        return Image.fromarray(arr)
     except:
         pass
 
