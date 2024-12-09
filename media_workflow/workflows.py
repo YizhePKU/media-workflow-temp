@@ -15,7 +15,8 @@ with workflow.unsafe.imports_passed_through():
 start = functools.partial(
     workflow.start_activity,
     task_queue=get_worker_specific_task_queue(),
-    schedule_to_close_timeout=timedelta(minutes=5),
+    schedule_to_close_timeout=timedelta(minutes=11),
+    start_to_close_timeout=timedelta(minutes=5),
 )
 
 
