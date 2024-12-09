@@ -38,8 +38,16 @@ async def image_detail(params) -> dict:
         url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
         async with session.post(url, headers=headers, json=json) as r:
             result = await r.json()
-    assert result["data"]["status"] == "succeeded"
-    assert isinstance(result["data"]["outputs"]["tags"], str)
+    try:
+        assert result["data"]["status"] == "succeeded"
+    except (KeyError, AssertionError):
+        raise RuntimeError(f"dify failed: {await r.text()}")
+
+    try:
+        assert isinstance(result["data"]["outputs"]["tags"], str)
+    except AssertionError:
+        raise RuntimeError(f"validation failed for dify output: {await r.json()}")
+
     return result["data"]["outputs"]
 
 
