@@ -93,8 +93,6 @@ class FileAnalysis:
                     result = await start(activity, params)
                     if fn := postprocess.get(activity):
                         result = await fn(result)
-                    if callback := request.get("callback"):
-                        await start("callback", args=[callback, result])
                     self.results[activity] = result
 
                 tg.create_task(task())
