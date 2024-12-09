@@ -8,7 +8,6 @@ from json import dumps as json_dumps
 from temporalio import workflow
 
 with workflow.unsafe.imports_passed_through():
-    from media_workflow.activities import names as all_activities
     from media_workflow.utils import get_worker_specific_task_queue
 
 
@@ -64,37 +63,68 @@ class ImageDetailBasic:
 
 @workflow.defn(name="file-analysis")
 class FileAnalysis:
+    def __init__(self):
+        self.results = {}
+
+    @workflow.update
+    async def get(self, key):
+        await workflow.wait_condition(lambda: key in self.results)
+        return self.results[key]
+
     @workflow.run
     async def run(self, request):
         id = workflow.info().workflow_id
-        file = await start("download", request["file"])
-        params = request.get("params", {})
+        file = await start(
+            "download", request["file"], heartbeat_timeout=timedelta(seconds=10)
+        )
 
-        # TODO: filter down activities based on file type
-        activities = request.get("activities", all_activities)
-
-        # post-process result from activities
         postprocess = {
-            "image-thumbnail": lambda path: start("upload", args=[path, "image/png"])
+            "image-thumbnail": lambda path: start("upload", args=[path, "image/png"]),
+            "video-transcode": lambda path: start("upload", args=[path]),
         }
 
-        async def run_activity_with_callback(activity):
-            result = await start(activity, {"file": file, **params.get(activity, {})})
-            if fn := postprocess.get(activity):
-                result = await fn(result)
-            if callback := request.get("callback"):
-                data = {"id": id, "request": request, "result": {activity: result}}
-                await start("callback", args=[callback, data])
-            return result
+        async with asyncio.TaskGroup() as tg:
+            for activity in request["activities"]:
+                # define one task per activity
+                async def task():
+                    params = {
+                        "file": file,
+                        **request.get("params", {}).get(activity, {}),
+                    }
+                    result = await start(activity, params)
+                    if fn := postprocess.get(activity):
+                        result = await fn(result)
+                    if callback := request.get("callback"):
+                        await start("callback", args=[callback, result])
+                    self.results[activity] = result
 
-        tasks = [run_activity_with_callback(activity) for activity in activities]
-        results = await asyncio.gather(*tasks)
+                tg.create_task(task())
 
         return {
             "id": id,
             "request": request,
-            "result": dict(zip(activities, results)),
+            "result": self.results,
         }
+
+
+@workflow.defn
+class Yizhe:
+    def __init__(self):
+        self.results = {}
+
+    @workflow.run
+    async def run(self):
+        await workflow.wait_condition(lambda: "stop" in self.results)
+        return "OK"
+
+    @workflow.update
+    async def set(self, key, value):
+        self.results[key] = value
+
+    @workflow.update
+    async def get(self, key):
+        await workflow.wait_condition(lambda: key in self.results)
+        return self.results[key]
 
 
 workflows = []

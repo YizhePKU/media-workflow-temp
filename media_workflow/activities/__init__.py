@@ -12,5 +12,3 @@ activities = []
 for _name, fn in inspect.getmembers(sys.modules[__name__]):
     if hasattr(fn, "__temporal_activity_definition"):
         activities.append(fn)
-
-names = [fn.__temporal_activity_definition.name for fn in activities]
