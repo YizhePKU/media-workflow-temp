@@ -23,7 +23,8 @@ async def download(url) -> str:
 
     The filename is randomly generated, but if the original URL contains a file extension, it will
     be retained."""
-    async with aiohttp.ClientSession() as session:
+    timeout = aiohttp.ClientTimeout(sock_read=5)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(url) as response:
             response.raise_for_status()
             data = await response.read()
