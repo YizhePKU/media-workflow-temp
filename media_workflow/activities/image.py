@@ -7,6 +7,7 @@ import aiohttp
 from PIL import Image
 from temporalio import activity
 
+from media_workflow.trace import span_attribute
 from media_workflow.utils import imread, imwrite
 from pylette.color_extraction import extract_colors
 
@@ -28,12 +29,14 @@ async def image_detail(params) -> dict:
             "image": {
                 "type": "image",
                 "transfer_method": "remote_url",
-                "url": params["file"],
+                "url": params["url"],
             },
         },
         "user": os.environ["DIFY_USER"],
         "response_mode": "blocking",
     }
+    span_attribute("dify_input", str(json))
+
     async with aiohttp.ClientSession() as session:
         url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
         async with session.post(url, headers=headers, json=json) as r:

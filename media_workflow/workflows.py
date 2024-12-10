@@ -79,6 +79,8 @@ class FileAnalysis:
         async with asyncio.TaskGroup() as tg:
             if "image-thumbnail" in request["activities"]:
                 tg.create_task(self.image_thumbnail(file, request))
+            if "image-detail" in request["activities"]:
+                tg.create_task(self.image_detail(file, request))
             if "video-transcode" in request["activities"]:
                 tg.create_task(self.video_transcode(file, request))
 
@@ -89,18 +91,41 @@ class FileAnalysis:
         }
 
     async def image_thumbnail(self, file, request):
+        activity = "image-thumbnail"
         params = {
             "file": file,
-            **request.get("params", {}).get("image-thumbnail", {}),
+            **request.get("params", {}).get(activity, {}),
         }
-        path = await start("image-thumbnail", params)
-        url = await start("upload", args=[path, "image/png"])
-        self.results["image-thumbnail"] = url
+        file = await start(activity, params)
+        url = await start("upload", args=[file, "image/png"])
+        self.results[activity] = url
         callback_data = {
             "id": workflow.info().workflow_id,
             "request": request,
             "result": {
-                "image-thumnail": url,
+                activity: url,
+            },
+        }
+        if callback := request.get("callback"):
+            await start("callback", args=[callback, callback_data])
+
+    async def image_detail(self, file, request):
+        activity = "image-detail"
+        # convert image to PNG first
+        file = await start("image-thumbnail", {"file": file})
+        # dify wants remote image URL
+        url = await start("upload", args=[file, "image/png"])
+        params = {
+            "url": url,
+            **request.get("params", {}).get(activity, {}),
+        }
+        data = await start(activity, params)
+        self.results[activity] = data
+        callback_data = {
+            "id": workflow.info().workflow_id,
+            "request": request,
+            "result": {
+                activity: data,
             },
         }
         if callback := request.get("callback"):

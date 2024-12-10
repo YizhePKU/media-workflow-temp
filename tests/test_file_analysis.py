@@ -121,7 +121,6 @@ async def test_image_thumbnail(file):
     assert image.size[1] <= 400
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", images)
 async def test_image_detail(file):
     client = await get_client()
