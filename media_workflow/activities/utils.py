@@ -66,3 +66,12 @@ async def upload(path: str, content_type: str = "binary/octet-stream"):
     span_attribute("content_type", content_type)
     span_attribute("presigned_url", presigned_url)
     return presigned_url
+
+
+@activity.defn
+async def callback(url: str, data: dict):
+    span_attribute("url", url)
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=data) as response:
+            if response.status != 200:
+                raise Exception(f"callback failed: {await response.text()}")
