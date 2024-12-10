@@ -72,38 +72,58 @@ class FileAnalysis:
 
     @workflow.run
     async def run(self, request):
-        id = workflow.info().workflow_id
         file = await start(
             "download", request["file"], heartbeat_timeout=timedelta(seconds=10)
         )
 
-        postprocess = {
-            "image-thumbnail": lambda path: start("upload", args=[path, "image/png"]),
-            "video-transcode": lambda path: start("upload", args=[path]),
-        }
-
         async with asyncio.TaskGroup() as tg:
-            for activity in request["activities"]:
-                # define one task per activity
-                async def task():
-                    params = {
-                        "file": file,
-                        **request.get("params", {}).get(activity, {}),
-                    }
-                    result = await start(activity, params)
-                    if fn := postprocess.get(activity):
-                        result = await fn(result)
-                    if callback := request.get("callback"):
-                        await start("callback", args=[callback, result])
-                    self.results[activity] = result
-
-                tg.create_task(task())
+            if "image-thumbnail" in request["activities"]:
+                tg.create_task(self.image_thumbnail(file, request))
+            if "video-transcode" in request["activities"]:
+                tg.create_task(self.video_transcode(file, request))
 
         return {
-            "id": id,
+            "id": workflow.info().workflow_id,
             "request": request,
             "result": self.results,
         }
+
+    async def image_thumbnail(self, file, request):
+        params = {
+            "file": file,
+            **request.get("params", {}).get("image-thumbnail", {}),
+        }
+        path = await start("image-thumbnail", params)
+        url = await start("upload", args=[path, "image/png"])
+        self.results["image-thumbnail"] = url
+        callback_data = {
+            "id": workflow.info().workflow_id,
+            "request": request,
+            "result": {
+                "image-thumnail": url,
+            },
+        }
+        if callback := request.get("callback"):
+            await start("callback", args=[callback, callback_data])
+
+    async def video_transcode(self, file, request):
+        params = {
+            "file": file,
+            **request.get("params", {}).get("video-transcode", {}),
+        }
+        path = await start("video-transcode", params)
+        mimetype = f"video/{params.get("container", "mp4")}"
+        url = await start("upload", args=[path, mimetype])
+        self.results["video-transcode"] = url
+        callback_data = {
+            "id": workflow.info().workflow_id,
+            "request": request,
+            "result": {
+                "video-transcode": url,
+            },
+        }
+        if callback := request.get("callback"):
+            await start("callback", args=[callback, callback_data])
 
 
 @workflow.defn(name="color-calibrate")
