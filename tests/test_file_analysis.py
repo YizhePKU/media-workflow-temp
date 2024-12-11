@@ -160,7 +160,6 @@ async def test_image_detail_basic(file):
     assert not title.isascii()
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", images)
 async def test_image_color_palette(file):
     client = await get_client()

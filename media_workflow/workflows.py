@@ -81,6 +81,8 @@ class FileAnalysis:
                 tg.create_task(self.image_thumbnail(file, request))
             if "image-detail" in request["activities"]:
                 tg.create_task(self.image_detail(file, request))
+            if "image-color-palette" in request["activities"]:
+                tg.create_task(self.image_color_palette(file, request))
             if "video-transcode" in request["activities"]:
                 tg.create_task(self.video_transcode(file, request))
 
@@ -117,6 +119,24 @@ class FileAnalysis:
         url = await start("upload", args=[file, "image/png"])
         params = {
             "url": url,
+            **request.get("params", {}).get(activity, {}),
+        }
+        data = await start(activity, params)
+        self.results[activity] = data
+        callback_data = {
+            "id": workflow.info().workflow_id,
+            "request": request,
+            "result": {
+                activity: data,
+            },
+        }
+        if callback := request.get("callback"):
+            await start("callback", args=[callback, callback_data])
+
+    async def image_color_palette(self, file, request):
+        activity = "image-color-palette"
+        params = {
+            "file": file,
             **request.get("params", {}).get(activity, {}),
         }
         data = await start(activity, params)
