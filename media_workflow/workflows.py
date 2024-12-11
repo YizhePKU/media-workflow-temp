@@ -87,6 +87,12 @@ class FileAnalysis:
                 tg.create_task(self.video_transcode(file, request))
             if "document-thumbnail" in request["activities"]:
                 tg.create_task(self.document_thumbnail(file, request))
+            if "font-thumbnail" in request["activities"]:
+                tg.create_task(self.font_thumbnail(file, request))
+            if "font-metadata" in request["activities"]:
+                tg.create_task(self.font_metadata(file, request))
+            if "font-detail" in request["activities"]:
+                tg.create_task(self.font_detail(file, request))
 
         return {
             "id": workflow.info().workflow_id,
@@ -166,6 +172,34 @@ class FileAnalysis:
         result = await asyncio.gather(
             *[start("upload", args=[image, "image/png"]) for image in images]
         )
+        await self.submit(activity, request, result)
+
+    async def font_thumbnail(self, file, request):
+        activity = "font-thumbnail"
+        params = {
+            "file": file,
+            **request.get("params", {}).get(activity, {}),
+        }
+        image = await start(activity, params)
+        result = await start("upload", args=[image, "image/png"])
+        await self.submit(activity, request, result)
+
+    async def font_metadata(self, file, request):
+        activity = "font-metadata"
+        params = {
+            "file": file,
+            **request.get("params", {}).get(activity, {}),
+        }
+        result = await start(activity, params)
+        await self.submit(activity, request, result)
+
+    async def font_detail(self, file, request):
+        activity = "font-thumbnail"
+        params = {
+            "file": file,
+            **request.get("params", {}).get(activity, {}),
+        }
+        result = await start(activity, params)
         await self.submit(activity, request, result)
 
 

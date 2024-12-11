@@ -197,7 +197,6 @@ async def test_document_thumbnail(file):
     assert len(result["result"]["document-thumbnail"]) == 1
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", fonts)
 async def test_font_thumbnail(file):
     client = await get_client()
@@ -219,7 +218,6 @@ async def test_font_thumbnail(file):
     assert image.size[1] <= 400
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", fonts)
 async def test_font_metadata(file):
     client = await get_client()

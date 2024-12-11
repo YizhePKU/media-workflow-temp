@@ -33,7 +33,7 @@ def supports_chinese(font: TTFont) -> bool:
     return all(ord(char) in cmap for char in CHINESE_SAMPLE if not char.isspace())
 
 
-def thumbnail(font: str | BinaryIO, size, font_size) -> Image.Image:
+def thumbnail(font: str, size, font_size) -> Image.Image:
     """Generate a thumbnail for the font."""
     margin = int(font_size * 0.5)
     spacing = int(font_size * 0.25)
@@ -43,7 +43,6 @@ def thumbnail(font: str | BinaryIO, size, font_size) -> Image.Image:
     else:
         sample = ENGLISH_SAMPLE
 
-    font.seek(0)
     font = ImageFont.truetype(font, size=font_size)
 
     # Calculate how large the image needs to be.
