@@ -11,16 +11,6 @@ from psd_tools import PSDImage
 
 from media_workflow.trace import span_attribute, tracer
 
-
-def get_worker_specific_task_queue() -> str:
-    """Get the task queue uniquely associated with this worker.
-
-    The return value persists between calls, but not between worker restart."""
-    if not hasattr(get_worker_specific_task_queue, "value"):
-        get_worker_specific_task_queue.value = f"task-queue-{uuid4()}"
-    return get_worker_specific_task_queue.value
-
-
 # remove image size limit
 Image.MAX_IMAGE_PIXELS = None
 
