@@ -140,7 +140,6 @@ async def test_image_detail(file):
     assert not title.isascii()
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", images)
 async def test_image_detail_basic(file):
     client = await get_client()
@@ -148,7 +147,7 @@ async def test_image_detail_basic(file):
         "file": file,
         "activities": ["image-detail-basic"],
         "params": {
-            "image-detail": {
+            "image-detail-basic": {
                 "language": "Simplified Chinese",
             }
         },

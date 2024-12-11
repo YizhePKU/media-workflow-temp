@@ -2,6 +2,7 @@ import os
 from base64 import b64encode
 from inspect import cleandoc
 from json import loads as json_loads
+import re
 
 import aiohttp
 from PIL import Image

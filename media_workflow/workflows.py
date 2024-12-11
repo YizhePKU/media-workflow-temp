@@ -19,25 +19,6 @@ start = functools.partial(
 )
 
 
-# @workflow.defn(name="image-detail-basic")
-# class ImageDetailBasic:
-#     @workflow.run
-#     async def run(self, params):
-#         basic = await start("image_analysis_basic", params)
-#         tags = await start("image_analysis_tags", params)
-#         details = await start("image_analysis_details", params)
-#         result = {
-#             "id": workflow.info().workflow_id,
-#             "title": basic["title"],
-#             "description": basic["description"],
-#             "tags": ",".join(value for values in tags.values() for value in values),
-#             "detailed_description": [{k: v} for k, v in details.items()],
-#         }
-#         if callback_url := params.get("callback_url"):
-#             await start("callback", args=[callback_url, result])
-#         return result
-
-
 @workflow.defn(name="file-analysis")
 class FileAnalysis:
     def __init__(self):
@@ -59,6 +40,8 @@ class FileAnalysis:
                 tg.create_task(self.image_thumbnail(file, request))
             if "image-detail" in request["activities"]:
                 tg.create_task(self.image_detail(file, request))
+            if "image-detail-basic" in request["activities"]:
+                tg.create_task(self.image_detail_basic(file, request))
             if "image-color-palette" in request["activities"]:
                 tg.create_task(self.image_color_palette(file, request))
             if "video-transcode" in request["activities"]:
@@ -113,6 +96,23 @@ class FileAnalysis:
             **request.get("params", {}).get(activity, {}),
         }
         result = await start(activity, params)
+        await self.submit(activity, request, result)
+
+    async def image_detail_basic(self, file, request):
+        activity = "image-detail-basic"
+        # convert image to PNG first
+        image = await start("image-thumbnail", {"file": file})
+        # invoke minicpm three times
+        params = {"file": image, **request.get("params", {}).get(activity, {})}
+        basic = await start("image-analysis-basic", params)
+        tags = await start("image-analysis-tags", params)
+        details = await start("image-analysis-details", params)
+        result = {
+            "title": basic["title"],
+            "description": basic["description"],
+            "tags": ",".join(value for values in tags.values() for value in values),
+            "detailed_description": [{k: v} for k, v in details.items()],
+        }
         await self.submit(activity, request, result)
 
     async def image_color_palette(self, file, request):
