@@ -9,8 +9,8 @@ from temporalio import workflow
 
 start = functools.partial(
     workflow.start_activity,
-    schedule_to_close_timeout=timedelta(minutes=20),
     start_to_close_timeout=timedelta(minutes=5),
+    schedule_to_close_timeout=timedelta(minutes=20),
 )
 
 
@@ -28,7 +28,11 @@ class FileAnalysis:
     async def run(self, request):
         try:
             file = await start(
-                "download", request["file"], heartbeat_timeout=timedelta(seconds=10)
+                "download",
+                request["file"],
+                heartbeat_timeout=timedelta(minutes=1),
+                start_to_close_timeout=timedelta(minutes=30),
+                schedule_to_close_timeout=timedelta(minutes=60),
             )
 
             async with asyncio.TaskGroup() as tg:
