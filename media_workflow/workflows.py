@@ -102,8 +102,7 @@ class FileAnalysis:
     async def image_detail(self, file, request):
         activity = "image-detail"
         # convert image to PNG first
-        file = await start("image-thumbnail", {"file": file})
-        # dify wants remote image URL
+        file = await start("image-thumbnail", {"file": file, "size": [1000, 1000]})
         url = await start("upload", args=[file, "image/png"])
         params = {
             "url": url,
@@ -115,7 +114,7 @@ class FileAnalysis:
     async def image_detail_basic(self, file, request):
         activity = "image-detail-basic"
         # convert image to PNG first
-        image = await start("image-thumbnail", {"file": file})
+        image = await start("image-thumbnail", {"file": file, "size": [1000, 1000]})
         # invoke minicpm three times
         params = {"file": image, **request.get("params", {}).get(activity, {})}
         basic = await start("image-analysis-basic", params)
