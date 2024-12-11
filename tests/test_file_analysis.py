@@ -254,6 +254,19 @@ async def test_font_detail(file):
     assert not description.isascii()
 
 
+@pytest.mark.parametrize("file", videos)
+async def test_video_metadata(file):
+    client = await get_client()
+    params = {
+        "file": file,
+        "activities": ["video-metadata"],
+    }
+    result = await client.execute_workflow(
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
+    )
+    assert isinstance(result["result"]["video-metadata"]["fps"], float)
+
+
 @pytest.mark.skip
 @pytest.mark.parametrize("file", videos)
 async def test_video_sprite(file):

@@ -124,6 +124,11 @@ class FileAnalysis:
         result = await start(activity, params)
         await self.submit(activity, request, result)
 
+    async def video_metadata(self, file, request):
+        activity = "video-metadata"
+        result = await start(activity, file)
+        await self.submit(activity, request, result)
+
     async def video_transcode(self, file, request):
         activity = "video-transcode"
         params = {

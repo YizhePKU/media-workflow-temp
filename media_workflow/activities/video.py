@@ -1,4 +1,7 @@
+import json
 import math
+import os
+import subprocess
 import tempfile
 from pathlib import Path
 from uuid import uuid4
@@ -7,6 +10,42 @@ import ffmpeg
 import numpy as np
 from pydub import AudioSegment
 from temporalio import activity
+
+
+@activity.defn(name="video-metadata")
+async def video_metadata(file) -> dict:
+    command = [
+        "ffprobe",
+        "-v",
+        "quiet",
+        "-print_format",
+        "json",
+        "-show_streams",
+        file,
+    ]
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode != 0:
+        raise RuntimeError(f"ffprobe failed: {result.stderr.decode()}")
+
+    data = json.loads(result.stdout.decode())
+    result = {}
+    for stream in data["streams"]:
+        if stream["codec_type"] == "video":
+            result["duration"] = float(stream["duration"])
+            result["video_codec"] = stream["codec_name"]
+            result["width"] = int(stream["width"])
+            result["height"] = int(stream["height"])
+            numerator, denominator = map(int, stream["avg_frame_rate"].split("/"))
+            result["fps"] = float(numerator) / float(denominator)
+            result["pix_fmt"] = stream["pix_fmt"]
+        if stream["codec_type"] == "audio":
+            result["audio_codec"] = stream["codec_name"]
+            result["sample_fmt"] = stream["sample_fmt"]
+            result["channel_layout"] = stream["channel_layout"]
+            result["sample_rate"] = int(stream["sample_rate"])
+
+    result["size"] = os.path.getsize(file)
+    return result
 
 
 @activity.defn(name="video-sprite")
