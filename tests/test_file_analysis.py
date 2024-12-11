@@ -179,26 +179,6 @@ async def test_image_color_palette(file):
 
 
 @pytest.mark.parametrize("file", documents)
-async def test_pdf_thumbnail(file):
-    client = await get_client()
-    params = {
-        "file": file,
-        "activities": ["pdf-thumbnail"],
-        "params": {
-            "pdf-thumbnail": {
-                "size": (800, 600),
-                "pages": [0],
-            }
-        },
-    }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
-    assert len(result["result"]["pdf-thumbnail"]) == 1
-
-
-@pytest.mark.skip
-@pytest.mark.parametrize("file", documents)
 async def test_document_thumbnail(file):
     client = await get_client()
     params = {
@@ -207,14 +187,14 @@ async def test_document_thumbnail(file):
         "params": {
             "document-thumbnail": {
                 "size": [800, 600],
-                "pages": [0, 1],
+                "pages": [0],
             }
         },
     }
     result = await client.execute_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
-    assert len(result["result"]["document-thumbnail"]) == 2
+    assert len(result["result"]["document-thumbnail"]) == 1
 
 
 @pytest.mark.skip

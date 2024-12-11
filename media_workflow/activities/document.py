@@ -1,4 +1,6 @@
 import subprocess
+import tempfile
+from pathlib import Path
 
 import pymupdf
 from PIL import Image
@@ -30,11 +32,7 @@ async def pdf_thumbnail(params) -> list[str]:
 
 @activity.defn(name="convert-to-pdf")
 async def convert_to_pdf(params) -> str:
-    # TODO: DOESN'T WORK
-    with TemporaryDirectory() as dir:
-        stem = str(uuid4())
-        input = f"{dir}/{stem}"
-        subprocess.run(
-            ["soffice", "--convert-to", "pdf", "--outdir", dir, params["file"]]
-        )
-        return f"{input}.pdf"
+    dir = tempfile.gettempdir()
+    subprocess.run(["soffice", "--convert-to", "pdf", "--outdir", dir, params["file"]])
+    stem = Path(params["file"]).stem
+    return f"{dir}/{stem}.pdf"

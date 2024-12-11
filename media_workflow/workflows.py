@@ -85,8 +85,8 @@ class FileAnalysis:
                 tg.create_task(self.image_color_palette(file, request))
             if "video-transcode" in request["activities"]:
                 tg.create_task(self.video_transcode(file, request))
-            if "pdf-thumbnail" in request["activities"]:
-                tg.create_task(self.pdf_thumbnail(file, request))
+            if "document-thumbnail" in request["activities"]:
+                tg.create_task(self.document_thumbnail(file, request))
 
         return {
             "id": workflow.info().workflow_id,
@@ -173,15 +173,22 @@ class FileAnalysis:
         if callback := request.get("callback"):
             await start("callback", args=[callback, callback_data])
 
-    async def pdf_thumbnail(self, file, request):
-        activity = "pdf-thumbnail"
+    async def document_thumbnail(self, file, request):
+        activity = "document-thumbnail"
+        # convert the document to PDF
         params = {
             "file": file,
+        }
+        pdf = await start("convert-to-pdf", params)
+        # extract thumbnails from pdf pages
+        params = {
+            "file": pdf,
             **request.get("params", {}).get(activity, {}),
         }
-        paths = await start(activity, params)
+        images = await start("pdf-thumbnail", params)
+        # upload thumbnails
         urls = await asyncio.gather(
-            *[start("upload", args=[path, "image/png"]) for path in paths]
+            *[start("upload", args=[image, "image/png"]) for image in images]
         )
         self.results[activity] = urls
         callback_data = {
