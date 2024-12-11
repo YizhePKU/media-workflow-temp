@@ -85,6 +85,8 @@ class FileAnalysis:
                 tg.create_task(self.image_color_palette(file, request))
             if "video-transcode" in request["activities"]:
                 tg.create_task(self.video_transcode(file, request))
+            if "pdf-thumbnail" in request["activities"]:
+                tg.create_task(self.pdf_thumbnail(file, request))
 
         return {
             "id": workflow.info().workflow_id,
@@ -152,19 +154,41 @@ class FileAnalysis:
             await start("callback", args=[callback, callback_data])
 
     async def video_transcode(self, file, request):
+        activity = "video-transcode"
         params = {
             "file": file,
-            **request.get("params", {}).get("video-transcode", {}),
+            **request.get("params", {}).get(activity, {}),
         }
-        path = await start("video-transcode", params)
+        path = await start(activity, params)
         mimetype = f"video/{params.get("container", "mp4")}"
         url = await start("upload", args=[path, mimetype])
-        self.results["video-transcode"] = url
+        self.results[activity] = url
         callback_data = {
             "id": workflow.info().workflow_id,
             "request": request,
             "result": {
-                "video-transcode": url,
+                activity: url,
+            },
+        }
+        if callback := request.get("callback"):
+            await start("callback", args=[callback, callback_data])
+
+    async def pdf_thumbnail(self, file, request):
+        activity = "pdf-thumbnail"
+        params = {
+            "file": file,
+            **request.get("params", {}).get(activity, {}),
+        }
+        paths = await start(activity, params)
+        urls = await asyncio.gather(
+            *[start("upload", args=[path, "image/png"]) for path in paths]
+        )
+        self.results[activity] = urls
+        callback_data = {
+            "id": workflow.info().workflow_id,
+            "request": request,
+            "result": {
+                activity: urls,
             },
         }
         if callback := request.get("callback"):
