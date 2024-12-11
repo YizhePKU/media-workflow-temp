@@ -33,23 +33,18 @@ images = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/cmyk.jpeg",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/cocktail.svg",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/fei.psb",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/float.tiff",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/flowers.exr",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/golden-gate.exr",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/hackson.heic",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.psd",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.svg",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/water-girl.jpeg",
-    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.jpeg",
-    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.psd",
 ]
 videos = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.mp4",
-    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.mp4",
 ]
 audios = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/reflection.mp3",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/resurrections.flac",
 ]
 documents = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/bill.cdr",
@@ -62,7 +57,6 @@ documents = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.eps",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pdf",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pptx",
-    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.pptx",
 ]
 models = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
@@ -77,6 +71,22 @@ fonts = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/noto-condensed-extrabold-italic.ttf",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/yahei.ttf",
 ]
+
+if os.environ.get("TEST_LARGE_FILES", False):
+    images += [
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/float.tiff",
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.jpeg",
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.psd",
+    ]
+    videos += [
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.mp4",
+    ]
+    documents += [
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.pptx",
+    ]
+    audios += [
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/resurrections.flac",
+    ]
 
 
 async def test_streaming_via_update():
