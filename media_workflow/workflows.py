@@ -63,6 +63,8 @@ class FileAnalysis:
                 tg.create_task(self.image_color_palette(file, request))
             if "video-transcode" in request["activities"]:
                 tg.create_task(self.video_transcode(file, request))
+            if "audio-waveform" in request["activities"]:
+                tg.create_task(self.audio_waveform(file, request))
             if "document-thumbnail" in request["activities"]:
                 tg.create_task(self.document_thumbnail(file, request))
             if "font-thumbnail" in request["activities"]:
@@ -131,6 +133,15 @@ class FileAnalysis:
         path = await start(activity, params)
         mimetype = f"video/{params.get("container", "mp4")}"
         result = await start("upload", args=[path, mimetype])
+        await self.submit(activity, request, result)
+
+    async def audio_waveform(self, file, request):
+        activity = "audio-waveform"
+        params = {
+            "file": file,
+            **request.get("params", {}).get(activity, {}),
+        }
+        result = await start(activity, params)
         await self.submit(activity, request, result)
 
     async def document_thumbnail(self, file, request):

@@ -281,7 +281,6 @@ async def test_video_transcode(file):
     await download(result["result"]["video-transcode"])
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", audios)
 async def test_audio_waveform(file):
     client = await get_client()
@@ -295,7 +294,7 @@ async def test_audio_waveform(file):
         },
     }
     result = await client.execute_workflow(
-        "audio-waveform", arg, id=f"{uuid4()}", task_queue="media"
+        "file-analysis", arg, id=f"{uuid4()}", task_queue="media"
     )
     waveform = result["result"]["audio-waveform"]
     assert len(waveform) == 1000
