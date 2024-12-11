@@ -31,37 +31,51 @@ class FileAnalysis:
 
     @workflow.run
     async def run(self, request):
-        file = await start(
-            "download", request["file"], heartbeat_timeout=timedelta(seconds=10)
-        )
+        try:
+            file = await start(
+                "download", request["file"], heartbeat_timeout=timedelta(seconds=10)
+            )
 
-        async with asyncio.TaskGroup() as tg:
-            if "image-thumbnail" in request["activities"]:
-                tg.create_task(self.image_thumbnail(file, request))
-            if "image-detail" in request["activities"]:
-                tg.create_task(self.image_detail(file, request))
-            if "image-detail-basic" in request["activities"]:
-                tg.create_task(self.image_detail_basic(file, request))
-            if "image-color-palette" in request["activities"]:
-                tg.create_task(self.image_color_palette(file, request))
-            if "video-transcode" in request["activities"]:
-                tg.create_task(self.video_transcode(file, request))
-            if "audio-waveform" in request["activities"]:
-                tg.create_task(self.audio_waveform(file, request))
-            if "document-thumbnail" in request["activities"]:
-                tg.create_task(self.document_thumbnail(file, request))
-            if "font-thumbnail" in request["activities"]:
-                tg.create_task(self.font_thumbnail(file, request))
-            if "font-metadata" in request["activities"]:
-                tg.create_task(self.font_metadata(file, request))
-            if "font-detail" in request["activities"]:
-                tg.create_task(self.font_detail(file, request))
+            async with asyncio.TaskGroup() as tg:
+                if "image-thumbnail" in request["activities"]:
+                    tg.create_task(self.image_thumbnail(file, request))
+                if "image-detail" in request["activities"]:
+                    tg.create_task(self.image_detail(file, request))
+                if "image-detail-basic" in request["activities"]:
+                    tg.create_task(self.image_detail_basic(file, request))
+                if "image-color-palette" in request["activities"]:
+                    tg.create_task(self.image_color_palette(file, request))
+                if "video-metadata" in request["activities"]:
+                    tg.create_task(self.video_metadata(file, request))
+                if "video-transcode" in request["activities"]:
+                    tg.create_task(self.video_transcode(file, request))
+                if "audio-waveform" in request["activities"]:
+                    tg.create_task(self.audio_waveform(file, request))
+                if "document-thumbnail" in request["activities"]:
+                    tg.create_task(self.document_thumbnail(file, request))
+                if "font-thumbnail" in request["activities"]:
+                    tg.create_task(self.font_thumbnail(file, request))
+                if "font-metadata" in request["activities"]:
+                    tg.create_task(self.font_metadata(file, request))
+                if "font-detail" in request["activities"]:
+                    tg.create_task(self.font_detail(file, request))
 
-        return {
-            "id": workflow.info().workflow_id,
-            "request": request,
-            "result": self.results,
-        }
+            return {
+                "id": workflow.info().workflow_id,
+                "request": request,
+                "result": self.results,
+            }
+
+        # If the workflow timeout, report the error via callback
+        except Exception as err:
+            if callback := request.get("callback"):
+                data = {
+                    "id": workflow.info().workflow_id,
+                    "request": request,
+                    "error": str(err),
+                }
+                await start("callback", args=[callback, data])
+            raise
 
     async def submit(self, activity, request, result):
         self.results[activity] = result
