@@ -94,6 +94,18 @@ class FileAnalysis:
             "result": self.results,
         }
 
+    async def submit(self, activity, request, result):
+        self.results[activity] = result
+        if callback := request.get("callback"):
+            response = {
+                "id": workflow.info().workflow_id,
+                "request": request,
+                "result": {
+                    activity: result,
+                },
+            }
+            await start("callback", args=[callback, response])
+
     async def image_thumbnail(self, file, request):
         activity = "image-thumbnail"
         params = {
@@ -101,17 +113,8 @@ class FileAnalysis:
             **request.get("params", {}).get(activity, {}),
         }
         file = await start(activity, params)
-        url = await start("upload", args=[file, "image/png"])
-        self.results[activity] = url
-        callback_data = {
-            "id": workflow.info().workflow_id,
-            "request": request,
-            "result": {
-                activity: url,
-            },
-        }
-        if callback := request.get("callback"):
-            await start("callback", args=[callback, callback_data])
+        result = await start("upload", args=[file, "image/png"])
+        await self.submit(activity, request, result)
 
     async def image_detail(self, file, request):
         activity = "image-detail"
@@ -123,17 +126,8 @@ class FileAnalysis:
             "url": url,
             **request.get("params", {}).get(activity, {}),
         }
-        data = await start(activity, params)
-        self.results[activity] = data
-        callback_data = {
-            "id": workflow.info().workflow_id,
-            "request": request,
-            "result": {
-                activity: data,
-            },
-        }
-        if callback := request.get("callback"):
-            await start("callback", args=[callback, callback_data])
+        result = await start(activity, params)
+        await self.submit(activity, request, result)
 
     async def image_color_palette(self, file, request):
         activity = "image-color-palette"
@@ -141,17 +135,8 @@ class FileAnalysis:
             "file": file,
             **request.get("params", {}).get(activity, {}),
         }
-        data = await start(activity, params)
-        self.results[activity] = data
-        callback_data = {
-            "id": workflow.info().workflow_id,
-            "request": request,
-            "result": {
-                activity: data,
-            },
-        }
-        if callback := request.get("callback"):
-            await start("callback", args=[callback, callback_data])
+        result = await start(activity, params)
+        await self.submit(activity, request, result)
 
     async def video_transcode(self, file, request):
         activity = "video-transcode"
@@ -161,17 +146,8 @@ class FileAnalysis:
         }
         path = await start(activity, params)
         mimetype = f"video/{params.get("container", "mp4")}"
-        url = await start("upload", args=[path, mimetype])
-        self.results[activity] = url
-        callback_data = {
-            "id": workflow.info().workflow_id,
-            "request": request,
-            "result": {
-                activity: url,
-            },
-        }
-        if callback := request.get("callback"):
-            await start("callback", args=[callback, callback_data])
+        result = await start("upload", args=[path, mimetype])
+        await self.submit(activity, request, result)
 
     async def document_thumbnail(self, file, request):
         activity = "document-thumbnail"
@@ -187,19 +163,10 @@ class FileAnalysis:
         }
         images = await start("pdf-thumbnail", params)
         # upload thumbnails
-        urls = await asyncio.gather(
+        result = await asyncio.gather(
             *[start("upload", args=[image, "image/png"]) for image in images]
         )
-        self.results[activity] = urls
-        callback_data = {
-            "id": workflow.info().workflow_id,
-            "request": request,
-            "result": {
-                activity: urls,
-            },
-        }
-        if callback := request.get("callback"):
-            await start("callback", args=[callback, callback_data])
+        await self.submit(activity, request, result)
 
 
 @workflow.defn(name="color-calibrate")
