@@ -148,7 +148,7 @@ async def font_detail(params) -> dict:
             "image": {
                 "type": "image",
                 "transfer_method": "remote_url",
-                "url": params["file"],
+                "url": params["url"],
             },
         },
         "user": os.environ["DIFY_USER"],
@@ -156,11 +156,14 @@ async def font_detail(params) -> dict:
     }
     async with aiohttp.ClientSession() as session:
         url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
-        async with session.post(url, headers=headers, json=json) as r:
-            r.raise_for_status()
-            result = await r.json()
-    assert result["data"]["status"] == "succeeded"
-    output = result["data"]["outputs"]
+        async with session.post(url, headers=headers, json=json) as response:
+            try:
+                response.raise_for_status()
+                result = await response.json()
+                assert result["data"]["status"] == "succeeded"
+                output = result["data"]["outputs"]
+            except:
+                raise RuntimeError(f"dify failed: {await response.text()}, json={json}")
 
     assert isinstance(output["description"], str)
     assert isinstance(output["tags"], str)

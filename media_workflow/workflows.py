@@ -3,6 +3,7 @@ import functools
 import inspect
 import sys
 from datetime import timedelta
+from json import dumps as json_dumps
 
 from temporalio import workflow
 
@@ -16,29 +17,6 @@ start = functools.partial(
     schedule_to_close_timeout=timedelta(minutes=20),
     start_to_close_timeout=timedelta(minutes=5),
 )
-
-
-# @workflow.defn(name="font-detail")
-# class FontDetail:
-#     @workflow.run
-#     async def run(self, params):
-#         image = await start("font_thumbnail", params)
-#         meta = await start("font_metadata", params)
-#         basic_info = {
-#             "name": meta["full_name"],
-#             "designer": meta["designer"],
-#             "description": meta["description"],
-#             "supports_kerning": meta["kerning"],
-#             "supports_chinese": meta["chinese"],
-#         }
-#         result = await start(
-#             "font_detail",
-#             {**params, "file": image, "basic_info": json_dumps(basic_info)},
-#         )
-#         result["id"] = workflow.info().workflow_id
-#         if callback_url := params.get("callback_url"):
-#             await start("callback", args=[callback_url, result])
-#         return result
 
 
 # @workflow.defn(name="image-detail-basic")
@@ -194,12 +172,24 @@ class FileAnalysis:
         await self.submit(activity, request, result)
 
     async def font_detail(self, file, request):
-        activity = "font-thumbnail"
+        activity = "font-detail"
+        image = await start("font-thumbnail", {"file": file})
+        image_url = await start("upload", image)
+        meta = await start("font-metadata", {"file": file})
+        basic_info = {
+            "name": meta["full_name"],
+            "designer": meta["designer"],
+            "description": meta["description"],
+            "supports_kerning": meta["kerning"],
+            "supports_chinese": meta["chinese"],
+        }
         params = {
-            "file": file,
+            "url": image_url,
+            "basic_info": json_dumps(basic_info),
+            "language": "Simplified Chinese",
             **request.get("params", {}).get(activity, {}),
         }
-        result = await start(activity, params)
+        result = await start("font-detail", params)
         await self.submit(activity, request, result)
 
 

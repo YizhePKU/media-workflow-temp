@@ -236,7 +236,6 @@ async def test_font_metadata(file):
     assert "font_family" in result["result"]["font-metadata"]
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", fonts)
 async def test_font_detail(file):
     client = await get_client()
@@ -250,7 +249,7 @@ async def test_font_detail(file):
         },
     }
     result = await client.execute_workflow(
-        "font-detail", params, id=f"{uuid4()}", task_queue="media"
+        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
     description = result["result"]["font-detail"]["description"]
     assert not description.isascii()
