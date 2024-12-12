@@ -1,5 +1,7 @@
+from dataclasses import dataclass
 import os
 from inspect import cleandoc
+from typing import Tuple
 
 import aiohttp
 from fontTools.ttLib import TTFont
@@ -32,17 +34,24 @@ def supports_chinese(font: TTFont) -> bool:
     return all(ord(char) in cmap for char in CHINESE_SAMPLE if not char.isspace())
 
 
-def thumbnail(font: str, size, font_size) -> Image.Image:
-    """Generate a thumbnail for the font."""
-    margin = int(font_size * 0.5)
-    spacing = int(font_size * 0.25)
+@dataclass
+class ThumbnailParams:
+    file: str
+    size: Tuple[int, int] = (1000, 1000)
+    font_size: int = 200
 
-    if supports_chinese(TTFont(font, fontNumber=0)):
+
+@activity.defn(name="font-thumbnail")
+async def font_thumbnail(params: ThumbnailParams) -> str:
+    margin = int(params.font_size * 0.5)
+    spacing = int(params.font_size * 0.25)
+
+    if supports_chinese(TTFont(params.file, fontNumber=0)):
         sample = CHINESE_SAMPLE
     else:
         sample = ENGLISH_SAMPLE
 
-    font = ImageFont.truetype(font, size=font_size)
+    font = ImageFont.truetype(params.file, size=params.font_size)
 
     # Calculate how large the image needs to be.
     bbox = ImageDraw.Draw(Image.new("RGB", (0, 0))).multiline_textbbox(
@@ -59,21 +68,27 @@ def thumbnail(font: str, size, font_size) -> Image.Image:
         spacing=spacing,
         fill="black",
     )
-    if size:
-        image.thumbnail(size, resample=Image.LANCZOS)
-    return image
+    if params.size is not None:
+        image.thumbnail(params.size, resample=Image.LANCZOS)
+    return imwrite(image)
 
 
-def metadata(font: TTFont, language: str):
-    """Extract font metadata."""
+@dataclass
+class MetadataParams:
+    file: str
+    language: str = "English"
+
+
+@activity.defn(name="font-metadata")
+async def font_metadata(params: MetadataParams) -> str:
     platform_id = 3  # Microsoft
     encoding_id = 1  # Unicode BMP
-    if language == "Simplified Chinese":
+    if params.language == "Simplified Chinese":
         language_id = 2052  # Simplified Chinese
-    elif language == "English":
+    elif params.language == "English":
         language_id = 1033  # English
     else:
-        raise Exception(f"unsupported language: {language}")
+        raise Exception(f"unsupported language: {params.language}")
 
     indices = {
         "copyright_notice": 0,
@@ -95,6 +110,7 @@ def metadata(font: TTFont, language: str):
         "typographic_subfamily": 17,
     }
     meta = {}
+    font = TTFont(params.file, fontNumber=0)
     for key, index in indices.items():
         if record := font["name"].getName(index, platform_id, encoding_id, language_id):
             meta[key] = record.toStr()
@@ -119,35 +135,24 @@ def metadata(font: TTFont, language: str):
     return meta
 
 
-@activity.defn(name="font-thumbnail")
-async def font_thumbnail(params) -> str:
-    image = thumbnail(
-        params["file"],
-        size=params.get("size", (800, 600)),
-        font_size=params.get("font_size", 200),
-    )
-    return imwrite(image)
-
-
-@activity.defn(name="font-metadata")
-async def font_metadata(params) -> str:
-    return metadata(
-        TTFont(params["file"], fontNumber=0),
-        language=params.get("language", "English"),
-    )
+@dataclass
+class DetailParams:
+    image_url: str
+    basic_info: str
+    language: str = "Simplified Chinese"
 
 
 @activity.defn(name="font-detail")
-async def font_detail(params) -> dict:
+async def font_detail(params: DetailParams) -> dict:
     headers = {"Authorization": f"Bearer {os.environ["DIFY_FONT_DETAIL_KEY"]}"}
     json = {
         "inputs": {
-            "language": params["language"],
-            "basic_info": params["basic_info"],
+            "language": params.language,
+            "basic_info": params.basic_info,
             "image": {
                 "type": "image",
                 "transfer_method": "remote_url",
-                "url": params["url"],
+                "url": params.image_url,
             },
         },
         "user": os.environ["DIFY_USER"],

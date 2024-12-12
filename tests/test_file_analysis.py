@@ -233,11 +233,6 @@ async def test_font_metadata(file):
     params = {
         "file": file,
         "activities": ["font-metadata"],
-        "params": {
-            "font-metadata": {
-                "language": "Simplified Chinese",
-            }
-        },
     }
     result = await client.execute_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
