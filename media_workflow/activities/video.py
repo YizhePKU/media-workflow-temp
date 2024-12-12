@@ -37,6 +37,8 @@ async def video_metadata(file) -> dict:
             result["height"] = int(stream["height"])
             numerator, denominator = map(int, stream["avg_frame_rate"].split("/"))
             result["fps"] = float(numerator) / float(denominator)
+            result["bit_rate"] = int(stream["bit_rate"])
+            result["bits_per_raw_sample"] = int(stream["bits_per_raw_sample"])
             result["pix_fmt"] = stream["pix_fmt"]
         if stream["codec_type"] == "audio":
             result["audio_codec"] = stream["codec_name"]
