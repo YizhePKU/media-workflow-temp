@@ -277,17 +277,26 @@ async def test_video_metadata(file):
     assert isinstance(result["result"]["video-metadata"]["fps"], float)
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize("file", videos)
 async def test_video_sprite(file):
     client = await get_client()
     params = {
         "file": file,
         "activities": ["video-sprite"],
+        "params": {
+            "video-sprite": {
+                "count": 2,
+                "layout": [6, 5],
+                "width": 800,
+            },
+        },
     }
-    await client.execute_workflow(
+    result = await client.execute_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
+    assert len(result["result"]["video-sprite"]) == 2
+    image = imread(await download(result["result"]["video-sprite"][0]))
+    assert image.size[0] <= 800
 
 
 @pytest.mark.parametrize("file", videos)

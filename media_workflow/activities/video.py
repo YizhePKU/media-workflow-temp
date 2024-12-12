@@ -1,9 +1,11 @@
+from dataclasses import dataclass
 import json
 import math
 import os
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import Tuple
 from uuid import uuid4
 
 import ffmpeg
@@ -50,33 +52,35 @@ async def video_metadata(file) -> dict:
     return result
 
 
+@dataclass
+class VideoSpriteParams:
+    file: str
+    duration: float
+    layout: Tuple[int, int] = (1, 1)
+    count: int = 1
+    width: int = -1
+    height: int = -1
+
+
 @activity.defn(name="video-sprite")
-async def video_sprite(params) -> list[str]:
-    dir = tempfile.gettempdir()
-    stream = ffmpeg.input(params["file"])
+async def video_sprite(params: VideoSpriteParams) -> list[str]:
+    dir = tempfile.mkdtemp()
 
-    interval = params.get("interval", 5)
-    expr = f"floor((t - prev_selected_t) / {interval})"
-    stream = stream.filter("select", expr=expr)
-
-    if layout := params.get("layout"):
-        stream = stream.filter("tile", layout=f"{layout[0]}x{layout[1]}")
-
-    stream = stream.filter(
-        "scale", width=params.get("width", -1), height=params.get("height", -1)
+    # calculate time between frames (in seconds)
+    interval = params.duration / float(
+        params.count * params.layout[0] * params.layout[1]
     )
 
-    filename = f"{dir}/%03d.png"
-    if count := params.get("count"):
-        stream = stream.output(filename, fps_mode="passthrough", vframes=count)
-    else:
-        stream = stream.output(filename, fps_mode="passthrough")
-
+    stream = ffmpeg.input(params.file)
+    stream = stream.filter("fps", 1 / interval)
+    stream = stream.filter("tile", layout=f"{params.layout[0]}x{params.layout[1]}")
+    stream = stream.filter("scale", width=params.width, height=params.height)
+    stream = stream.output(f"{dir}/%03d.png", vframes=params.count)
     stream.run()
 
     paths = list(Path(dir).iterdir())
     paths.sort(key=lambda p: int(p.stem))
-    return paths
+    return [str(path) for path in paths]
 
 
 @activity.defn(name="video-transcode")

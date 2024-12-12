@@ -7,6 +7,9 @@ from json import dumps as json_dumps
 
 from temporalio import workflow
 
+with workflow.unsafe.imports_passed_through():
+    from media_workflow.activities.video import VideoSpriteParams
+
 start = functools.partial(
     workflow.start_activity,
     start_to_close_timeout=timedelta(minutes=5),
@@ -46,6 +49,8 @@ class FileAnalysis:
                     tg.create_task(self.image_color_palette(file, request))
                 if "video-metadata" in request["activities"]:
                     tg.create_task(self.video_metadata(file, request))
+                if "video-sprite" in request["activities"]:
+                    tg.create_task(self.video_sprite(file, request))
                 if "video-transcode" in request["activities"]:
                     tg.create_task(self.video_transcode(file, request))
                 if "audio-waveform" in request["activities"]:
@@ -139,6 +144,17 @@ class FileAnalysis:
     async def video_metadata(self, file, request):
         activity = "video-metadata"
         result = await start(activity, file)
+        await self.submit(activity, request, result)
+
+    async def video_sprite(self, file, request):
+        activity = "video-sprite"
+        metadata = await start("video-metadata", file)
+        duration = metadata["duration"]
+        params = request.get("params", {}).get(activity, {})
+        images = await start(activity, VideoSpriteParams(file, duration, **params))
+        result = await asyncio.gather(
+            *[start("upload", args=[image, "image/png"]) for image in images]
+        )
         await self.submit(activity, request, result)
 
     async def video_transcode(self, file, request):
