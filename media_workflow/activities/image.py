@@ -17,7 +17,7 @@ from pylette.color_extraction import extract_colors
 @dataclass
 class ThumbnailParams:
     file: str
-    size: Tuple[int, int] = None
+    size: Tuple[int, int] | None = None
 
 
 @activity.defn(name="image-thumbnail")
