@@ -7,8 +7,10 @@ from json import dumps as json_dumps
 
 from temporalio import workflow
 
+
 with workflow.unsafe.imports_passed_through():
-    from media_workflow.activities.video import VideoSpriteParams
+    import media_workflow.activities.video as video
+    from media_workflow.activities.video import SpriteParams
 
 start = functools.partial(
     workflow.start_activity,
@@ -143,15 +145,17 @@ class FileAnalysis:
 
     async def video_metadata(self, file, request):
         activity = "video-metadata"
-        result = await start(activity, file)
+        result = await start(video.metadata, video.MetadataParams(file))
         await self.submit(activity, request, result)
 
     async def video_sprite(self, file, request):
         activity = "video-sprite"
-        metadata = await start("video-metadata", file)
+        metadata = await start(video.metadata, video.MetadataParams(file))
         duration = metadata["duration"]
-        params = request.get("params", {}).get(activity, {})
-        images = await start(activity, VideoSpriteParams(file, duration, **params))
+        images = await start(
+            video.sprite,
+            SpriteParams(file, duration, **request.get("params", {}).get(activity, {})),
+        )
         result = await asyncio.gather(
             *[start("upload", args=[image, "image/png"]) for image in images]
         )
@@ -159,22 +163,20 @@ class FileAnalysis:
 
     async def video_transcode(self, file, request):
         activity = "video-transcode"
-        params = {
-            "file": file,
-            **request.get("params", {}).get(activity, {}),
-        }
-        path = await start(activity, params)
-        mimetype = f"video/{params.get("container", "mp4")}"
+        params = video.TranscodeParams(
+            file, **request.get("params", {}).get(activity, {})
+        )
+        path = await start(video.transcode, params)
+        mimetype = f"video/{params.container}"
         result = await start("upload", args=[path, mimetype])
         await self.submit(activity, request, result)
 
     async def audio_waveform(self, file, request):
         activity = "audio-waveform"
-        params = {
-            "file": file,
-            **request.get("params", {}).get(activity, {}),
-        }
-        result = await start(activity, params)
+        result = await start(
+            video.waveform,
+            video.WaveformParams(file, **request.get("params", {}).get(activity, {})),
+        )
         await self.submit(activity, request, result)
 
     async def document_thumbnail(self, file, request):

@@ -14,8 +14,13 @@ from pydub import AudioSegment
 from temporalio import activity
 
 
+@dataclass
+class MetadataParams:
+    file: str
+
+
 @activity.defn(name="video-metadata")
-async def video_metadata(file) -> dict:
+async def metadata(params: MetadataParams) -> dict:
     command = [
         "ffprobe",
         "-v",
@@ -23,7 +28,7 @@ async def video_metadata(file) -> dict:
         "-print_format",
         "json",
         "-show_streams",
-        file,
+        params.file,
     ]
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode != 0:
@@ -48,12 +53,12 @@ async def video_metadata(file) -> dict:
             result["channel_layout"] = stream["channel_layout"]
             result["sample_rate"] = int(stream["sample_rate"])
 
-    result["size"] = os.path.getsize(file)
+    result["size"] = os.path.getsize(params.file)
     return result
 
 
 @dataclass
-class VideoSpriteParams:
+class SpriteParams:
     file: str
     duration: float
     layout: Tuple[int, int] = (1, 1)
@@ -63,7 +68,7 @@ class VideoSpriteParams:
 
 
 @activity.defn(name="video-sprite")
-async def video_sprite(params: VideoSpriteParams) -> list[str]:
+async def sprite(params: SpriteParams) -> list[str]:
     dir = tempfile.mkdtemp()
 
     # calculate time between frames (in seconds)
@@ -83,28 +88,41 @@ async def video_sprite(params: VideoSpriteParams) -> list[str]:
     return [str(path) for path in paths]
 
 
+@dataclass
+class TranscodeParams:
+    file: str
+    video_codec: str = "h264"
+    audio_codec: str = "libopus"
+    container: str = "mp4"
+
+
 @activity.defn(name="video-transcode")
-async def video_transcode(params) -> str:
+async def transcode(params: TranscodeParams) -> str:
     dir = tempfile.gettempdir()
-    stream = ffmpeg.input(params["file"])
-    container = params.get("container", "mp4")
-    path = f"{dir}/{uuid4()}.{container}"
+    path = f"{dir}/{uuid4()}.{params.container}"
+    stream = ffmpeg.input(params.file)
     kwargs = {
-        "codec:v": params.get("video-codec", "h264"),
-        "codec:a": params.get("audio-codec", "libopus"),
+        "codec:v": params.video_codec,
+        "codec:a": params.audio_codec,
     }
     stream = stream.output(path, **kwargs)
     stream.run()
     return path
 
 
+@dataclass
+class WaveformParams:
+    file: str
+    num_samples: int = 1000
+
+
 @activity.defn(name="audio-waveform")
-async def audio_waveform(params) -> list[float]:
-    audio = AudioSegment.from_file(params["file"])
+async def waveform(params: WaveformParams) -> list[float]:
+    audio = AudioSegment.from_file(params.file)
     data = np.array(audio.get_array_of_samples())
 
-    samples = np.zeros(params["num_samples"])
-    step = math.ceil(len(data) / params["num_samples"])
+    samples = np.zeros(params.num_samples)
+    step = math.ceil(len(data) / params.num_samples)
     for i in range(0, len(data), step):
         samples[i // step] = np.max(np.abs(data[i : i + step]))
 
