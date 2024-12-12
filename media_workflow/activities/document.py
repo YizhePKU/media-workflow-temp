@@ -32,8 +32,8 @@ async def to_pdf(params: ToPdfParams) -> str:
 @dataclass
 class ThumbnailParams:
     file: str
-    pages: list[int] = None
-    size: Tuple[int, int] = None
+    pages: list[int] | None = None
+    size: Tuple[int, int] | None = None
 
 
 @activity.defn(name="pdf-thumbnail")
