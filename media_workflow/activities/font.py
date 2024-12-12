@@ -42,7 +42,7 @@ class ThumbnailParams:
 
 
 @activity.defn(name="font-thumbnail")
-async def font_thumbnail(params: ThumbnailParams) -> str:
+async def thumbnail(params: ThumbnailParams) -> str:
     margin = int(params.font_size * 0.5)
     spacing = int(params.font_size * 0.25)
 
@@ -80,7 +80,7 @@ class MetadataParams:
 
 
 @activity.defn(name="font-metadata")
-async def font_metadata(params: MetadataParams) -> str:
+async def metadata(params: MetadataParams) -> dict:
     platform_id = 3  # Microsoft
     encoding_id = 1  # Unicode BMP
     if params.language == "Simplified Chinese":
@@ -137,13 +137,13 @@ async def font_metadata(params: MetadataParams) -> str:
 
 @dataclass
 class DetailParams:
-    image_url: str
+    url: str
     basic_info: str
     language: str = "Simplified Chinese"
 
 
 @activity.defn(name="font-detail")
-async def font_detail(params: DetailParams) -> dict:
+async def detail(params: DetailParams) -> dict:
     headers = {"Authorization": f"Bearer {os.environ["DIFY_FONT_DETAIL_KEY"]}"}
     json = {
         "inputs": {
@@ -152,7 +152,7 @@ async def font_detail(params: DetailParams) -> dict:
             "image": {
                 "type": "image",
                 "transfer_method": "remote_url",
-                "url": params.image_url,
+                "url": params.url,
             },
         },
         "user": os.environ["DIFY_USER"],

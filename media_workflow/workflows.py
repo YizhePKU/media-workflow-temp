@@ -9,7 +9,7 @@ from temporalio import workflow
 
 
 with workflow.unsafe.imports_passed_through():
-    from media_workflow.activities import document, image, video
+    from media_workflow.activities import document, font, image, video
 
 start = functools.partial(
     workflow.start_activity,
@@ -204,42 +204,41 @@ class FileAnalysis:
 
     async def font_thumbnail(self, file, request):
         activity = "font-thumbnail"
-        params = {
-            "file": file,
-            **request.get("params", {}).get(activity, {}),
-        }
-        image = await start(activity, params)
+        image = await start(
+            font.thumbnail,
+            font.ThumbnailParams(file, **request.get("params", {}).get(activity, {})),
+        )
         result = await start("upload", args=[image, "image/png"])
         await self.submit(activity, request, result)
 
     async def font_metadata(self, file, request):
         activity = "font-metadata"
-        params = {
-            "file": file,
-            **request.get("params", {}).get(activity, {}),
-        }
-        result = await start(activity, params)
+        result = await start(
+            font.metadata,
+            font.MetadataParams(file, **request.get("params", {}).get(activity, {})),
+        )
         await self.submit(activity, request, result)
 
     async def font_detail(self, file, request):
         activity = "font-detail"
-        image = await start("font-thumbnail", {"file": file})
+        image = await start(font.thumbnail, font.ThumbnailParams(file))
         image_url = await start("upload", image)
-        meta = await start("font-metadata", {"file": file})
+        metadata = await start(font.metadata, font.MetadataParams(file))
         basic_info = {
-            "name": meta["full_name"],
-            "designer": meta["designer"],
-            "description": meta["description"],
-            "supports_kerning": meta["kerning"],
-            "supports_chinese": meta["chinese"],
+            "name": metadata["full_name"],
+            "designer": metadata["designer"],
+            "description": metadata["description"],
+            "supports_kerning": metadata["kerning"],
+            "supports_chinese": metadata["chinese"],
         }
-        params = {
-            "url": image_url,
-            "basic_info": json_dumps(basic_info),
-            "language": "Simplified Chinese",
-            **request.get("params", {}).get(activity, {}),
-        }
-        result = await start("font-detail", params)
+        result = await start(
+            font.detail,
+            font.DetailParams(
+                url=image_url,
+                basic_info=json_dumps(basic_info),
+                **request.get("params", {}).get(activity, {}),
+            ),
+        )
         await self.submit(activity, request, result)
 
 
