@@ -1,43 +1,54 @@
+from dataclasses import dataclass
 import os
 from base64 import b64encode
 from inspect import cleandoc
 from json import loads as json_loads
 import re
+from typing import Tuple
 
 import aiohttp
 from PIL import Image
 from temporalio import activity
 
-from media_workflow.trace import span_attribute
 from media_workflow.utils import imread, imwrite
 from pylette.color_extraction import extract_colors
 
 
+@dataclass
+class ThumbnailParams:
+    file: str
+    size: Tuple[int, int] = None
+
+
 @activity.defn(name="image-thumbnail")
-async def image_thumbnail(params) -> str:
-    image = imread(params["file"])
-    if size := params.get("size"):
-        image.thumbnail(size, resample=Image.LANCZOS)
+async def thumbnail(params: ThumbnailParams) -> str:
+    image = imread(params.file)
+    if params.size is not None:
+        image.thumbnail(params.size, resample=Image.LANCZOS)
     return imwrite(image)
 
 
+@dataclass
+class DetailParams:
+    url: str
+    language: str = "Simplified Chinese"
+
+
 @activity.defn(name="image-detail")
-async def image_detail(params) -> dict:
+async def detail(params: DetailParams) -> dict:
     headers = {"Authorization": f"Bearer {os.environ["DIFY_IMAGE_DETAIL_KEY"]}"}
     json = {
         "inputs": {
-            "language": params["language"],
+            "language": params.language,
             "image": {
                 "type": "image",
                 "transfer_method": "remote_url",
-                "url": params["url"],
+                "url": params.url,
             },
         },
         "user": os.environ["DIFY_USER"],
         "response_mode": "blocking",
     }
-    span_attribute("dify_input", str(json))
-
     async with aiohttp.ClientSession() as session:
         url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
         async with session.post(url, headers=headers, json=json) as r:
@@ -53,6 +64,12 @@ async def image_detail(params) -> dict:
         raise RuntimeError(f"validation failed for dify output: {await r.json()}")
 
     return result["data"]["outputs"]
+
+
+@dataclass
+class DetailBasicParams:
+    file: str
+    language: str = "Simplified Chinese"
 
 
 async def minicpm(prompt: str, image: str, postprocess=None):
@@ -80,8 +97,8 @@ async def minicpm(prompt: str, image: str, postprocess=None):
     return content
 
 
-@activity.defn(name="image-analysis-basic")
-async def image_analysis_basic(params):
+@activity.defn(name="image-minicpm-basic")
+async def minicpm_basic(params: DetailBasicParams):
     def postprocess(content):
         json = json_loads(content)
         assert isinstance(json["title"], str)
@@ -94,13 +111,13 @@ async def image_analysis_basic(params):
 
     prompt = cleandoc(
         f"""
-        Extract a title and a detailed description from the image. The output should be in {params["language"]}.
+        Extract a title and a detailed description from the image. The output should be in {params.language}.
 
         The output should be in JSON format. The output JSON should contain the following keys:
         - title
         - description
 
-        The title should summarize the image in a short, single sentence using {params["language"]}.
+        The title should summarize the image in a short, single sentence using {params.language}.
         No punctuation mark should be in the title.
 
         The description should be a long text that describes the content of the image.
@@ -108,11 +125,11 @@ async def image_analysis_basic(params):
         If there're any text in the image, mention the text and the font type of that text.
         """
     )
-    return await minicpm(prompt, params["file"], postprocess)
+    return await minicpm(prompt, params.file, postprocess)
 
 
-@activity.defn(name="image-analysis-tags")
-async def image_analysis_tags(params):
+@activity.defn(name="image-minicpm-tags")
+async def minicpm_tags(params: DetailBasicParams):
     def postprocess(content):
         keys = [
             "theme_identification",
@@ -140,7 +157,7 @@ async def image_analysis_tags(params):
                 subvalue for value in json[key] for subvalue in re.split(",|，", value)
             )
         # reject English results if the language is not set to English
-        if params["language"].lower() != "english":
+        if params.language.lower() != "english":
             for tags in json.values():
                 for tag in tags:
                     if tag.isascii():
@@ -151,7 +168,7 @@ async def image_analysis_tags(params):
 
     prompt = cleandoc(
         f"""
-        Extract tags from the image according to some predefined aspects. The output should be in {params["language"]}.
+        Extract tags from the image according to some predefined aspects. The output should be in {params.language}.
 
         The output should be a JSON object with the following keys:
         - theme_identification: summarize the core theme of the material, such as education, technology, health, etc.
@@ -166,7 +183,7 @@ async def image_analysis_tags(params):
         - trend_tracking: summarize current trends or hot issues, such as sustainable development, artificial intelligence, etc.
 
         Each tag value should be a JSON list containing zero of more short strings.
-        Each string should briefly describes the image in {params["language"]}.
+        Each string should briefly describes the image in {params.language}.
         Only use strings inside lists, not complex objects.
 
         If the extracted value is vague or non-informative, or if the tag doesn't apply to this image, set the value to an empty list instead. 
@@ -174,11 +191,11 @@ async def image_analysis_tags(params):
         If the extracted value is too long, shorten it by summarizing the key information.
         """
     )
-    return await minicpm(prompt, params["file"], postprocess)
+    return await minicpm(prompt, params.file, postprocess)
 
 
-@activity.defn(name="image-analysis-details")
-async def image_analysis_details(params):
+@activity.defn(name="image-minicpm-details")
+async def minicpm_details(params: DetailBasicParams):
     def postprocess(content):
         keys = [
             "usage",
@@ -196,7 +213,7 @@ async def image_analysis_details(params):
                 json[key] = None
 
         # reject English results if the language is not set to English
-        if params["language"].lower() != "english":
+        if params.language.lower() != "english":
             for value in json.values():
                 if value and value.isascii():
                     raise Exception(
@@ -207,7 +224,7 @@ async def image_analysis_details(params):
     prompt = cleandoc(
         f"""
         Extract detailed descriptions from the image according to some predefined aspects.
-        The output should be in {params["language"]}.
+        The output should be in {params.language}.
 
         The output should be a JSON object with the following keys:
         - usage
@@ -218,20 +235,26 @@ async def image_analysis_details(params):
         - seasonality
         - holiday_theme
 
-        Each value should be a short phrase that describes the image in {params["language"]}.
-        If the extracted value is not in {params["language"]}, translate the value to {params["language"]} instead.
+        Each value should be a short phrase that describes the image in {params.language}.
+        If the extracted value is not in {params.language}, translate the value to {params.language} instead.
         If no relevant information can be extracted from the image, or if the result is vague, set the value to null instead.
         """
     )
-    return await minicpm(prompt, params["file"], postprocess)
+    return await minicpm(prompt, params.file, postprocess)
 
 
 def rgb2hex(rgb: list[int]) -> str:
     return f"#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
 
 
+@dataclass
+class ColorPaletteParams:
+    file: str
+    count: int = 10
+
+
 @activity.defn(name="image-color-palette")
-async def image_color_palette(params) -> list:
-    image = imread(params["file"])
-    palette = extract_colors(image.convert("RGB"), params.get("count", 10))
+async def color_palette(params: ColorPaletteParams) -> list:
+    image = imread(params.file)
+    palette = extract_colors(image.convert("RGB"), params.count)
     return [{"color": rgb2hex(color.rgb), "frequency": color.freq} for color in palette]

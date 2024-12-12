@@ -9,8 +9,8 @@ from temporalio import workflow
 
 
 with workflow.unsafe.imports_passed_through():
+    import media_workflow.activities.image as image
     import media_workflow.activities.video as video
-    from media_workflow.activities.video import SpriteParams
 
 start = functools.partial(
     workflow.start_activity,
@@ -97,35 +97,39 @@ class FileAnalysis:
 
     async def image_thumbnail(self, file, request):
         activity = "image-thumbnail"
-        params = {
-            "file": file,
-            **request.get("params", {}).get(activity, {}),
-        }
-        file = await start(activity, params)
+        file = await start(
+            image.thumbnail,
+            image.ThumbnailParams(file, **request.get("params", {}).get(activity, {})),
+        )
         result = await start("upload", args=[file, "image/png"])
         await self.submit(activity, request, result)
 
     async def image_detail(self, file, request):
         activity = "image-detail"
         # convert image to PNG first
-        file = await start("image-thumbnail", {"file": file, "size": [1000, 1000]})
-        url = await start("upload", args=[file, "image/png"])
-        params = {
-            "url": url,
-            **request.get("params", {}).get(activity, {}),
-        }
-        result = await start(activity, params)
+        png = await start(
+            image.thumbnail, image.ThumbnailParams(file, size=(1000, 1000))
+        )
+        url = await start("upload", args=[png, "image/png"])
+        result = await start(
+            image.detail,
+            image.DetailParams(url, **request.get("params", {}).get(activity, {})),
+        )
         await self.submit(activity, request, result)
 
     async def image_detail_basic(self, file, request):
         activity = "image-detail-basic"
         # convert image to PNG first
-        image = await start("image-thumbnail", {"file": file, "size": [1000, 1000]})
+        png = await start(
+            image.thumbnail, image.ThumbnailParams(file, size=(1000, 1000))
+        )
         # invoke minicpm three times
-        params = {"file": image, **request.get("params", {}).get(activity, {})}
-        basic = await start("image-analysis-basic", params)
-        tags = await start("image-analysis-tags", params)
-        details = await start("image-analysis-details", params)
+        params = image.DetailBasicParams(
+            png, **request.get("params", {}).get(activity, {})
+        )
+        basic = await start(image.minicpm_basic, params)
+        tags = await start(image.minicpm_tags, params)
+        details = await start(image.minicpm_details, params)
         result = {
             "title": basic["title"],
             "description": basic["description"],
@@ -136,11 +140,12 @@ class FileAnalysis:
 
     async def image_color_palette(self, file, request):
         activity = "image-color-palette"
-        params = {
-            "file": file,
-            **request.get("params", {}).get(activity, {}),
-        }
-        result = await start(activity, params)
+        result = await start(
+            image.color_palette,
+            image.ColorPaletteParams(
+                file, **request.get("params", {}).get(activity, {})
+            ),
+        )
         await self.submit(activity, request, result)
 
     async def video_metadata(self, file, request):
@@ -154,7 +159,9 @@ class FileAnalysis:
         duration = metadata["duration"]
         images = await start(
             video.sprite,
-            SpriteParams(file, duration, **request.get("params", {}).get(activity, {})),
+            video.SpriteParams(
+                file, duration, **request.get("params", {}).get(activity, {})
+            ),
         )
         result = await asyncio.gather(
             *[start("upload", args=[image, "image/png"]) for image in images]
