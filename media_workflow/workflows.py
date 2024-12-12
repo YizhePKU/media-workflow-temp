@@ -9,8 +9,7 @@ from temporalio import workflow
 
 
 with workflow.unsafe.imports_passed_through():
-    import media_workflow.activities.image as image
-    import media_workflow.activities.video as video
+    from media_workflow.activities import document, image, video
 
 start = functools.partial(
     workflow.start_activity,
@@ -189,16 +188,14 @@ class FileAnalysis:
     async def document_thumbnail(self, file, request):
         activity = "document-thumbnail"
         # convert the document to PDF
-        params = {
-            "file": file,
-        }
-        pdf = await start("convert-to-pdf", params)
+        pdf = await start(document.to_pdf, document.ToPdfParams(file))
         # extract thumbnails from pdf pages
-        params = {
-            "file": pdf,
-            **request.get("params", {}).get(activity, {}),
-        }
-        images = await start("pdf-thumbnail", params)
+        images = await start(
+            document.thumbnail,
+            document.ThumbnailParams(
+                pdf, **request.get("params", {}).get(activity, {})
+            ),
+        )
         # upload thumbnails
         result = await asyncio.gather(
             *[start("upload", args=[image, "image/png"]) for image in images]

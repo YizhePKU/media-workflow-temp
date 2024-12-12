@@ -1,16 +1,15 @@
-# ruff: noqa: F403
-
 import inspect
-import sys
 
-from media_workflow.activities.calibrate import *
-from media_workflow.activities.document import *
-from media_workflow.activities.font import *
-from media_workflow.activities.image import *
-from media_workflow.activities.utils import *
-from media_workflow.activities.video import *
+import media_workflow.activities.calibrate as calibrate
+import media_workflow.activities.document as document
+import media_workflow.activities.font as font
+import media_workflow.activities.image as images
+import media_workflow.activities.utils as utils
+import media_workflow.activities.video as video
+
 
 activities = []
-for _name, fn in inspect.getmembers(sys.modules[__name__]):
-    if hasattr(fn, "__temporal_activity_definition"):
-        activities.append(fn)
+for module in [calibrate, document, font, images, utils, video]:
+    for _name, fn in inspect.getmembers(module):
+        if hasattr(fn, "__temporal_activity_definition"):
+            activities.append(fn)
