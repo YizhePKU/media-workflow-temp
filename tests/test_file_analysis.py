@@ -285,7 +285,7 @@ async def test_video_sprite(file):
         "file": file,
         "activities": ["video-sprite"],
     }
-    result = await client.execute_workflow(
+    await client.execute_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
 

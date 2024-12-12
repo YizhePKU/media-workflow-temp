@@ -1,6 +1,5 @@
 import os
 from inspect import cleandoc
-from typing import BinaryIO
 
 import aiohttp
 from fontTools.ttLib import TTFont
@@ -109,12 +108,12 @@ def metadata(font: TTFont, language: str):
     try:
         height = font["hhea"].lineGap + font["hhea"].ascent - font["hhea"].descent
         meta["line_height"] = (height / font["head"].unitsPerEm) * 16
-    except Exception as e:
+    except Exception:
         meta["line_height"] = None
 
     try:
         meta["sx_height"] = font["OS/2"].sxHeight
-    except:
+    except Exception:
         meta["sx_height"] = None
 
     return meta
@@ -162,8 +161,10 @@ async def font_detail(params) -> dict:
                 result = await response.json()
                 assert result["data"]["status"] == "succeeded"
                 output = result["data"]["outputs"]
-            except:
-                raise RuntimeError(f"dify failed: {await response.text()}, json={json}")
+            except Exception as err:
+                raise RuntimeError(
+                    f"dify failed with {err}, text={await response.text()}, json={json}"
+                )
 
     assert isinstance(output["description"], str)
     assert isinstance(output["tags"], str)

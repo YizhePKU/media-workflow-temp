@@ -7,7 +7,6 @@
 
 # Finally, run with /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy
 
-import asyncio
 import functools
 import os
 from datetime import timedelta

@@ -26,7 +26,7 @@ async def main():
         workflows=media_workflow.workflows.workflows,
         activities=media_workflow.activities.activities,
     )
-    print(f"starting worker on task_queue media")
+    print("starting worker on task_queue media")
     await worker.run()
 
 

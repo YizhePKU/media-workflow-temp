@@ -24,19 +24,19 @@ def imread(path: str) -> Image:
         if arr.dtype != np.uint8:
             arr = (arr * 256 / np.max(arr)).astype(np.uint8)
         return Image.fromarray(arr)
-    except:
+    except Exception:
         pass
 
     # open the image with psd-tools
     try:
         return PSDImage.open(path).composite()
-    except:
+    except Exception:
         pass
 
     # open the image with cairosvg
     try:
         return Image.open(BytesIO(svg2png(url=path)))
-    except:
+    except Exception:
         pass
 
     # give up

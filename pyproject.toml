@@ -7,15 +7,12 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-pytest = "^8.3.3"
-imageio = {extras = ["pillow-heif", "tifffile"], version = "^2.36.1"}
+imageio = { extras = ["pillow-heif", "tifffile"], version = "^2.36.1" }
 pillow = "^11.0.0"
 cairosvg = "^2.7.1"
 psd-tools = "^1.10.4"
 temporalio = { extras = ["opentelemetry"], version = "^1.8.0" }
 boto3 = "^1.35.63"
-pytest-asyncio = "^0.24.0"
-pytest-xdist = "^3.6.1"
 pymupdf = "^1.24.13"
 aiohttp = "^3.11.2"
 ffmpeg-python = "^0.2.0"
@@ -28,6 +25,11 @@ opentelemetry-api = "^1.28.2"
 opentelemetry-sdk = "^1.28.2"
 opentelemetry-exporter-otlp-proto-http = "^1.28.2"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+pytest-xdist = "^3.6.1"
+ruff = "^0.8.2"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

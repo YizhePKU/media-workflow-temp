@@ -1,7 +1,5 @@
 from uuid import uuid4
 
-import pytest
-
 from media_workflow.worker import get_client
 
 
