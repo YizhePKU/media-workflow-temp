@@ -29,6 +29,9 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read
       packages: write
@@ -115,13 +118,11 @@ jobs:
 
       - name: Pull the published image
         run: docker pull ${{ needs.build.outputs.tags }}
-      
-      - run: echo ${{ secrets.HONEYCOMB_KEY }}
 
       - name: Run pytest
         run: docker run ${{ needs.build.outputs.tags }} poetry run pytest
         env:
-          HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
+          HONEYCOMB_KEY: ABCD
 
           TEMPORAL_SERVER_HOST: 40.162.210.3:7233
           TEMPORAL_NAMESPACE: muse-dev
