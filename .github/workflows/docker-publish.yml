@@ -28,6 +28,8 @@ jobs:
       contents: read
       packages: write
       id-token: write
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -107,10 +109,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull the published image
-        run: docker pull ${{ needs.build.steps.meta.outputs.tags }}
+        run: docker pull ${{ needs.build.outputs.tags }}
 
       - name: Run pytest
-        run: docker run --rm -it ${{ needs.build.steps.meta.outputs.tags }} poetry run pytest
+        run: docker run --rm -it ${{ needs.build.outputs.tags }} poetry run pytest
         env:
           TEMPORAL_SERVER_HOST: 40.162.210.3:7233
           TEMPORAL_NAMESPACE: muse-dev
