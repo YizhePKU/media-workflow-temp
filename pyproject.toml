@@ -6,7 +6,7 @@ authors = ["sunyizhe <sunyizhe@tezign.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 imageio = { extras = ["pillow-heif", "tifffile"], version = "^2.36.1" }
 pillow = "^11.0.0"
 cairosvg = "^2.7.1"

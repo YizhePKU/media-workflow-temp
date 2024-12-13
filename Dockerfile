@@ -1,17 +1,15 @@
-FROM python:3.12.7-bookworm
+FROM debian:bookworm-20241202
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 RUN apt-get update
-RUN apt-get install -y libcairo2-dev ffmpeg libreoffice fonts-recommended fonts-noto-cjk ghostscript libfreeimage3
-
-RUN curl -sSL https://install.python-poetry.org | python3 -
+RUN apt-get install -y python3-poetry libcairo2-dev ffmpeg libreoffice fonts-recommended fonts-noto-cjk ghostscript libfreeimage3
 
 COPY poetry.lock pyproject.toml .
-RUN /root/.local/bin/poetry install --no-interaction --no-root
+RUN poetry install --no-interaction --no-root
 
 COPY . .
-RUN /root/.local/bin/poetry install --no-interaction
+RUN poetry install --no-interaction
 
-CMD /root/.local/bin/poetry run python media_workflow/worker.py
+CMD poetry run python media_workflow/worker.py
