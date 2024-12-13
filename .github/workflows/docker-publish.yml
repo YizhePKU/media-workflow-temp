@@ -114,7 +114,8 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: pytest
-        run: pwd && ls
+        run: poetry run pytest
+        working-directory: /app
         env:
           HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
 
