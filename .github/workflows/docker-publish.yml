@@ -19,8 +19,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: ruff-action
+      - name: ruff-check
         uses: astral-sh/ruff-action@v2.0.0
+
+      - name: ruff-format
+        uses: astral-sh/ruff-action@v2
+        with:
+          args: "format --check"
 
   build:
     runs-on: ubuntu-latest
@@ -114,6 +119,8 @@ jobs:
       - name: Run pytest
         run: docker run ${{ needs.build.outputs.tags }} poetry run pytest
         env:
+          HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
+
           TEMPORAL_SERVER_HOST: 40.162.210.3:7233
           TEMPORAL_NAMESPACE: muse-dev
 
@@ -131,5 +138,4 @@ jobs:
           AWS_ACCESS_KEY_ID: AKIARY7MIU4TTCZEX2FD
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-          HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
           OPENCV_IO_ENABLE_OPENEXR: 1
