@@ -107,10 +107,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull the published image
-        run: docker pull ${{ needs.build.steps.build-and-push.outputs.tags }}
+        run: docker pull ${{ needs.build.steps.meta.outputs.tags }}
 
       - name: Run pytest
-        run: docker run --rm -it ${{ needs.build.steps.build-and-push.outputs.tags }} poetry run pytest
+        run: docker run --rm -it ${{ needs.build.steps.meta.outputs.tags }} poetry run pytest
         env:
           TEMPORAL_SERVER_HOST: 40.162.210.3:7233
           TEMPORAL_NAMESPACE: muse-dev
