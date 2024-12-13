@@ -115,6 +115,8 @@ jobs:
 
       - name: Pull the published image
         run: docker pull ${{ needs.build.outputs.tags }}
+      
+      - run: echo ${{ secrets.HONEYCOMB_KEY }}
 
       - name: Run pytest
         run: docker run ${{ needs.build.outputs.tags }} poetry run pytest
