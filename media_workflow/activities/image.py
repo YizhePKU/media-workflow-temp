@@ -36,7 +36,7 @@ class DetailParams:
 
 @activity.defn(name="image-detail")
 async def detail(params: DetailParams) -> dict:
-    headers = {"Authorization": f"Bearer {os.environ["DIFY_IMAGE_DETAIL_KEY"]}"}
+    headers = {"Authorization": f"Bearer {os.environ['DIFY_IMAGE_DETAIL_KEY']}"}
     json = {
         "inputs": {
             "language": params.language,
@@ -50,7 +50,7 @@ async def detail(params: DetailParams) -> dict:
         "response_mode": "blocking",
     }
     async with aiohttp.ClientSession() as session:
-        url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
+        url = f"{os.environ['DIFY_ENDPOINT_URL']}/workflows/run"
         async with session.post(url, headers=headers, json=json) as r:
             result = await r.json()
     try:
@@ -76,8 +76,8 @@ async def minicpm(prompt: str, image: str, postprocess=None):
     with open(image, "rb") as file:
         b64image = b64encode(file.read()).decode("ascii")
 
-    url = f"{os.environ["OLLAMA_ENDPOINT"]}/api/chat"
-    headers = {"Authorization": f"Bearer {os.environ["OLLAMA_KEY"]}"}
+    url = f"{os.environ['OLLAMA_ENDPOINT']}/api/chat"
+    headers = {"Authorization": f"Bearer {os.environ['OLLAMA_KEY']}"}
     json = {
         "model": "minicpm-v:8b-2.6-q4_K_S",
         "stream": False,

@@ -144,7 +144,7 @@ class DetailParams:
 
 @activity.defn(name="font-detail")
 async def detail(params: DetailParams) -> dict:
-    headers = {"Authorization": f"Bearer {os.environ["DIFY_FONT_DETAIL_KEY"]}"}
+    headers = {"Authorization": f"Bearer {os.environ['DIFY_FONT_DETAIL_KEY']}"}
     json = {
         "inputs": {
             "language": params.language,
@@ -159,7 +159,7 @@ async def detail(params: DetailParams) -> dict:
         "response_mode": "blocking",
     }
     async with aiohttp.ClientSession() as session:
-        url = f"{os.environ["DIFY_ENDPOINT_URL"]}/workflows/run"
+        url = f"{os.environ['DIFY_ENDPOINT_URL']}/workflows/run"
         async with session.post(url, headers=headers, json=json) as response:
             try:
                 response.raise_for_status()
