@@ -112,7 +112,7 @@ jobs:
         run: docker pull ${{ needs.build.outputs.tags }}
 
       - name: Run pytest
-        run: docker run --rm -it ${{ needs.build.outputs.tags }} poetry run pytest
+        run: docker run ${{ needs.build.outputs.tags }} poetry run pytest
         env:
           TEMPORAL_SERVER_HOST: 40.162.210.3:7233
           TEMPORAL_NAMESPACE: muse-dev
