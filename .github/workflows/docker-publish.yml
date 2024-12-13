@@ -107,7 +107,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull the published image
-        run: docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        run: docker pull ${{ steps.build-and-push.outputs.tags }}
 
       - name: Run pytest
         run: docker run --rm -it ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} poetry run pytest
