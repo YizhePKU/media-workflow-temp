@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import Tuple
 
@@ -19,19 +18,22 @@ def page2image(page: pymupdf.Page) -> Image.Image:
 @dataclass
 class ToPdfParams:
     file: str
+    datadir: str
 
 
 @activity.defn(name="convert-to-pdf")
 async def to_pdf(params: ToPdfParams) -> str:
-    dir = tempfile.gettempdir()
-    subprocess.run(["soffice", "--convert-to", "pdf", "--outdir", dir, params.file])
+    subprocess.run(
+        ["soffice", "--convert-to", "pdf", "--outdir", params.datadir, params.file]
+    )
     stem = Path(params.file).stem
-    return f"{dir}/{stem}.pdf"
+    return f"{params.datadir}/{stem}.pdf"
 
 
 @dataclass
 class ThumbnailParams:
     file: str
+    datadir: str
     pages: list[int] | None = None
     size: Tuple[int, int] | None = None
 
@@ -49,4 +51,4 @@ async def thumbnail(params: ThumbnailParams) -> list[str]:
     if params.size is not None:
         for image in images:
             image.thumbnail(params.size, resample=Image.LANCZOS)
-    return [imwrite(image) for image in images]
+    return [imwrite(image, datadir=params.datadir) for image in images]

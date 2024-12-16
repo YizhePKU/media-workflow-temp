@@ -1,5 +1,4 @@
 import os
-import tempfile
 from io import BytesIO
 from uuid import uuid4
 
@@ -44,14 +43,14 @@ def imread(path: str) -> Image:
 
 
 @tracer.start_as_current_span("imwrite")
-def imwrite(image: Image) -> str:
+def imwrite(image: Image, datadir: str) -> str:
     """Write an image to a temporary file in PNG format. Return the file path."""
     # If the image is in floating point mode, scale the value by 255
     # See https://github.com/python-pillow/Pillow/issues/3159
     if image.mode == "F":
         image = Image.fromarray((np.array(image) * 255).astype(np.uint8), mode="L")
 
-    path = os.path.join(tempfile.gettempdir(), f"{uuid4()}.png")
+    path = os.path.join(datadir, f"{uuid4()}.png")
     image.convert("RGB").save(path)
     span_attribute("path", path)
     return path

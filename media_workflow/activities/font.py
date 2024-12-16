@@ -37,6 +37,7 @@ def supports_chinese(font: TTFont) -> bool:
 @dataclass
 class ThumbnailParams:
     file: str
+    datadir: str
     size: Tuple[int, int] = (1000, 1000)
     font_size: int = 200
 
@@ -70,7 +71,7 @@ async def thumbnail(params: ThumbnailParams) -> str:
     )
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.LANCZOS)
-    return imwrite(image)
+    return imwrite(image, datadir=params.datadir)
 
 
 @dataclass

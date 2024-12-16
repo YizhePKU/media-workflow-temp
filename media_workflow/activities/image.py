@@ -17,6 +17,7 @@ from pylette.color_extraction import extract_colors
 @dataclass
 class ThumbnailParams:
     file: str
+    datadir: str
     size: Tuple[int, int] | None = None
 
 
@@ -25,7 +26,7 @@ async def thumbnail(params: ThumbnailParams) -> str:
     image = imread(params.file)
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.LANCZOS)
-    return imwrite(image)
+    return imwrite(image, params.datadir)
 
 
 @dataclass

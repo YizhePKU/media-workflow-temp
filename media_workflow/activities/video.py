@@ -3,7 +3,6 @@ import json
 import math
 import os
 import subprocess
-import tempfile
 from pathlib import Path
 from typing import Tuple
 from uuid import uuid4
@@ -61,6 +60,7 @@ async def metadata(params: MetadataParams) -> dict:
 class SpriteParams:
     file: str
     duration: float
+    datadir: str
     layout: Tuple[int, int] = (1, 1)
     count: int = 1
     width: int = -1
@@ -69,8 +69,6 @@ class SpriteParams:
 
 @activity.defn(name="video-sprite")
 async def sprite(params: SpriteParams) -> list[str]:
-    dir = tempfile.mkdtemp()
-
     # calculate time between frames (in seconds)
     interval = params.duration / float(
         params.count * params.layout[0] * params.layout[1]
@@ -80,10 +78,12 @@ async def sprite(params: SpriteParams) -> list[str]:
     stream = stream.filter("fps", 1 / interval)
     stream = stream.filter("tile", layout=f"{params.layout[0]}x{params.layout[1]}")
     stream = stream.filter("scale", width=params.width, height=params.height)
-    stream = stream.output(f"{dir}/%03d.png", vframes=params.count)
+    stream = stream.output(f"{params.datadir}/%03d.png", vframes=params.count)
     stream.run()
 
-    paths = list(Path(dir).iterdir())
+    paths = list(
+        path for path in Path(params.datadir).iterdir() if path.suffix == ".png"
+    )
     paths.sort(key=lambda p: int(p.stem))
     return [str(path) for path in paths]
 
@@ -91,6 +91,7 @@ async def sprite(params: SpriteParams) -> list[str]:
 @dataclass
 class TranscodeParams:
     file: str
+    datadir: str
     video_codec: str = "h264"
     audio_codec: str = "libopus"
     container: str = "mp4"
@@ -98,8 +99,7 @@ class TranscodeParams:
 
 @activity.defn(name="video-transcode")
 async def transcode(params: TranscodeParams) -> str:
-    dir = tempfile.gettempdir()
-    path = f"{dir}/{uuid4()}.{params.container}"
+    path = f"{params.datadir}/{uuid4()}.{params.container}"
     stream = ffmpeg.input(params.file)
     kwargs = {
         "codec:v": params.video_codec,

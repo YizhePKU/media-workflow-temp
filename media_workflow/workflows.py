@@ -9,7 +9,7 @@ from temporalio import workflow
 
 
 with workflow.unsafe.imports_passed_through():
-    from media_workflow.activities import document, font, image, video
+    from media_workflow.activities import document, font, image, utils, video
 
 start = functools.partial(
     workflow.start_activity,
@@ -31,9 +31,11 @@ class FileAnalysis:
     @workflow.run
     async def run(self, request):
         try:
+            datadir = await start(utils.datadir)
+
             file = await start(
-                "download",
-                request["file"],
+                utils.download,
+                utils.DownloadParams(request["file"], datadir),
                 heartbeat_timeout=timedelta(minutes=1),
                 start_to_close_timeout=timedelta(minutes=30),
                 schedule_to_close_timeout=timedelta(minutes=60),
@@ -41,29 +43,29 @@ class FileAnalysis:
 
             async with asyncio.TaskGroup() as tg:
                 if "image-thumbnail" in request["activities"]:
-                    tg.create_task(self.image_thumbnail(file, request))
+                    tg.create_task(self.image_thumbnail(file, request, datadir))
                 if "image-detail" in request["activities"]:
-                    tg.create_task(self.image_detail(file, request))
+                    tg.create_task(self.image_detail(file, request, datadir))
                 if "image-detail-basic" in request["activities"]:
-                    tg.create_task(self.image_detail_basic(file, request))
+                    tg.create_task(self.image_detail_basic(file, request, datadir))
                 if "image-color-palette" in request["activities"]:
-                    tg.create_task(self.image_color_palette(file, request))
+                    tg.create_task(self.image_color_palette(file, request, datadir))
                 if "video-metadata" in request["activities"]:
-                    tg.create_task(self.video_metadata(file, request))
+                    tg.create_task(self.video_metadata(file, request, datadir))
                 if "video-sprite" in request["activities"]:
-                    tg.create_task(self.video_sprite(file, request))
+                    tg.create_task(self.video_sprite(file, request, datadir))
                 if "video-transcode" in request["activities"]:
-                    tg.create_task(self.video_transcode(file, request))
+                    tg.create_task(self.video_transcode(file, request, datadir))
                 if "audio-waveform" in request["activities"]:
-                    tg.create_task(self.audio_waveform(file, request))
+                    tg.create_task(self.audio_waveform(file, request, datadir))
                 if "document-thumbnail" in request["activities"]:
-                    tg.create_task(self.document_thumbnail(file, request))
+                    tg.create_task(self.document_thumbnail(file, request, datadir))
                 if "font-thumbnail" in request["activities"]:
-                    tg.create_task(self.font_thumbnail(file, request))
+                    tg.create_task(self.font_thumbnail(file, request, datadir))
                 if "font-metadata" in request["activities"]:
-                    tg.create_task(self.font_metadata(file, request))
+                    tg.create_task(self.font_metadata(file, request, datadir))
                 if "font-detail" in request["activities"]:
-                    tg.create_task(self.font_detail(file, request))
+                    tg.create_task(self.font_detail(file, request, datadir))
 
             return {
                 "id": workflow.info().workflow_id,
@@ -94,33 +96,37 @@ class FileAnalysis:
             }
             await start("callback", args=[callback, response])
 
-    async def image_thumbnail(self, file, request):
+    async def image_thumbnail(self, file, request, datadir):
         activity = "image-thumbnail"
         file = await start(
             image.thumbnail,
-            image.ThumbnailParams(file, **request.get("params", {}).get(activity, {})),
+            image.ThumbnailParams(
+                file, datadir=datadir, **request.get("params", {}).get(activity, {})
+            ),
         )
-        result = await start("upload", args=[file, "image/png"])
+        result = await start(utils.upload, utils.UploadParams(file, "image/png"))
         await self.submit(activity, request, result)
 
-    async def image_detail(self, file, request):
+    async def image_detail(self, file, request, datadir):
         activity = "image-detail"
         # convert image to PNG first
         png = await start(
-            image.thumbnail, image.ThumbnailParams(file, size=(1000, 1000))
+            image.thumbnail,
+            image.ThumbnailParams(file, datadir=datadir, size=(1000, 1000)),
         )
-        url = await start("upload", args=[png, "image/png"])
+        url = await start(utils.upload, utils.UploadParams(png, "image/png"))
         result = await start(
             image.detail,
             image.DetailParams(url, **request.get("params", {}).get(activity, {})),
         )
         await self.submit(activity, request, result)
 
-    async def image_detail_basic(self, file, request):
+    async def image_detail_basic(self, file, request, datadir):
         activity = "image-detail-basic"
         # convert image to PNG first
         png = await start(
-            image.thumbnail, image.ThumbnailParams(file, size=(1000, 1000))
+            image.thumbnail,
+            image.ThumbnailParams(file, datadir=datadir, size=(1000, 1000)),
         )
         # invoke minicpm three times
         params = image.DetailBasicParams(
@@ -137,7 +143,7 @@ class FileAnalysis:
         }
         await self.submit(activity, request, result)
 
-    async def image_color_palette(self, file, request):
+    async def image_color_palette(self, file, request, _datadir):
         activity = "image-color-palette"
         result = await start(
             image.color_palette,
@@ -147,37 +153,43 @@ class FileAnalysis:
         )
         await self.submit(activity, request, result)
 
-    async def video_metadata(self, file, request):
+    async def video_metadata(self, file, request, _datadir):
         activity = "video-metadata"
         result = await start(video.metadata, video.MetadataParams(file))
         await self.submit(activity, request, result)
 
-    async def video_sprite(self, file, request):
+    async def video_sprite(self, file, request, datadir):
         activity = "video-sprite"
         metadata = await start(video.metadata, video.MetadataParams(file))
         duration = metadata["duration"]
         images = await start(
             video.sprite,
             video.SpriteParams(
-                file, duration, **request.get("params", {}).get(activity, {})
+                file,
+                duration,
+                datadir=datadir,
+                **request.get("params", {}).get(activity, {}),
             ),
         )
         result = await asyncio.gather(
-            *[start("upload", args=[image, "image/png"]) for image in images]
+            *[
+                start(utils.upload, utils.UploadParams(image, "image/png"))
+                for image in images
+            ]
         )
         await self.submit(activity, request, result)
 
-    async def video_transcode(self, file, request):
+    async def video_transcode(self, file, request, datadir):
         activity = "video-transcode"
         params = video.TranscodeParams(
-            file, **request.get("params", {}).get(activity, {})
+            file, datadir=datadir, **request.get("params", {}).get(activity, {})
         )
         path = await start(video.transcode, params)
         mimetype = f"video/{params.container}"
-        result = await start("upload", args=[path, mimetype])
+        result = await start(utils.upload, utils.UploadParams(path, mimetype))
         await self.submit(activity, request, result)
 
-    async def audio_waveform(self, file, request):
+    async def audio_waveform(self, file, request, _datadir):
         activity = "audio-waveform"
         result = await start(
             video.waveform,
@@ -185,33 +197,38 @@ class FileAnalysis:
         )
         await self.submit(activity, request, result)
 
-    async def document_thumbnail(self, file, request):
+    async def document_thumbnail(self, file, request, datadir):
         activity = "document-thumbnail"
         # convert the document to PDF
-        pdf = await start(document.to_pdf, document.ToPdfParams(file))
+        pdf = await start(document.to_pdf, document.ToPdfParams(file, datadir=datadir))
         # extract thumbnails from pdf pages
         images = await start(
             document.thumbnail,
             document.ThumbnailParams(
-                pdf, **request.get("params", {}).get(activity, {})
+                pdf, datadir=datadir, **request.get("params", {}).get(activity, {})
             ),
         )
         # upload thumbnails
         result = await asyncio.gather(
-            *[start("upload", args=[image, "image/png"]) for image in images]
+            *[
+                start(utils.upload, utils.UploadParams(image, "image/png"))
+                for image in images
+            ]
         )
         await self.submit(activity, request, result)
 
-    async def font_thumbnail(self, file, request):
+    async def font_thumbnail(self, file, request, datadir):
         activity = "font-thumbnail"
         image = await start(
             font.thumbnail,
-            font.ThumbnailParams(file, **request.get("params", {}).get(activity, {})),
+            font.ThumbnailParams(
+                file, datadir=datadir, **request.get("params", {}).get(activity, {})
+            ),
         )
-        result = await start("upload", args=[image, "image/png"])
+        result = await start(utils.upload, utils.UploadParams(image, "image/png"))
         await self.submit(activity, request, result)
 
-    async def font_metadata(self, file, request):
+    async def font_metadata(self, file, request, _datadir):
         activity = "font-metadata"
         result = await start(
             font.metadata,
@@ -219,10 +236,10 @@ class FileAnalysis:
         )
         await self.submit(activity, request, result)
 
-    async def font_detail(self, file, request):
+    async def font_detail(self, file, request, datadir):
         activity = "font-detail"
-        image = await start(font.thumbnail, font.ThumbnailParams(file))
-        image_url = await start("upload", image)
+        image = await start(font.thumbnail, font.ThumbnailParams(file, datadir=datadir))
+        image_url = await start(utils.upload, utils.UploadParams(image, "image/png"))
         metadata = await start(font.metadata, font.MetadataParams(file))
         basic_info = {
             "name": metadata["full_name"],
