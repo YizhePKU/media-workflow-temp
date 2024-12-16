@@ -114,8 +114,6 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - run: ls -ld ~
-      - run: ls /root/.cache/pypoetry/virtualenvs/media-workflow-9TtSrW0h-py3.11/bin
       - name: pytest
         run: poetry run pytest
         working-directory: /app
