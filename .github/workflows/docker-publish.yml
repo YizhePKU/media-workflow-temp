@@ -114,6 +114,9 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - name: Reset $HOME back to /root
+        run: echo HOME=/root >> "$GITHUB_ENV"
+
       - name: pytest
         run: poetry run pytest
         working-directory: /app
