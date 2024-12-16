@@ -118,13 +118,13 @@ jobs:
         run: echo HOME=/root >> "$GITHUB_ENV"
 
       - name: pytest
-        run: poetry run pytest
+        run: temporal server start-dev && poetry run python media_workflow/worker.py && poetry run pytest -n 8
         working-directory: /app
         env:
           HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
 
-          TEMPORAL_SERVER_HOST: 40.162.210.3:7233
-          TEMPORAL_NAMESPACE: muse-dev
+          TEMPORAL_SERVER_HOST: localhost:7233
+          TEMPORAL_NAMESPACE: default
 
           DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
           DIFY_USER: muse-test
@@ -141,3 +141,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
           OPENCV_IO_ENABLE_OPENEXR: 1
+          TEST_LARGE: 1
