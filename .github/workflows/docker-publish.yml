@@ -110,18 +110,12 @@ jobs:
       packages: read
     container:
       image: ${{ needs.build.outputs.tags }}
-      options: --user root
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
-      - run: pwd
-      - run: whoami
-      - run: cd /app
-      - run: ls
-      - run: pwd
-      - run: ls /app
-      - run: ls /root/.cache/pypoetry/virtualenvs/media-workflow-9TtSrW0h-py3.11
+      - run: ls -ld ~
+      - run: ls /root/.cache/pypoetry/virtualenvs/media-workflow-9TtSrW0h-py3.11/bin
       - name: pytest
         run: poetry run pytest
         working-directory: /app
