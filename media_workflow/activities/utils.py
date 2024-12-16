@@ -20,7 +20,9 @@ def url2ext(url) -> str:
 @activity.defn
 async def datadir() -> str:
     """Create the data directory for this workflow, shared between workers."""
-    dir = os.path.join(os.environ["DATADIR"], activity.info().workflow_id)
+    dir = os.path.join(
+        os.environ["MEDIA_WORKFLOW_DATADIR"], activity.info().workflow_id
+    )
     os.makedirs(dir, exist_ok=True)
     return dir
 

@@ -121,6 +121,9 @@ jobs:
         run: temporal server start-dev && poetry run python media_workflow/worker.py && poetry run pytest -n 8
         working-directory: /app
         env:
+          MEDIA_WORKFLOW_DATADIR: /tmp
+          MEDIA_WORKFLOW_TEST_LARGE: 1
+
           HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
 
           TEMPORAL_SERVER_HOST: localhost:7233
@@ -141,4 +144,3 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
           OPENCV_IO_ENABLE_OPENEXR: 1
-          TEST_LARGE: 1

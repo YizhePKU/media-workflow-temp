@@ -72,7 +72,7 @@ fonts = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/yahei.ttf",
 ]
 
-if os.environ.get("TEST_SMALL", False):
+if os.environ.get("MEDIA_WORKFLOW_TEST_SMALL", False):
     images = [images[0]]
     videos = [videos[0]]
     audios = [audios[0]]
@@ -80,7 +80,7 @@ if os.environ.get("TEST_SMALL", False):
     models = [models[0]]
     fonts = [fonts[0]]
 
-if os.environ.get("TEST_LARGE", False):
+if os.environ.get("MEDIA_WORKFLOW_TEST_LARGE", False):
     images += [
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/float.tiff",
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.jpeg",
