@@ -114,6 +114,13 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
+      - run: pwd
+      - run: whoami
+      - run: ls /
+      - run: ls /app
+      - run: ls /github/home
+      - run: which poetry
+      - run: ls /github/home/.cache/pypoetry/virtualenvs
       - name: pytest
         run: poetry run pytest
         working-directory: /app
