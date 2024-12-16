@@ -116,10 +116,12 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - run: pwd
-      - run: ls
       - run: whoami
       - run: cd /app
       - run: ls
+      - run: pwd
+      - run: ls /app
+      - run: ls /root/.cache/pypoetry/virtualenvs/media-workflow-9TtSrW0h-py3.11
       - name: pytest
         run: poetry run pytest
         working-directory: /app
