@@ -110,17 +110,16 @@ jobs:
       packages: read
     container:
       image: ${{ needs.build.outputs.tags }}
+      options: --user root
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - run: pwd
+      - run: ls
       - run: whoami
-      - run: ls /
-      - run: ls /app
-      - run: ls /github/home
-      - run: which poetry
-      - run: ls /github/home/.cache/pypoetry/virtualenvs
+      - run: cd /app
+      - run: ls
       - name: pytest
         run: poetry run pytest
         working-directory: /app
@@ -140,8 +139,8 @@ jobs:
 
           S3_ENDPOINT_URL: https://s3.cn-north-1.amazonaws.com.cn
           S3_REGION: cn-north-1
-          S3_BUCKET: muse-media-processing-prod
-          AWS_ACCESS_KEY_ID: AKIARY7MIU4TTCZEX2FD
+          S3_BUCKET: muse-media-process
+          AWS_ACCESS_KEY_ID: AKIARY7MIU4TR7ZH2JVE
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
           OPENCV_IO_ENABLE_OPENEXR: 1
