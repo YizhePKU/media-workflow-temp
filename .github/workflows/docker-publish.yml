@@ -149,6 +149,7 @@ jobs:
 
       - name: Check connectivity with poetry
         run: poetry run curl -v http://localhost:7233 || true
+        working-directory: /app
 
       - name: Start a worker
         run: poetry run python media_workflow/worker.py &
