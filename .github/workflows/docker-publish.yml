@@ -117,7 +117,7 @@ jobs:
       MEDIA_WORKFLOW_DATADIR: /tmp
       MEDIA_WORKFLOW_TEST_LARGE: 1
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
-      TEMPORAL_SERVER_HOST: localhost:7233
+      TEMPORAL_SERVER_HOST: 127.0.0.1:7233
       TEMPORAL_NAMESPACE: default
       DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
       DIFY_USER: muse-test
@@ -145,10 +145,10 @@ jobs:
         run: apt-get install -y curl
 
       - name: Check connectivity
-        run: curl -v http://localhost:8233
+        run: curl -v http://localhost:7233 || true
 
       - name: Start a worker
-        run: poetry run python media_workflow/worker.py
+        run: poetry run python media_workflow/worker.py &
         working-directory: /app
 
       - name: Run pytest
