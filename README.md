@@ -1,6 +1,10 @@
 # Environment Variables
 
 ```bash
+# Data directory shared between workers
+MEDIA_WORKFLOW_DATADIR=
+MEDIA_WORKFLOW_MAX_CONCURRENT_ACTIVITIES=
+
 TEMPORAL_SERVER_HOST=
 TEMPORAL_NAMESPACE=
 
