@@ -14,7 +14,7 @@ with workflow.unsafe.imports_passed_through():
 start = functools.partial(
     workflow.start_activity,
     start_to_close_timeout=timedelta(minutes=5),
-    schedule_to_close_timeout=timedelta(minutes=20),
+    schedule_to_close_timeout=timedelta(minutes=30),
 )
 
 
@@ -189,7 +189,9 @@ class FileAnalysis:
             datadir=self.datadir,
             **self.request.get("params", {}).get(activity, {}),
         )
-        path = await start(video.transcode, params)
+        path = await start(
+            video.transcode, params, start_to_close_timeout=timedelta(minutes=30)
+        )
         mimetype = f"video/{params.container}"
         result = await start(utils.upload, utils.UploadParams(path, mimetype))
         await self.submit(activity, result)
