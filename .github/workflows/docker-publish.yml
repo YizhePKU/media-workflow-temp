@@ -108,6 +108,11 @@ jobs:
     needs: build
     permissions:
       packages: read
+    services:
+      temporal:
+        image: temporalio/auto-setup:latest
+        ports:
+          - 7233:7233
     container:
       image: ${{ needs.build.outputs.tags }}
       credentials:
@@ -117,7 +122,7 @@ jobs:
       MEDIA_WORKFLOW_DATADIR: /tmp
       MEDIA_WORKFLOW_TEST_LARGE: 1
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
-      TEMPORAL_SERVER_HOST: 127.0.0.1:7233
+      TEMPORAL_SERVER_HOST: temporal:7233
       TEMPORAL_NAMESPACE: default
       DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
       DIFY_USER: muse-test
@@ -135,17 +140,11 @@ jobs:
       - name: Reset $HOME back to /root
         run: echo HOME=/root >> "$GITHUB_ENV"
 
-      - name: Install Temporal CLI
-        uses: temporalio/setup-temporal@v0
-
-      - name: Start a local Temporal server
-        run: temporal server start-dev --ip 0.0.0.0 &
-      
       - name: Install curl
         run: apt-get install -y curl
 
       - name: Check connectivity
-        run: curl -v http://localhost:7233 || true
+        run: curl -v http://temporal:7233 || true
 
       - name: Start a worker
         run: poetry run python media_workflow/worker.py &
