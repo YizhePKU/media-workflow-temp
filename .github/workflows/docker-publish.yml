@@ -140,6 +140,9 @@ jobs:
 
       - name: Start a local Temporal server
         run: temporal server start-dev &
+      
+      - name: Install curl
+        run: apt-get install -y curl
 
       - name: Check connectivity
         run: curl -v http://localhost:8233
