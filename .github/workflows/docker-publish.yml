@@ -148,7 +148,7 @@ jobs:
         run: curl -v http://localhost:8233
 
       - name: Start a worker
-        run: poetry run python media_workflow/worker.py &
+        run: poetry run python media_workflow/worker.py
         working-directory: /app
 
       - name: Run pytest
