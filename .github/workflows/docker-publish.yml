@@ -117,7 +117,7 @@ jobs:
       MEDIA_WORKFLOW_DATADIR: /tmp
       MEDIA_WORKFLOW_TEST_LARGE: 1
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
-      TEMPORAL_SERVER_HOST: temporal:7233
+      TEMPORAL_SERVER_HOST: localhost:7233
       TEMPORAL_NAMESPACE: default
       DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
       DIFY_USER: muse-test
@@ -140,10 +140,6 @@ jobs:
 
       - name: Start a local Temporal server
         run: temporal server start-dev &
-
-      - name: Check connection within python
-        run: poetry run python -c "import requests; r = requests.get('http://localhost:8233'); print(r.text)"
-        working-directory: /app
 
       - name: Start a worker
         run: poetry run python media_workflow/worker.py &
