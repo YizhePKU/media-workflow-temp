@@ -118,7 +118,7 @@ jobs:
         run: echo HOME=/root >> "$GITHUB_ENV"
 
       - name: pytest
-        run: temporal server start-dev && poetry run python media_workflow/worker.py && poetry run pytest -n 8
+        run: ./temporal server start-dev && poetry run python media_workflow/worker.py && poetry run pytest -n 8
         working-directory: /app
         env:
           MEDIA_WORKFLOW_DATADIR: /tmp
