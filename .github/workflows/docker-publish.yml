@@ -117,8 +117,8 @@ jobs:
       MEDIA_WORKFLOW_DATADIR: /tmp
       MEDIA_WORKFLOW_TEST_LARGE: 1
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
-      TEMPORAL_SERVER_HOST: localhost:7233
-      TEMPORAL_NAMESPACE: default
+      TEMPORAL_SERVER_HOST: 40.162.210.3:7233
+      TEMPORAL_NAMESPACE: muse-dev
       DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
       DIFY_USER: muse-test
       DIFY_IMAGE_DETAIL_KEY: ${{ secrets.DIFY_IMAGE_DETAIL_KEY }}
