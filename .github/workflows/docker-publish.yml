@@ -116,6 +116,12 @@ jobs:
     steps:
       - name: Reset $HOME back to /root
         run: echo HOME=/root >> "$GITHUB_ENV"
+      
+      - name: Install Temporal CLI
+        uses: temporalio/setup-temporal@v0
+      
+      - name: Start a local Temporal server
+        run: temporal server start-dev --headless &
 
       - name: pytest
         run: ./temporal server start-dev && poetry run python media_workflow/worker.py && poetry run pytest -n 8
