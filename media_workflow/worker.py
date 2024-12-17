@@ -26,7 +26,6 @@ async def main():
     else:
         max_concurrent_activities = None
 
-    max_concurrent_activities = int()
     worker = Worker(
         client,
         task_queue="media",
@@ -34,7 +33,9 @@ async def main():
         activities=media_workflow.activities.activities,
         max_concurrent_activities=max_concurrent_activities,
     )
-    print("starting worker on task_queue media")
+    print(
+        f"starting worker on task_queue media, max_concurrent_activities={max_concurrent_activities}"
+    )
     await worker.run()
 
 
