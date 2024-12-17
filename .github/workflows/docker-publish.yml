@@ -113,40 +113,38 @@ jobs:
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+    env:
+      MEDIA_WORKFLOW_DATADIR: /tmp
+      MEDIA_WORKFLOW_TEST_LARGE: 1
+      HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
+      TEMPORAL_SERVER_HOST: localhost:7233
+      TEMPORAL_NAMESPACE: default
+      DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
+      DIFY_USER: muse-test
+      DIFY_IMAGE_DETAIL_KEY: ${{ secrets.DIFY_IMAGE_DETAIL_KEY }}
+      DIFY_FONT_DETAIL_KEY: ${{ secrets.DIFY_FONT_DETAIL_KEY }}
+      OLLAMA_ENDPOINT: https://ollama.museai.cc
+      OLLAMA_KEY: ${{ secrets.OLLAMA_KEY }}
+      S3_ENDPOINT_URL: https://s3.cn-north-1.amazonaws.com.cn
+      S3_REGION: cn-north-1
+      S3_BUCKET: muse-media-process
+      AWS_ACCESS_KEY_ID: AKIARY7MIU4TR7ZH2JVE
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      OPENCV_IO_ENABLE_OPENEXR: 1
     steps:
       - name: Reset $HOME back to /root
         run: echo HOME=/root >> "$GITHUB_ENV"
-      
+
       - name: Install Temporal CLI
         uses: temporalio/setup-temporal@v0
-      
+
       - name: Start a local Temporal server
         run: temporal server start-dev --headless &
 
-      - name: pytest
-        run: ./temporal server start-dev && poetry run python media_workflow/worker.py && poetry run pytest -n 8
+      - name: Start a worker
+        run: poetry run python media_workflow/worker.py &
         working-directory: /app
-        env:
-          MEDIA_WORKFLOW_DATADIR: /tmp
-          MEDIA_WORKFLOW_TEST_LARGE: 1
 
-          HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
-
-          TEMPORAL_SERVER_HOST: localhost:7233
-          TEMPORAL_NAMESPACE: default
-
-          DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
-          DIFY_USER: muse-test
-          DIFY_IMAGE_DETAIL_KEY: ${{ secrets.DIFY_IMAGE_DETAIL_KEY }}
-          DIFY_FONT_DETAIL_KEY: ${{ secrets.DIFY_FONT_DETAIL_KEY }}
-
-          OLLAMA_ENDPOINT: https://ollama.museai.cc
-          OLLAMA_KEY: ${{ secrets.OLLAMA_KEY }}
-
-          S3_ENDPOINT_URL: https://s3.cn-north-1.amazonaws.com.cn
-          S3_REGION: cn-north-1
-          S3_BUCKET: muse-media-process
-          AWS_ACCESS_KEY_ID: AKIARY7MIU4TR7ZH2JVE
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-          OPENCV_IO_ENABLE_OPENEXR: 1
+      - name: Run pytest
+        run: poetry run pytest -n 8
+        working-directory: /app
