@@ -139,7 +139,7 @@ jobs:
         uses: temporalio/setup-temporal@v0
 
       - name: Start a local Temporal server
-        run: temporal server start-dev &
+        run: temporal server start-dev --ip 0.0.0.0 &
       
       - name: Install curl
         run: apt-get install -y curl
