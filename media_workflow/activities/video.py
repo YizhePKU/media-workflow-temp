@@ -1,13 +1,12 @@
-from dataclasses import dataclass
+import asyncio
 import json
 import math
 import os
-import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 from uuid import uuid4
 
-import ffmpeg
 import numpy as np
 from pydub import AudioSegment
 from temporalio import activity
@@ -20,7 +19,7 @@ class MetadataParams:
 
 @activity.defn(name="video-metadata")
 async def metadata(params: MetadataParams) -> dict:
-    command = [
+    process = await asyncio.subprocess.create_subprocess_exec(
         "ffprobe",
         "-v",
         "quiet",
@@ -28,12 +27,13 @@ async def metadata(params: MetadataParams) -> dict:
         "json",
         "-show_streams",
         params.file,
-    ]
-    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if result.returncode != 0:
-        raise RuntimeError(f"ffprobe failed: {result.stderr.decode()}")
+        stdout=asyncio.subprocess.PIPE,
+    )
+    (stdout, stderr) = await process.communicate()
+    if process.returncode != 0:
+        raise RuntimeError(f"ffprobe failed: {stderr.decode()}")
 
-    data = json.loads(result.stdout.decode())
+    data = json.loads(stdout.decode())
     result = {}
     for stream in data["streams"]:
         if stream["codec_type"] == "video":
@@ -74,12 +74,17 @@ async def sprite(params: SpriteParams) -> list[str]:
         params.count * params.layout[0] * params.layout[1]
     )
 
-    stream = ffmpeg.input(params.file)
-    stream = stream.filter("fps", 1 / interval)
-    stream = stream.filter("tile", layout=f"{params.layout[0]}x{params.layout[1]}")
-    stream = stream.filter("scale", width=params.width, height=params.height)
-    stream = stream.output(f"{params.datadir}/%03d.png", vframes=params.count)
-    stream.run()
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "ffmpeg",
+        "-i",
+        params.file,
+        "-vf",
+        f"fps={1/interval},tile={params.layout[0]}x{params.layout[1]},scale={params.width}:{params.height}",
+        "-vframes",
+        str(params.count),
+        f"{params.datadir}/%03d.png",
+    )
+    await process.wait()
 
     paths = list(
         path for path in Path(params.datadir).iterdir() if path.suffix == ".png"
@@ -99,15 +104,19 @@ class TranscodeParams:
 
 @activity.defn(name="video-transcode")
 async def transcode(params: TranscodeParams) -> str:
-    path = f"{params.datadir}/{uuid4()}.{params.container}"
-    stream = ffmpeg.input(params.file)
-    kwargs = {
-        "codec:v": params.video_codec,
-        "codec:a": params.audio_codec,
-    }
-    stream = stream.output(path, **kwargs)
-    stream.run()
-    return path
+    output = f"{params.datadir}/{uuid4()}.{params.container}"
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "ffmpeg",
+        "-i",
+        params.file,
+        "-codec:v",
+        params.video_codec,
+        "-codec:a",
+        params.audio_codec,
+        output,
+    )
+    await process.wait()
+    return output
 
 
 @dataclass
