@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import os
 from pathlib import Path
 from typing import Tuple
 import asyncio
@@ -8,7 +9,7 @@ from PIL import Image
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
-from media_workflow.utils import ensure_exists, imwrite
+from media_workflow.utils import imwrite
 
 
 def page2image(page: pymupdf.Page) -> Image.Image:
@@ -23,14 +24,14 @@ class ToPdfParams:
 
 @activity.defn(name="convert-to-pdf")
 async def to_pdf(params: ToPdfParams) -> str:
-    ensure_exists(params.file)
     datadir = get_datadir()
     process = await asyncio.subprocess.create_subprocess_exec(
         "soffice", "--convert-to", "pdf", "--outdir", datadir, params.file
     )
     await process.wait()
-    stem = Path(params.file).stem
-    return f"{datadir}/{stem}.pdf"
+    output = f"{datadir}/{Path(params.file).stem}.pdf"
+    assert os.path.exists(output)
+    return output
 
 
 @dataclass
@@ -42,7 +43,6 @@ class ThumbnailParams:
 
 @activity.defn(name="pdf-thumbnail")
 async def thumbnail(params: ThumbnailParams) -> list[str]:
-    ensure_exists(params.file)
     images = []
     with pymupdf.Document(filename=params.file) as doc:
         if params.pages is not None:

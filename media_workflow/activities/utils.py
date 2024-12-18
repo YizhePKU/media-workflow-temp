@@ -10,7 +10,6 @@ from botocore.config import Config
 from temporalio import activity
 
 from media_workflow.trace import span_attribute
-from media_workflow.utils import ensure_exists
 
 
 def url2ext(url) -> str:
@@ -64,7 +63,6 @@ class UploadParams:
 async def upload(params: UploadParams) -> str:
     """Upload file to S3-compatible storage. Return a presigned URL that can be used to download
     the file."""
-    ensure_exists(params.path)
     s3 = boto3.client(
         "s3",
         endpoint_url=os.environ["S3_ENDPOINT_URL"],

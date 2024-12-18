@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw, ImageFont
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
-from media_workflow.utils import ensure_exists, imwrite
+from media_workflow.utils import imwrite
 
 CHINESE_SAMPLE = cleandoc(
     """
@@ -44,7 +44,6 @@ class ThumbnailParams:
 
 @activity.defn(name="font-thumbnail")
 async def thumbnail(params: ThumbnailParams) -> str:
-    ensure_exists(params.file)
     margin = int(params.font_size * 0.5)
     spacing = int(params.font_size * 0.25)
 
@@ -83,7 +82,6 @@ class MetadataParams:
 
 @activity.defn(name="font-metadata")
 async def metadata(params: MetadataParams) -> dict:
-    ensure_exists(params.file)
     platform_id = 3  # Microsoft
     encoding_id = 1  # Unicode BMP
     if params.language == "Simplified Chinese":

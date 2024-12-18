@@ -7,7 +7,6 @@ import numpy as np
 from cairosvg import svg2png
 from PIL import Image
 from psd_tools import PSDImage
-from temporalio.exceptions import ApplicationError
 
 from media_workflow.trace import span_attribute, tracer
 
@@ -55,12 +54,3 @@ def imwrite(image: Image, datadir: str) -> str:
     image.convert("RGB").save(path)
     span_attribute("path", path)
     return path
-
-
-class FileNotFound(ApplicationError):
-    pass
-
-
-def ensure_exists(path: str):
-    if not os.path.exists(path):
-        raise FileNotFound(f"{path} not found")
