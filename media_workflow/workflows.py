@@ -3,13 +3,19 @@ import functools
 import inspect
 import sys
 from datetime import timedelta
-from json import dumps as json_dumps
 
 from temporalio import workflow
 
 
 with workflow.unsafe.imports_passed_through():
-    from media_workflow.activities import document, font, image, utils, video
+    from media_workflow.activities import (
+        document,
+        font,
+        image,
+        utils,
+        video,
+        image_detail,
+    )
 
 
 start = functools.partial(
@@ -112,12 +118,13 @@ class FileAnalysis:
         # convert image to PNG first
         png = await start(
             image.thumbnail,
-            image.ThumbnailParams(file, size=(1000, 1000)),
+            image.ThumbnailParams(file, size=(1024, 1024)),
         )
-        url = await start(utils.upload, utils.UploadParams(png, "image/png"))
         result = await start(
-            image.detail,
-            image.DetailParams(url, **self.request.get("params", {}).get(activity, {})),
+            image_detail.image_detail,
+            image_detail.ImageDetailParams(
+                png, **self.request.get("params", {}).get(activity, {})
+            ),
         )
         await self.submit(activity, result)
 
@@ -126,21 +133,13 @@ class FileAnalysis:
         # convert image to PNG first
         png = await start(
             image.thumbnail,
-            image.ThumbnailParams(file, size=(1000, 1000)),
+            image.ThumbnailParams(file, size=(1024, 1024)),
         )
-        # invoke minicpm three times
-        params = image.DetailBasicParams(
+
+        params = image_detail.ImageDetailBasicParams(
             png, **self.request.get("params", {}).get(activity, {})
         )
-        basic = await start(image.minicpm_basic, params)
-        tags = await start(image.minicpm_tags, params)
-        details = await start(image.minicpm_details, params)
-        result = {
-            "title": basic["title"],
-            "description": basic["description"],
-            "tags": ",".join(value for values in tags.values() for value in values),
-            "detailed_description": [{k: v} for k, v in details.items()],
-        }
+        result = await start(image_detail.image_detail_basic, params)
         await self.submit(activity, result)
 
     async def image_color_palette(self, file):
@@ -247,7 +246,6 @@ class FileAnalysis:
     async def font_detail(self, file):
         activity = "font-detail"
         image = await start(font.thumbnail, font.ThumbnailParams(file))
-        image_url = await start(utils.upload, utils.UploadParams(image, "image/png"))
         metadata = await start(font.metadata, font.MetadataParams(file))
         basic_info = {
             "name": metadata["full_name"],
@@ -259,8 +257,8 @@ class FileAnalysis:
         result = await start(
             font.detail,
             font.DetailParams(
-                url=image_url,
-                basic_info=json_dumps(basic_info),
+                file=image,
+                basic_info=basic_info,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )

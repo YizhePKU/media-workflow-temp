@@ -40,4 +40,9 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        from dotenv import load_dotenv
+
+        load_dotenv()
+    finally:
+        asyncio.run(main())

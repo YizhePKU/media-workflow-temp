@@ -1,15 +1,18 @@
 from dataclasses import dataclass
-import os
 from inspect import cleandoc
-from typing import Tuple
+from typing import Optional, Tuple
 
-import aiohttp
 from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
+from pydantic import BaseModel
 from temporalio import activity
+from base64 import b64encode
 
-from media_workflow.activities.utils import get_datadir
+from media_workflow.activities.utils import get_datadir, llm
 from media_workflow.utils import imwrite
+from media_workflow.types import Language, language_to_name
+import json
+import json_repair
 
 CHINESE_SAMPLE = cleandoc(
     """
@@ -77,19 +80,18 @@ async def thumbnail(params: ThumbnailParams) -> str:
 @dataclass
 class MetadataParams:
     file: str
-    language: str = "English"
+    language: Language = "en-US"
 
 
 @activity.defn(name="font-metadata")
 async def metadata(params: MetadataParams) -> dict:
     platform_id = 3  # Microsoft
     encoding_id = 1  # Unicode BMP
-    if params.language == "Simplified Chinese":
+    if params.language == "zh-CN":
         language_id = 2052  # Simplified Chinese
-    elif params.language == "English":
-        language_id = 1033  # English
     else:
-        raise Exception(f"unsupported language: {params.language}")
+        # other language are considered as English
+        language_id = 1033
 
     indices = {
         "copyright_notice": 0,
@@ -138,43 +140,64 @@ async def metadata(params: MetadataParams) -> dict:
 
 @dataclass
 class DetailParams:
-    url: str
-    basic_info: str
-    language: str = "Simplified Chinese"
+    file: str
+    basic_info: dict
+    language: Language = "en-US"
+
+
+class FontDetailResponse(BaseModel):
+    description: str
+    font_category: Optional[str]
+    stroke_characteristics: Optional[str]
+    historical_period: Optional[str]
+    tags: list[str] = []
 
 
 @activity.defn(name="font-detail")
 async def detail(params: DetailParams) -> dict:
-    headers = {"Authorization": f"Bearer {os.environ['DIFY_FONT_DETAIL_KEY']}"}
-    json = {
-        "inputs": {
-            "language": params.language,
-            "basic_info": params.basic_info,
-            "image": {
-                "type": "image",
-                "transfer_method": "remote_url",
-                "url": params.url,
-            },
-        },
-        "user": os.environ["DIFY_USER"],
-        "response_mode": "blocking",
-    }
-    async with aiohttp.ClientSession() as session:
-        url = f"{os.environ['DIFY_ENDPOINT_URL']}/workflows/run"
-        async with session.post(url, headers=headers, json=json) as response:
-            try:
-                response.raise_for_status()
-                result = await response.json()
-                assert result["data"]["status"] == "succeeded"
-                output = result["data"]["outputs"]
-            except Exception as err:
-                raise RuntimeError(
-                    f"dify failed with {err}, text={await response.text()}, json={json}"
-                )
+    """Get font detail analysis using LLM."""
 
-    assert isinstance(output["description"], str)
-    assert isinstance(output["tags"], str)
-    assert isinstance(output["font_category"], str)
-    assert isinstance(output["stroke_characteristics"], str)
-    assert isinstance(output["historical_period"], str)
-    return output
+    with open(params.file, "rb") as file:
+        encoded_string = b64encode(file.read()).decode("utf-8")
+        b64image = f"data:image/png;base64,{encoded_string}"
+
+    client = llm()
+
+    response = await client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {
+                "role": "system",
+                "content": f"""You are an assistant skilled at font analysis.
+## Guidelines
+Input image will contain several characters from one source font file. You should observe the image as detailed as possible, and tell the feature of the providing font. Input also includes the basic information of the font, like name, style or weight, you can refer to them if needed.
+Your answer should include description, tags, font category, stroke characteristics and historical period for the target font.
+### Description
+Basic description of the font, which help designers to choose suitable font. Contain the content only, do not start with something like `this font ...`, and also do not contain the font name.
+### Tags
+A list of keywords, which can be used to describe target font.
+### Font Category
+Try to classify the font into correct category
+## Format Principles
+- Response in JSON format
+- Using {language_to_name(params.language)} for value
+- Using snake_case for key""",
+            },
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": json.dumps(params.basic_info)},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": b64image, "detail": "low"},
+                    },
+                ],
+            },
+        ],
+        stream=False,
+        response_format={"type": "json_object"},
+    )
+
+    response = json_repair.loads(response.choices[0].message.content)
+
+    return FontDetailResponse(**response)

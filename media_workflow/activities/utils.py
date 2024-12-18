@@ -1,5 +1,5 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
 from uuid import uuid4
@@ -7,6 +7,7 @@ from uuid import uuid4
 import aiohttp
 import boto3
 from botocore.config import Config
+from openai import AsyncOpenAI
 from temporalio import activity
 
 from media_workflow.trace import span_attribute
@@ -94,3 +95,15 @@ async def callback(url: str, data: dict):
         async with session.post(url, json=data) as response:
             if response.status != 200:
                 raise Exception(f"callback failed: {await response.text()}")
+
+
+def llm() -> AsyncOpenAI:
+    """
+    Get llm client.
+    Currently it should use litellm proxy server.
+    """
+    client = AsyncOpenAI(
+        base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"]
+    )
+
+    return client
