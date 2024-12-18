@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-import subprocess
 from pathlib import Path
 from typing import Tuple
+import asyncio
 
 import pymupdf
 from PIL import Image
@@ -23,9 +23,10 @@ class ToPdfParams:
 
 @activity.defn(name="convert-to-pdf")
 async def to_pdf(params: ToPdfParams) -> str:
-    subprocess.run(
-        ["soffice", "--convert-to", "pdf", "--outdir", params.datadir, params.file]
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "soffice", "--convert-to", "pdf", "--outdir", params.datadir, params.file
     )
+    await process.wait()
     stem = Path(params.file).stem
     return f"{params.datadir}/{stem}.pdf"
 
