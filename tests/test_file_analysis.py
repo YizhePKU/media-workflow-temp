@@ -297,7 +297,8 @@ async def test_video_sprite(file):
     result = await client.execute_workflow(
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
-    assert len(result["result"]["video-sprite"]) == 2
+    assert len(result["result"]["video-sprite"]["files"]) == 2
+    assert result["result"]["video-sprite"]["width"] == 200
     image = imread(await download(result["result"]["video-sprite"]["files"][0]))
     assert image.size[0] <= 1000
 

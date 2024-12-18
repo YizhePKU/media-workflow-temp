@@ -4,6 +4,7 @@ import math
 import os
 from dataclasses import dataclass
 from pathlib import Path
+import re
 from typing import Tuple
 from uuid import uuid4
 
@@ -85,12 +86,22 @@ async def sprite(params: SpriteParams) -> dict:
         "-vframes",
         str(params.count),
         f"{datadir}/%03d.png",
+        stderr=asyncio.subprocess.PIPE,
     )
-    await process.wait()
+    (_, stderr) = await process.communicate()
+    for line in stderr.decode().split("\n"):
+        if match := re.search(r"Video: png.*?(\d+)x(\d+)", line):
+            width = int(match.group(1))
+            height = int(match.group(2))
 
     paths = list(path for path in Path(datadir).iterdir() if path.suffix == ".png")
     paths.sort(key=lambda p: int(p.stem))
-    return {"interval": interval, "files": [str(path) for path in paths]}
+    return {
+        "interval": interval,
+        "width": width // params.layout[0],
+        "height": height // params.layout[1],
+        "files": [str(path) for path in paths],
+    }
 
 
 @dataclass
