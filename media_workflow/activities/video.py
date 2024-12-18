@@ -11,6 +11,7 @@ import numpy as np
 from pydub import AudioSegment
 from temporalio import activity
 
+from media_workflow.activities.utils import get_datadir
 from media_workflow.utils import ensure_exists
 
 
@@ -63,7 +64,6 @@ async def metadata(params: MetadataParams) -> dict:
 class SpriteParams:
     file: str
     duration: float
-    datadir: str
     layout: Tuple[int, int] = (1, 1)
     count: int = 1
     width: int = -1
@@ -73,6 +73,7 @@ class SpriteParams:
 @activity.defn(name="video-sprite")
 async def sprite(params: SpriteParams) -> list[str]:
     ensure_exists(params.file)
+    datadir = get_datadir()
     # calculate time between frames (in seconds)
     interval = params.duration / float(
         params.count * params.layout[0] * params.layout[1]
@@ -86,13 +87,11 @@ async def sprite(params: SpriteParams) -> list[str]:
         f"fps={1/interval},tile={params.layout[0]}x{params.layout[1]},scale={params.width}:{params.height}",
         "-vframes",
         str(params.count),
-        f"{params.datadir}/%03d.png",
+        f"{datadir}/%03d.png",
     )
     await process.wait()
 
-    paths = list(
-        path for path in Path(params.datadir).iterdir() if path.suffix == ".png"
-    )
+    paths = list(path for path in Path(datadir).iterdir() if path.suffix == ".png")
     paths.sort(key=lambda p: int(p.stem))
     return [str(path) for path in paths]
 
@@ -100,7 +99,6 @@ async def sprite(params: SpriteParams) -> list[str]:
 @dataclass
 class TranscodeParams:
     file: str
-    datadir: str
     video_codec: str = "h264"
     audio_codec: str = "libopus"
     container: str = "mp4"
@@ -109,7 +107,8 @@ class TranscodeParams:
 @activity.defn(name="video-transcode")
 async def transcode(params: TranscodeParams) -> str:
     ensure_exists(params.file)
-    output = f"{params.datadir}/{uuid4()}.{params.container}"
+    datadir = get_datadir()
+    output = f"{datadir}/{uuid4()}.{params.container}"
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffmpeg",
         "-i",

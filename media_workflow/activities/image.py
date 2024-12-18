@@ -10,6 +10,7 @@ import aiohttp
 from PIL import Image
 from temporalio import activity
 
+from media_workflow.activities.utils import get_datadir
 from media_workflow.utils import ensure_exists, imread, imwrite
 from pylette.color_extraction import extract_colors
 
@@ -17,7 +18,6 @@ from pylette.color_extraction import extract_colors
 @dataclass
 class ThumbnailParams:
     file: str
-    datadir: str
     size: Tuple[int, int] | None = None
 
 
@@ -27,7 +27,7 @@ async def thumbnail(params: ThumbnailParams) -> str:
     image = imread(params.file)
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.LANCZOS)
-    return imwrite(image, params.datadir)
+    return imwrite(image, datadir=get_datadir())
 
 
 @dataclass

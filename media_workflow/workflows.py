@@ -35,11 +35,10 @@ class FileAnalysis:
     async def run(self, request):
         try:
             self.request = request
-            self.datadir = await start(utils.datadir)
 
             file = await start(
                 utils.download,
-                utils.DownloadParams(request["file"], datadir=self.datadir),
+                utils.DownloadParams(request["file"]),
                 heartbeat_timeout=timedelta(minutes=1),
                 start_to_close_timeout=timedelta(minutes=30),
                 schedule_to_close_timeout=timedelta(minutes=60),
@@ -106,7 +105,6 @@ class FileAnalysis:
             image.thumbnail,
             image.ThumbnailParams(
                 file,
-                datadir=self.datadir,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
@@ -118,7 +116,7 @@ class FileAnalysis:
         # convert image to PNG first
         png = await start(
             image.thumbnail,
-            image.ThumbnailParams(file, datadir=self.datadir, size=(1000, 1000)),
+            image.ThumbnailParams(file, size=(1000, 1000)),
         )
         url = await start(utils.upload, utils.UploadParams(png, "image/png"))
         result = await start(
@@ -132,7 +130,7 @@ class FileAnalysis:
         # convert image to PNG first
         png = await start(
             image.thumbnail,
-            image.ThumbnailParams(file, datadir=self.datadir, size=(1000, 1000)),
+            image.ThumbnailParams(file, size=(1000, 1000)),
         )
         # invoke minicpm three times
         params = image.DetailBasicParams(
@@ -173,7 +171,6 @@ class FileAnalysis:
             video.SpriteParams(
                 file,
                 duration,
-                datadir=self.datadir,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
@@ -189,7 +186,6 @@ class FileAnalysis:
         activity = "video-transcode"
         params = video.TranscodeParams(
             file,
-            datadir=self.datadir,
             **self.request.get("params", {}).get(activity, {}),
         )
         path = await start(
@@ -212,15 +208,12 @@ class FileAnalysis:
     async def document_thumbnail(self, file):
         activity = "document-thumbnail"
         # convert the document to PDF
-        pdf = await start(
-            document.to_pdf, document.ToPdfParams(file, datadir=self.datadir)
-        )
+        pdf = await start(document.to_pdf, document.ToPdfParams(file))
         # extract thumbnails from pdf pages
         images = await start(
             document.thumbnail,
             document.ThumbnailParams(
                 pdf,
-                datadir=self.datadir,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
@@ -239,7 +232,6 @@ class FileAnalysis:
             font.thumbnail,
             font.ThumbnailParams(
                 file,
-                datadir=self.datadir,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
@@ -258,9 +250,7 @@ class FileAnalysis:
 
     async def font_detail(self, file):
         activity = "font-detail"
-        image = await start(
-            font.thumbnail, font.ThumbnailParams(file, datadir=self.datadir)
-        )
+        image = await start(font.thumbnail, font.ThumbnailParams(file))
         image_url = await start(utils.upload, utils.UploadParams(image, "image/png"))
         metadata = await start(font.metadata, font.MetadataParams(file))
         basic_info = {

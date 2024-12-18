@@ -18,8 +18,7 @@ def url2ext(url) -> str:
     return os.path.splitext(path)[1]
 
 
-@activity.defn
-async def datadir() -> str:
+def get_datadir() -> str:
     """Create the data directory for this workflow, shared between workers."""
     dir = os.path.join(
         os.environ["MEDIA_WORKFLOW_DATADIR"], activity.info().workflow_id
@@ -31,7 +30,6 @@ async def datadir() -> str:
 @dataclass
 class DownloadParams:
     url: str
-    datadir: str
 
 
 @activity.defn
@@ -41,7 +39,7 @@ async def download(params: DownloadParams) -> str:
     The filename is randomly generated, but if the original URL contains a file extension, it will
     be retained."""
     filename = str(uuid4()) + url2ext(params.url)
-    path = os.path.join(params.datadir, filename)
+    path = os.path.join(get_datadir(), filename)
 
     with open(path, "wb") as file:
         async with aiohttp.ClientSession() as session:
