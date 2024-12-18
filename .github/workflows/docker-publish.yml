@@ -119,12 +119,8 @@ jobs:
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
       TEMPORAL_SERVER_HOST: 40.162.210.3:7233
       TEMPORAL_NAMESPACE: muse-dev
-      DIFY_ENDPOINT_URL: https://dify.tezign.com/v1
-      DIFY_USER: muse-test
-      DIFY_IMAGE_DETAIL_KEY: ${{ secrets.DIFY_IMAGE_DETAIL_KEY }}
-      DIFY_FONT_DETAIL_KEY: ${{ secrets.DIFY_FONT_DETAIL_KEY }}
-      OLLAMA_ENDPOINT: https://ollama.museai.cc
-      OLLAMA_KEY: ${{ secrets.OLLAMA_KEY }}
+      LLM_BASE_URL: ${{ secrets.LLM_API_KEY }}
+      LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
       S3_ENDPOINT_URL: https://s3.cn-north-1.amazonaws.com.cn
       S3_REGION: cn-north-1
       S3_BUCKET: muse-media-process
