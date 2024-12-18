@@ -289,8 +289,8 @@ async def test_video_sprite(file):
         "params": {
             "video-sprite": {
                 "count": 2,
-                "layout": [6, 5],
-                "width": 800,
+                "layout": [5, 4],
+                "width": 200,
             },
         },
     }
@@ -299,7 +299,7 @@ async def test_video_sprite(file):
     )
     assert len(result["result"]["video-sprite"]) == 2
     image = imread(await download(result["result"]["video-sprite"]["files"][0]))
-    assert image.size[0] <= 800
+    assert image.size[0] <= 1000
 
 
 @pytest.mark.parametrize("file", videos)

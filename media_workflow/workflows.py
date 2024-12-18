@@ -166,7 +166,7 @@ class FileAnalysis:
         activity = "video-sprite"
         metadata = await start(video.metadata, video.MetadataParams(file))
         duration = metadata["duration"]
-        images = await start(
+        result = await start(
             video.sprite,
             video.SpriteParams(
                 file,
@@ -174,10 +174,10 @@ class FileAnalysis:
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
-        result = await asyncio.gather(
+        result["files"] = await asyncio.gather(
             *[
                 start(utils.upload, utils.UploadParams(image, "image/png"))
-                for image in images
+                for image in result["files"]
             ]
         )
         await self.submit(activity, result)

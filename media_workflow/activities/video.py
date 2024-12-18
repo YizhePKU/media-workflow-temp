@@ -71,7 +71,7 @@ class SpriteParams:
 
 
 @activity.defn(name="video-sprite")
-async def sprite(params: SpriteParams) -> list[str]:
+async def sprite(params: SpriteParams) -> dict:
     ensure_exists(params.file)
     datadir = get_datadir()
     # calculate time between frames (in seconds)
