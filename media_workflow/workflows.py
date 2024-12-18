@@ -16,7 +16,6 @@ with workflow.unsafe.imports_passed_through():
 start = functools.partial(
     workflow.start_activity,
     start_to_close_timeout=timedelta(minutes=5),
-    schedule_to_close_timeout=timedelta(minutes=30),
     retry_policy=RetryPolicy(non_retryable_error_types=["FileNotFound"]),
 )
 
@@ -41,7 +40,6 @@ class FileAnalysis:
                 utils.DownloadParams(request["file"]),
                 heartbeat_timeout=timedelta(minutes=1),
                 start_to_close_timeout=timedelta(minutes=30),
-                schedule_to_close_timeout=timedelta(minutes=60),
             )
 
             async with asyncio.TaskGroup() as tg:
