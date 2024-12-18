@@ -64,9 +64,9 @@ async def metadata(params: MetadataParams) -> dict:
 class SpriteParams:
     file: str
     duration: float
-    layout: Tuple[int, int] = (1, 1)
+    layout: Tuple[int, int] = (5, 5)
     count: int = 1
-    width: int = -1
+    width: int = 200
     height: int = -1
 
 
@@ -84,7 +84,7 @@ async def sprite(params: SpriteParams) -> list[str]:
         "-i",
         params.file,
         "-vf",
-        f"fps={1/interval},tile={params.layout[0]}x{params.layout[1]},scale={params.width}:{params.height}",
+        f"fps={1/interval},scale={params.width}:{params.height},tile={params.layout[0]}x{params.layout[1]}",
         "-vframes",
         str(params.count),
         f"{datadir}/%03d.png",
@@ -93,7 +93,7 @@ async def sprite(params: SpriteParams) -> list[str]:
 
     paths = list(path for path in Path(datadir).iterdir() if path.suffix == ".png")
     paths.sort(key=lambda p: int(p.stem))
-    return [str(path) for path in paths]
+    return {"interval": interval, "files": [str(path) for path in paths]}
 
 
 @dataclass

@@ -298,7 +298,7 @@ async def test_video_sprite(file):
         "file-analysis", params, id=f"{uuid4()}", task_queue="media"
     )
     assert len(result["result"]["video-sprite"]) == 2
-    image = imread(await download(result["result"]["video-sprite"][0]))
+    image = imread(await download(result["result"]["video-sprite"]["files"][0]))
     assert image.size[0] <= 800
 
 
