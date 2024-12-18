@@ -6,15 +6,18 @@ from datetime import timedelta
 from json import dumps as json_dumps
 
 from temporalio import workflow
+from temporalio.common import RetryPolicy
 
 
 with workflow.unsafe.imports_passed_through():
     from media_workflow.activities import document, font, image, utils, video
 
+
 start = functools.partial(
     workflow.start_activity,
     start_to_close_timeout=timedelta(minutes=5),
     schedule_to_close_timeout=timedelta(minutes=30),
+    retry_policy=RetryPolicy(non_retryable_error_types=["FileNotFound"]),
 )
 
 

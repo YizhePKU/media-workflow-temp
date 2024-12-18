@@ -7,7 +7,7 @@ import pymupdf
 from PIL import Image
 from temporalio import activity
 
-from media_workflow.utils import imwrite
+from media_workflow.utils import ensure_exists, imwrite
 
 
 def page2image(page: pymupdf.Page) -> Image.Image:
@@ -23,6 +23,7 @@ class ToPdfParams:
 
 @activity.defn(name="convert-to-pdf")
 async def to_pdf(params: ToPdfParams) -> str:
+    ensure_exists(params.file)
     process = await asyncio.subprocess.create_subprocess_exec(
         "soffice", "--convert-to", "pdf", "--outdir", params.datadir, params.file
     )
@@ -41,6 +42,7 @@ class ThumbnailParams:
 
 @activity.defn(name="pdf-thumbnail")
 async def thumbnail(params: ThumbnailParams) -> list[str]:
+    ensure_exists(params.file)
     images = []
     with pymupdf.Document(filename=params.file) as doc:
         if params.pages is not None:

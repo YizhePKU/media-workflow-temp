@@ -11,6 +11,8 @@ import numpy as np
 from pydub import AudioSegment
 from temporalio import activity
 
+from media_workflow.utils import ensure_exists
+
 
 @dataclass
 class MetadataParams:
@@ -19,6 +21,7 @@ class MetadataParams:
 
 @activity.defn(name="video-metadata")
 async def metadata(params: MetadataParams) -> dict:
+    ensure_exists(params.file)
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffprobe",
         "-v",
@@ -69,6 +72,7 @@ class SpriteParams:
 
 @activity.defn(name="video-sprite")
 async def sprite(params: SpriteParams) -> list[str]:
+    ensure_exists(params.file)
     # calculate time between frames (in seconds)
     interval = params.duration / float(
         params.count * params.layout[0] * params.layout[1]
@@ -104,6 +108,7 @@ class TranscodeParams:
 
 @activity.defn(name="video-transcode")
 async def transcode(params: TranscodeParams) -> str:
+    ensure_exists(params.file)
     output = f"{params.datadir}/{uuid4()}.{params.container}"
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffmpeg",
@@ -127,6 +132,7 @@ class WaveformParams:
 
 @activity.defn(name="audio-waveform")
 async def waveform(params: WaveformParams) -> list[float]:
+    ensure_exists(params.file)
     audio = AudioSegment.from_file(params.file)
     data = np.array(audio.get_array_of_samples())
 

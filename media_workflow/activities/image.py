@@ -10,7 +10,7 @@ import aiohttp
 from PIL import Image
 from temporalio import activity
 
-from media_workflow.utils import imread, imwrite
+from media_workflow.utils import ensure_exists, imread, imwrite
 from pylette.color_extraction import extract_colors
 
 
@@ -23,6 +23,7 @@ class ThumbnailParams:
 
 @activity.defn(name="image-thumbnail")
 async def thumbnail(params: ThumbnailParams) -> str:
+    ensure_exists(params.file)
     image = imread(params.file)
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.LANCZOS)
@@ -110,6 +111,7 @@ async def minicpm_basic(params: DetailBasicParams):
             )
         return json
 
+    ensure_exists(params.file)
     prompt = cleandoc(
         f"""
         Extract a title and a detailed description from the image. The output should be in {params.language}.
@@ -167,6 +169,7 @@ async def minicpm_tags(params: DetailBasicParams):
                         )
         return json
 
+    ensure_exists(params.file)
     prompt = cleandoc(
         f"""
         Extract tags from the image according to some predefined aspects. The output should be in {params.language}.
@@ -222,6 +225,7 @@ async def minicpm_details(params: DetailBasicParams):
                     )
         return json
 
+    ensure_exists(params.file)
     prompt = cleandoc(
         f"""
         Extract detailed descriptions from the image according to some predefined aspects.
@@ -256,6 +260,7 @@ class ColorPaletteParams:
 
 @activity.defn(name="image-color-palette")
 async def color_palette(params: ColorPaletteParams) -> list:
+    ensure_exists(params.file)
     image = imread(params.file)
     palette = extract_colors(image.convert("RGB"), params.count)
     return [{"color": rgb2hex(color.rgb), "frequency": color.freq} for color in palette]
