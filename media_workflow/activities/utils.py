@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from uuid import uuid4
 
 import aiohttp
-import boto3
+import aioboto3
 from botocore.config import Config
 from temporalio import activity
 
@@ -64,28 +64,29 @@ class UploadParams:
 async def upload(params: UploadParams) -> str:
     """Upload file to S3-compatible storage. Return a presigned URL that can be used to download
     the file."""
-    s3 = boto3.client(
+    session = aioboto3.Session()
+    async with session.client(
         "s3",
         endpoint_url=os.environ["S3_ENDPOINT_URL"],
         config=Config(region_name=os.environ["S3_REGION"], signature_version="v4"),
-    )
-    with open(params.path, "rb") as file:
-        key = Path(params.path).name
-        data = file.read()
-        s3.put_object(
-            Bucket=os.environ["S3_BUCKET"],
-            Key=key,
-            Body=data,
-            ContentType=params.content_type,
+    ) as s3:
+        with open(params.path, "rb") as file:
+            key = Path(params.path).name
+            data = file.read()
+            await s3.put_object(
+                Bucket=os.environ["S3_BUCKET"],
+                Key=key,
+                Body=data,
+                ContentType=params.content_type,
+            )
+        presigned_url = await s3.generate_presigned_url(
+            "get_object", Params=dict(Bucket=os.environ["S3_BUCKET"], Key=key)
         )
-    presigned_url = s3.generate_presigned_url(
-        "get_object", Params=dict(Bucket=os.environ["S3_BUCKET"], Key=key)
-    )
-    span_attribute("key", key)
-    span_attribute("path", params.path)
-    span_attribute("content_type", params.content_type)
-    span_attribute("presigned_url", presigned_url)
-    return presigned_url
+        span_attribute("key", key)
+        span_attribute("path", params.path)
+        span_attribute("content_type", params.content_type)
+        span_attribute("presigned_url", presigned_url)
+        return presigned_url
 
 
 @activity.defn
