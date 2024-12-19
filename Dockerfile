@@ -1,4 +1,4 @@
-FROM python:3.11.11-slim-bookworm
+FROM python:3.13.1-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
