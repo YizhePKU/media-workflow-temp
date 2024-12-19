@@ -1,18 +1,19 @@
+import json
+from base64 import b64encode
 from dataclasses import dataclass
 from inspect import cleandoc
 from typing import Optional, Tuple
 
+import json_repair
 from fontTools.ttLib import TTFont
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
 from temporalio import activity
-from base64 import b64encode
 
-from media_workflow.activities.utils import get_datadir, llm
-from media_workflow.utils import imwrite
+from media_workflow.activities.utils import get_datadir
 from media_workflow.schema import Language, language_to_name
-import json
-import json_repair
+from media_workflow.utils import imwrite
+from media_workflow import llm
 
 CHINESE_SAMPLE = cleandoc(
     """
@@ -161,7 +162,7 @@ async def detail(params: DetailParams) -> dict:
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
-    client = llm()
+    client = llm.client()
 
     response = await client.chat.completions.create(
         model="gpt-4o-mini",

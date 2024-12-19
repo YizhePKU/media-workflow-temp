@@ -20,7 +20,7 @@ from media_workflow.activities.image_detail.schema import (
     validate_detailed_description,
     validate_tags,
 )
-from media_workflow.activities.utils import llm
+from media_workflow import llm
 
 
 async def _image_detail(params: ImageDetailParams) -> ImageDetailFinalResponse:
@@ -30,7 +30,7 @@ async def _image_detail(params: ImageDetailParams) -> ImageDetailFinalResponse:
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
-    client = llm()
+    client = llm.client()
 
     response = await client.chat.completions.create(
         model="gpt-4o",
@@ -111,7 +111,7 @@ async def _image_detail_basic(
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
-    client = llm()
+    client = llm.client()
 
     model_name = (
         "qwen2-vl-7b-instruct"

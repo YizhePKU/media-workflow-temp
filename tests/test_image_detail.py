@@ -1,11 +1,11 @@
+import builtins
 import io
 import json
 
 import openai
 import pytest
 
-import media_workflow
-import media_workflow.activities
+
 from media_workflow.activities.image_detail import (
     ImageDetailBasicParams,
     ImageDetailParams,
@@ -14,7 +14,7 @@ from media_workflow.activities.image_detail import (
 )
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def mock_openai_chatcompletion(monkeypatch):
     """Monkeypatch openai package to prevent useless api calls."""
 
@@ -89,21 +89,22 @@ def mock_openai_chatcompletion(monkeypatch):
 
         return client
 
-    monkeypatch.setattr(media_workflow.activities.utils, "llm", mock_llm)
+    monkeypatch.setattr("media_workflow.llm.client", mock_llm)
 
 
 @pytest.fixture
 def mock_openfile(monkeypatch):
-    # Create a file-like object (empty file)
-    empty_file = io.BytesIO(b"")
+    def mock_open(*args, **kwargs):
+        return io.BytesIO(b"")
 
     # Use monkeypatch to replace the open function
-    monkeypatch.setattr("builtins.open", lambda file, mode: empty_file)
+    monkeypatch.setattr(builtins, "open", mock_open)
 
 
 @pytest.mark.asyncio
 async def test_image_detail(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailParams(file="")
+
     result = await _image_detail(params)
 
     assert result.title == "image-detail-title"
