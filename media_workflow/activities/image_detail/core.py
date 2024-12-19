@@ -1,5 +1,5 @@
-import asyncio
 from base64 import b64encode
+from typing import Literal, Optional
 
 import json_repair
 from temporalio import activity
@@ -14,6 +14,7 @@ from media_workflow.activities.image_detail.prompts import (
 from media_workflow.activities.image_detail.schema import (
     ImageDetailBasicMainResponse,
     ImageDetailBasicParams,
+    ImageDetailDetailsParams,
     ImageDetailFinalResponse,
     ImageDetailMainResponse,
     ImageDetailParams,
@@ -23,7 +24,7 @@ from media_workflow.activities.image_detail.schema import (
 from media_workflow import llm
 
 
-async def _image_detail(params: ImageDetailParams) -> ImageDetailFinalResponse:
+async def _image_detail_main(params: ImageDetailParams) -> ImageDetailMainResponse:
     """Get image structured description."""
 
     with open(params.file, "rb") as file:
@@ -54,16 +55,26 @@ async def _image_detail(params: ImageDetailParams) -> ImageDetailFinalResponse:
     )
 
     repaired_response = json_repair.loads(response.choices[0].message.content)
-    main_response = ImageDetailMainResponse(**repaired_response)
+    return ImageDetailMainResponse(**repaired_response)
+
+
+async def _image_detail_details(
+    params: ImageDetailDetailsParams,
+) -> ImageDetailFinalResponse:
+    """"""
+
+    with open(params.file, "rb") as file:
+        encoded_string = b64encode(file.read()).decode("utf-8")
+        b64image = f"data:image/png;base64,{encoded_string}"
+
+    client = llm.client()
 
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
                 "role": "system",
-                "content": prompt_image_detail_detailed_description(
-                    params, main_response
-                ),
+                "content": prompt_image_detail_detailed_description(params),
             },
             {
                 "role": "user",
@@ -86,25 +97,37 @@ async def _image_detail(params: ImageDetailParams) -> ImageDetailFinalResponse:
     detailed_description = validate_detailed_description(detailed_description)
 
     return ImageDetailFinalResponse(
-        title=main_response.title,
-        description=main_response.description,
-        tags=[tag for tag_list in main_response.tags.values() for tag in tag_list],
+        title=params.main_response.title,
+        description=params.main_response.description,
+        tags=[
+            tag for tag_list in params.main_response.tags.values() for tag in tag_list
+        ],
         detailed_description=[
             {key: value} for key, value in detailed_description.items()
         ],
     )
 
 
-@activity.defn(name="image-detail")
-async def image_detail(params: ImageDetailParams) -> ImageDetailFinalResponse:
-    """`image-detail` activity wrapper."""
+@activity.defn(name="image-detail-main")
+async def image_detail_main(params: ImageDetailParams) -> ImageDetailMainResponse:
+    """`image-detail-main` activity wrapper."""
 
-    return await _image_detail(params)
+    return await _image_detail_main(params)
+
+
+@activity.defn(name="image-detail-details")
+async def image_detail_details(
+    params: ImageDetailDetailsParams,
+) -> ImageDetailFinalResponse:
+    """`image-detail-details` activity wrapper."""
+
+    return await _image_detail_details(params)
 
 
 async def _image_detail_basic(
     params: ImageDetailBasicParams,
-) -> ImageDetailFinalResponse:
+    task: Literal["main", "details", "tags"] = "main",
+):
     """Get image structured description with lightweight model."""
 
     with open(params.file, "rb") as file:
@@ -119,12 +142,25 @@ async def _image_detail_basic(
         else "minicpm-v:8b-2.6-q4_K_S"
     )
 
-    main_fut = client.chat.completions.create(
+    match task:
+        case "main":
+            system_prompt = prompt_image_detail_basic_main(params)
+
+        case "details":
+            system_prompt = prompt_image_detail_basic_details(params)
+
+        case "tags":
+            system_prompt = prompt_image_detail_basic_tags(params)
+
+        case _:
+            raise ValueError(f"Unknown task: {task}")
+
+    response = await client.chat.completions.create(
         model=model_name,
         messages=[
             {
                 "role": "system",
-                "content": prompt_image_detail_basic_main(params),
+                "content": system_prompt,
             },
             {
                 "role": "user",
@@ -139,70 +175,43 @@ async def _image_detail_basic(
         stream=False,
     )
 
-    detail_fut = client.chat.completions.create(
-        model=model_name,
-        messages=[
-            {
-                "role": "system",
-                "content": prompt_image_detail_basic_details(params),
-            },
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": b64image, "detail": "low"},
-                    }
-                ],
-            },
-        ],
-        stream=False,
-    )
+    response = json_repair.loads(response.choices[0].message.content)
 
-    tags_fut = client.chat.completions.create(
-        model=model_name,
-        messages=[
-            {"role": "system", "content": prompt_image_detail_basic_tags(params)},
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": b64image, "detail": "low"},
-                    }
-                ],
-            },
-        ],
-        stream=False,
-    )
-
-    main_resp, detail_resp, tags_resp = await asyncio.gather(
-        main_fut, detail_fut, tags_fut
-    )
-
-    main_resp = json_repair.loads(main_resp.choices[0].message.content)
-    detail_resp = json_repair.loads(detail_resp.choices[0].message.content)
-    tags_resp = json_repair.loads(tags_resp.choices[0].message.content)
-
-    main_resp = ImageDetailBasicMainResponse(**main_resp)
-
-    tags = validate_tags(tags_resp)
-    detailed_description = validate_detailed_description(detail_resp)
-
-    return ImageDetailFinalResponse(
-        title=main_resp.title,
-        description=main_resp.description,
-        tags=[tag for tag_list in tags.values() for tag in tag_list],
-        detailed_description=[
-            {key: value} for key, value in detailed_description.items()
-        ],
-    )
+    match task:
+        case "main":
+            return ImageDetailBasicMainResponse(**response)
+        case "details":
+            detailed_description = validate_detailed_description(response)
+            return [{key: value} for key, value in detailed_description.items()]
+        case "tags":
+            tags = validate_tags(response)
+            return [tag for tag_list in tags.values() for tag in tag_list]
+        case _:
+            return {}
 
 
-@activity.defn(name="image-detail-basic")
-async def image_detail_basic(
+@activity.defn(name="image-detail-basic-main")
+async def image_detail_basic_main(
     params: ImageDetailBasicParams,
-) -> ImageDetailFinalResponse:
-    """`image-detail-basic` activity wrapper."""
+) -> ImageDetailBasicMainResponse:
+    """`image-detail-basic-main` activity wrapper."""
 
-    return await _image_detail_basic(params)
+    return await _image_detail_basic(params, "main")
+
+
+@activity.defn(name="image-detail-basic-tags")
+async def image_detail_basic_tags(
+    params: ImageDetailBasicParams,
+) -> list[str]:
+    """`image-detail-basic-tags` activity wrapper."""
+
+    return await _image_detail_basic(params, "tags")
+
+
+@activity.defn(name="image-detail-basic-details")
+async def image_detail_basic_details(
+    params: ImageDetailBasicParams,
+) -> list[dict[str, Optional[str]]]:
+    """`image-detail-basic-details` activity wrapper."""
+
+    return await _image_detail_basic(params, "details")

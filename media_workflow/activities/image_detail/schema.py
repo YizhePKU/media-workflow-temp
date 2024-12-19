@@ -33,6 +33,17 @@ class ImageDetailMainResponse(BaseModel):
     tags: dict[str, list[str]]
 
 
+@dataclass
+class ImageDetailDetailsParams(ImageDetailParams):
+    """Params of image-detail-details activity."""
+
+    main_response: ImageDetailMainResponse = field(
+        default_factory=lambda: ImageDetailMainResponse(
+            title="", description="", main_category="", sub_category="", tags={}
+        )
+    )
+
+
 class ImageDetailFinalResponse(BaseModel):
     """Final response of image-detail and image-detail-basic pipeline."""
 

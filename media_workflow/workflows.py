@@ -120,12 +120,23 @@ class FileAnalysis:
             image.thumbnail,
             image.ThumbnailParams(file, size=(1024, 1024)),
         )
+
+        params = image_detail.ImageDetailParams(
+            png, **self.request.get("params", {}).get(activity, {})
+        )
+        main_response = await start(
+            image_detail.image_detail_main,
+            params,
+        )
+
         result = await start(
-            image_detail.image_detail,
-            image_detail.ImageDetailParams(
-                png, **self.request.get("params", {}).get(activity, {})
+            image_detail.image_detail_details,
+            image_detail.ImageDetailDetailsParams(
+                **params.__dict__,
+                main_response=main_response,
             ),
         )
+
         await self.submit(activity, result)
 
     async def image_detail_basic(self, file):
@@ -139,7 +150,17 @@ class FileAnalysis:
         params = image_detail.ImageDetailBasicParams(
             png, **self.request.get("params", {}).get(activity, {})
         )
-        result = await start(image_detail.image_detail_basic, params)
+        main_result = await start(image_detail.image_detail_basic_main, params)
+        details_result = await start(image_detail.image_detail_basic_details, params)
+        tags_result = await start(image_detail.image_detail_basic_tags, params)
+
+        result = {
+            "title": main_result.title,
+            "description": main_result.description,
+            "tags": tags_result,
+            "detailed_description": details_result,
+        }
+
         await self.submit(activity, result)
 
     async def image_color_palette(self, file):

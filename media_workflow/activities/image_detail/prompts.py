@@ -8,7 +8,7 @@ from media_workflow.schema import language_to_name
 
 from .schema import (
     ImageDetailBasicParams,
-    ImageDetailMainResponse,
+    ImageDetailDetailsParams,
     ImageDetailParams,
 )
 
@@ -68,13 +68,12 @@ An image.
 
 
 def prompt_image_detail_detailed_description(
-    params: ImageDetailParams,
-    main_response: ImageDetailMainResponse,
+    params: ImageDetailDetailsParams,
 ) -> str:
     """System prompt to generate detailed description in image-detail pipeline."""
 
     _, sub_category, aspects = get_description_aspects(
-        main_response.main_category, main_response.sub_category
+        params.main_response.main_category, params.main_response.sub_category
     )
 
     aspects = "\n".join(

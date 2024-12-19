@@ -9,7 +9,9 @@ import pytest
 from media_workflow.activities.image_detail import (
     ImageDetailBasicParams,
     ImageDetailParams,
-    _image_detail,
+    ImageDetailDetailsParams,
+    _image_detail_main,
+    _image_detail_details,
     _image_detail_basic,
 )
 
@@ -105,16 +107,23 @@ def mock_openfile(monkeypatch):
 async def test_image_detail(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailParams(file="")
 
-    result = await _image_detail(params)
+    main_response = await _image_detail_main(params)
 
-    assert result.title == "image-detail-title"
-    assert result.description == "image-detail-description"
+    assert main_response.title == "image-detail-title"
+    assert main_response.description == "image-detail-description"
+
+    result = await _image_detail_details(
+        ImageDetailDetailsParams(**params.__dict__, main_response=main_response)
+    )
+
+    assert result.title == main_response.title
+    assert result.description == main_response.description
 
 
 @pytest.mark.asyncio
 async def test_image_detail_basic(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailBasicParams(file="")
-    result = await _image_detail_basic(params)
+    result = await _image_detail_basic(params, "main")
 
     assert result.title == "image-detail-basic-title"
     assert result.description == "image-detail-basic-description"
@@ -123,7 +132,7 @@ async def test_image_detail_basic(mock_openai_chatcompletion, mock_openfile):
 @pytest.mark.asyncio
 async def test_image_detail_basic_zh(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailBasicParams(file="", language="zh-CN")
-    result = await _image_detail_basic(params)
+    result = await _image_detail_basic(params, "main")
 
     assert result.title == "标题"
     assert result.description == "描述"

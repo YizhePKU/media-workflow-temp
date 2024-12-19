@@ -18,7 +18,6 @@ for module in [
     utils,
     video,
     image_detail,
-    image_detail,
 ]:
     for _name, fn in inspect.getmembers(module):
         if hasattr(fn, "__temporal_activity_definition"):
