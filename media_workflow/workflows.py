@@ -42,8 +42,8 @@ class FileAnalysis:
             file = await start(
                 utils.download,
                 utils.DownloadParams(request["file"]),
-                heartbeat_timeout=timedelta(minutes=1),
                 start_to_close_timeout=timedelta(minutes=30),
+                heartbeat_timeout=timedelta(seconds=30),
             )
 
             async with asyncio.TaskGroup() as tg:

@@ -19,6 +19,9 @@ async def get_client():
 
 
 async def main():
+    # With asyncio debug mode, warn if a coroutine takes more than 300ms to yield.
+    asyncio.get_running_loop().slow_callback_duration = 300
+
     client = await get_client()
 
     if value := os.environ.get("MEDIA_WORKFLOW_MAX_CONCURRENT_ACTIVITIES"):
