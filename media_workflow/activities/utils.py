@@ -40,10 +40,11 @@ async def download(params: DownloadParams) -> str:
     filename = str(uuid4()) + url2ext(params.url)
     path = os.path.join(get_datadir(), filename)
 
-    with open(path, "wb") as file:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(params.url) as response:
-                response.raise_for_status()
+    timeout = aiohttp.ClientTimeout(total=1500, sock_read=30)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(params.url) as response:
+            response.raise_for_status()
+            with open(path, "wb") as file:
                 async for chunk, _ in response.content.iter_chunks():
                     file.write(chunk)
                     activity.heartbeat()
