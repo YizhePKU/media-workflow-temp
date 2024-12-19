@@ -14,7 +14,6 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_DEFAULT_TIMEOUT=100 \
   # Poetry's configuration:
   POETRY_NO_INTERACTION=1 \
-  POETRY_VIRTUALENVS_CREATE=false \
   PATH="/root/.local/bin:${PATH}"
 
 RUN pipx install poetry==1.8.5
