@@ -10,7 +10,7 @@ from base64 import b64encode
 
 from media_workflow.activities.utils import get_datadir, llm
 from media_workflow.utils import imwrite
-from media_workflow.types import Language, language_to_name
+from media_workflow.schema import Language, language_to_name
 import json
 import json_repair
 

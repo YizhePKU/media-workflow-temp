@@ -1,16 +1,17 @@
-import pytest
-import openai
+import io
+import json
 
+import openai
+import pytest
+
+import media_workflow
 import media_workflow.activities
 from media_workflow.activities.image_detail import (
+    ImageDetailBasicParams,
+    ImageDetailParams,
     _image_detail,
     _image_detail_basic,
-    ImageDetailParams,
-    ImageDetailBasicParams,
 )
-import media_workflow
-import json
-import io
 
 
 @pytest.fixture

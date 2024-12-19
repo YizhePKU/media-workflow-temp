@@ -11,7 +11,7 @@ from media_workflow.activities.image_detail.prompts import (
     prompt_image_detail_detailed_description,
     prompt_image_detail_main,
 )
-from media_workflow.activities.image_detail.types import (
+from media_workflow.activities.image_detail.schema import (
     ImageDetailBasicMainResponse,
     ImageDetailBasicParams,
     ImageDetailFinalResponse,

@@ -1,6 +1,6 @@
 from typing import Optional
 
-from .types import ImageDetailParams
+from .schema import ImageDetailParams
 
 
 def get_category_tree(params: ImageDetailParams) -> dict[str, dict[str, Optional[str]]]:
