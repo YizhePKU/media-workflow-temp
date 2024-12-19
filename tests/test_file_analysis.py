@@ -42,6 +42,11 @@ images = [
 ]
 videos = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.mp4",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dream.mkv",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dream.webm",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/ocean.rm",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.avi",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/surfing.ts",
 ]
 audios = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/reflection.mp3",
