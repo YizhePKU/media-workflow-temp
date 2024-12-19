@@ -11,6 +11,8 @@ def get_category_tree(params: ImageDetailParams) -> dict[str, dict[str, Optional
     target_category_set = set()
 
     for industry_name in params.industry:
+        industry_name = INDUSTRY_NAME_MAPPING.get(industry_name, industry_name.lower())
+
         if industry_name in INDUSTRY_CATEGORY_MAPPING:
             for value in INDUSTRY_CATEGORY_MAPPING[industry_name]:
                 target_category_set.add(value)
@@ -758,21 +760,39 @@ CATEGORY_DESCRIPTION = {
     },
 }
 
+INDUSTRY_NAME_MAPPING = {
+    "室内设计": "interior design",
+    "建筑设计": "architecture design",
+    "服装设计": "fashion design",
+    "插画设计": "illustration",
+    "视觉设计": "graphic design",
+    "UI/UX 设计": "ui/ux",
+    "3D 设计": "3d",
+    "游戏设计": "game design",
+    "自媒体运营": "social media",
+    "摄影": "photography",
+    "电商": "e-commerce",
+    "互联网": "internet",
+    "其他": "others",
+}
+
+
 INDUSTRY_CATEGORY_MAPPING = {
-    "室内设计": [
+    "interior design": [
         "general",
         "architecture_and_interior_design",
         "furniture_and_equipment",
     ],
-    "建筑设计": ["general", "architecture_and_interior_design"],
-    "插画设计": ["general", "visual_design"],
-    "视觉设计": ["general", "visual_design"],
-    "UI/UX 设计": ["general"],
-    "3D 设计": ["general", "game_design"],
-    "游戏设计": ["general", "game_design"],
-    "自媒体运营": ["general", "visual_design"],
-    "摄影": ["general"],
-    "电商": ["general"],
-    "互联网": ["general"],
-    "其他": ["general"],
+    "architecture design": ["general", "architecture_and_interior_design"],
+    "illustration": ["general", "visual_design"],
+    "graphic design": ["general", "visual_design"],
+    "ui/ux": ["general"],
+    "3d": ["general", "game_design"],
+    "game design": ["general", "game_design"],
+    "social media": ["general", "visual_design"],
+    "photography": ["general"],
+    "e-commerce": ["general"],
+    "internet": ["general"],
+    "fashion design": ["general"],
+    "others": ["general"],
 }

@@ -13,7 +13,6 @@ from media_workflow.activities.image_detail.prompts import (
 )
 from media_workflow.activities.image_detail.schema import (
     ImageDetailBasicMainResponse,
-    ImageDetailBasicParams,
     ImageDetailDetailsParams,
     ImageDetailFinalResponse,
     ImageDetailMainResponse,
@@ -125,7 +124,7 @@ async def image_detail_details(
 
 
 async def _image_detail_basic(
-    params: ImageDetailBasicParams,
+    params: ImageDetailParams,
     task: Literal["main", "details", "tags"] = "main",
 ):
     """Get image structured description with lightweight model."""
@@ -192,7 +191,7 @@ async def _image_detail_basic(
 
 @activity.defn(name="image-detail-basic-main")
 async def image_detail_basic_main(
-    params: ImageDetailBasicParams,
+    params: ImageDetailParams,
 ) -> ImageDetailBasicMainResponse:
     """`image-detail-basic-main` activity wrapper."""
 
@@ -201,7 +200,7 @@ async def image_detail_basic_main(
 
 @activity.defn(name="image-detail-basic-tags")
 async def image_detail_basic_tags(
-    params: ImageDetailBasicParams,
+    params: ImageDetailParams,
 ) -> list[str]:
     """`image-detail-basic-tags` activity wrapper."""
 
@@ -210,7 +209,7 @@ async def image_detail_basic_tags(
 
 @activity.defn(name="image-detail-basic-details")
 async def image_detail_basic_details(
-    params: ImageDetailBasicParams,
+    params: ImageDetailParams,
 ) -> list[dict[str, Optional[str]]]:
     """`image-detail-basic-details` activity wrapper."""
 

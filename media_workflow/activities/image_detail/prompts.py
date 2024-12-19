@@ -1,13 +1,12 @@
 import json
 
-from media_workflow.activities.image_detail.caetgory import (
+from media_workflow.activities.image_detail.category import (
     get_category_tree,
     get_description_aspects,
 )
 from media_workflow.schema import language_to_name
 
 from .schema import (
-    ImageDetailBasicParams,
     ImageDetailDetailsParams,
     ImageDetailParams,
 )
@@ -88,7 +87,7 @@ If you can't describe for an aspect, use `null` as value.
 You should try to use {language_to_name(params.language)} in description."""
 
 
-def prompt_image_detail_basic_main(params: ImageDetailBasicParams) -> str:
+def prompt_image_detail_basic_main(params: ImageDetailParams) -> str:
     """System prompt for image-detail-basic main result."""
 
     match params.language:
@@ -110,7 +109,7 @@ The description should be a long text that describes the content of the image. A
 """
 
 
-def prompt_image_detail_basic_tags(params: ImageDetailBasicParams) -> str:
+def prompt_image_detail_basic_tags(params: ImageDetailParams) -> str:
     """System prompt for image-detail-basic tags result."""
     match params.language:
         case "zh-CN":
@@ -157,7 +156,7 @@ If the extracted value is a complex object instead of a string, summarize it in 
 If the extracted value is too long, shorten it by summarizing the key information."""
 
 
-def prompt_image_detail_basic_details(params: ImageDetailBasicParams) -> str:
+def prompt_image_detail_basic_details(params: ImageDetailParams) -> str:
     """System prompt for image-detail-basic detailed description result."""
     match params.language:
         case "zh-CN":

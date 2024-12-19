@@ -12,10 +12,11 @@ ModelType = Literal["public", "private"]
 
 @dataclass
 class ImageDetailParams:
-    """Params of image-detail activity."""
+    """Basic params of image detail related activities."""
 
     file: str
     language: Language = "en-US"
+    model_type: ModelType = "public"
     industry: list[str] = field(default_factory=list)
 
 
@@ -51,15 +52,6 @@ class ImageDetailFinalResponse(BaseModel):
     description: str
     tags: list[str]
     detailed_description: list[dict[str, Optional[str]]]
-
-
-@dataclass
-class ImageDetailBasicParams:
-    """Params of image-detail-basic activity."""
-
-    file: str
-    language: Language = "en-US"
-    model_type: ModelType = "public"
 
 
 class ImageDetailBasicMainResponse(BaseModel):

@@ -7,12 +7,16 @@ import pytest
 
 
 from media_workflow.activities.image_detail import (
-    ImageDetailBasicParams,
     ImageDetailParams,
     ImageDetailDetailsParams,
     _image_detail_main,
     _image_detail_details,
     _image_detail_basic,
+)
+from media_workflow.activities.image_detail.category import (
+    get_category_tree,
+    INDUSTRY_NAME_MAPPING,
+    INDUSTRY_CATEGORY_MAPPING,
 )
 
 
@@ -103,6 +107,35 @@ def mock_openfile(monkeypatch):
     monkeypatch.setattr(builtins, "open", mock_open)
 
 
+def test_image_detail_category_tree():
+    # valid data from backend
+    valid_data = [
+        {"name": "室内设计", "name_en": "Interior Design"},
+        {"name": "建筑设计", "name_en": "Architecture Design"},
+        {"name": "服装设计", "name_en": "Fashion Design"},
+        {"name": "插画设计", "name_en": "Illustration"},
+        {"name": "视觉设计", "name_en": "Graphic Design"},
+        {"name": "UI/UX 设计", "name_en": "UI/UX"},
+        {"name": "3D 设计", "name_en": "3D"},
+        {"name": "游戏设计", "name_en": "Game Design"},
+        {"name": "自媒体运营", "name_en": "Social Media"},
+        {"name": "摄影", "name_en": "Photography"},
+        {"name": "电商", "name_en": "E-commerce"},
+        {"name": "互联网", "name_en": "Internet"},
+        {"name": "其他", "name_en": "Others"},
+    ]
+
+    for data in valid_data:
+        assert data["name"] in INDUSTRY_NAME_MAPPING
+        assert data["name_en"].lower() in INDUSTRY_CATEGORY_MAPPING
+
+        assert get_category_tree(
+            ImageDetailParams(file="", language="en-US", industry=[data["name"]])
+        ) == get_category_tree(
+            ImageDetailParams(file="", language="en-US", industry=[data["name_en"]])
+        )
+
+
 @pytest.mark.asyncio
 async def test_image_detail(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailParams(file="")
@@ -122,7 +155,7 @@ async def test_image_detail(mock_openai_chatcompletion, mock_openfile):
 
 @pytest.mark.asyncio
 async def test_image_detail_basic(mock_openai_chatcompletion, mock_openfile):
-    params = ImageDetailBasicParams(file="")
+    params = ImageDetailParams(file="")
     result = await _image_detail_basic(params, "main")
 
     assert result.title == "image-detail-basic-title"
@@ -131,7 +164,7 @@ async def test_image_detail_basic(mock_openai_chatcompletion, mock_openfile):
 
 @pytest.mark.asyncio
 async def test_image_detail_basic_zh(mock_openai_chatcompletion, mock_openfile):
-    params = ImageDetailBasicParams(file="", language="zh-CN")
+    params = ImageDetailParams(file="", language="zh-CN")
     result = await _image_detail_basic(params, "main")
 
     assert result.title == "标题"

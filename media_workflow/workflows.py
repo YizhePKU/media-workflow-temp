@@ -147,7 +147,7 @@ class FileAnalysis:
             image.ThumbnailParams(file, size=(1024, 1024)),
         )
 
-        params = image_detail.ImageDetailBasicParams(
+        params = image_detail.ImageDetailParams(
             png, **self.request.get("params", {}).get(activity, {})
         )
         main_result = await start(image_detail.image_detail_basic_main, params)

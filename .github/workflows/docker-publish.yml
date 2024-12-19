@@ -119,7 +119,7 @@ jobs:
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
       TEMPORAL_SERVER_HOST: 40.162.210.3:7233
       TEMPORAL_NAMESPACE: muse-dev
-      LLM_BASE_URL: ${{ secrets.LLM_API_KEY }}
+      LLM_BASE_URL: ${{ secrets.BASE_URL }}
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
       S3_ENDPOINT_URL: https://s3.cn-north-1.amazonaws.com.cn
       S3_REGION: cn-north-1
