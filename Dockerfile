@@ -4,7 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 
 RUN apt-get update
-RUN apt-get install -y libcairo2-dev ffmpeg libreoffice fonts-recommended fonts-noto-cjk ghostscript libfreeimage3 curl
+RUN apt-get install -y libcairo2-dev ffmpeg libreoffice fonts-recommended fonts-noto-cjk ghostscript libfreeimage3 pipx
 
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
@@ -18,7 +18,7 @@ ENV PYTHONFAULTHANDLER=1 \
   POETRY_VERSION=1.8.5 \
   POETRY_HOME=/usr/local
 
-RUN curl -sSL https://install.python-poetry.org | python3 -
+RUN pipx install poetry
 COPY poetry.lock pyproject.toml ./
 RUN poetry install --no-interaction --no-root
 

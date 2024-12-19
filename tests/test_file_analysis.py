@@ -254,7 +254,7 @@ async def test_font_detail(file):
         "activities": ["font-detail"],
         "params": {
             "font-detail": {
-                "language": "Simplified Chinese",
+                "language": "zh-CN",
             }
         },
     }
