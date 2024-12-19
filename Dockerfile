@@ -15,10 +15,9 @@ ENV PYTHONFAULTHANDLER=1 \
   # Poetry's configuration:
   POETRY_NO_INTERACTION=1 \
   POETRY_VIRTUALENVS_CREATE=false \
-  POETRY_VERSION=1.8.5 \
-  POETRY_HOME=/usr/local
+  PATH="/root/.local/bin:${PATH}"
 
-RUN pipx install poetry
+RUN pipx install poetry==1.8.5
 COPY poetry.lock pyproject.toml ./
 RUN poetry install --no-interaction --no-root
 
