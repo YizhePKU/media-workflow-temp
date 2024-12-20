@@ -285,7 +285,10 @@ class FileAnalysis:
     async def c4d_preview(self):
         activity = "c4d-preview"
         result = await start(
-            "c4d-preview", {"url": self.request["file"]}, task_queue="media-c4d"
+            "c4d-preview",
+            {"url": self.request["file"]},
+            task_queue="media-c4d",
+            start_to_close_timeout=timedelta(minutes=15),
         )
         await self.submit(activity, result)
 
