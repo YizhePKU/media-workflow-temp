@@ -70,6 +70,8 @@ class FileAnalysis:
                 tg.create_task(self.font_metadata(file))
             if "font-detail" in request["activities"]:
                 tg.create_task(self.font_detail(file))
+            if "c4d-preview" in request["activities"]:
+                tg.create_task(self.c4d_preview())
 
         return {
             "id": workflow.info().workflow_id,
@@ -277,6 +279,13 @@ class FileAnalysis:
                 basic_info=basic_info,
                 **self.request.get("params", {}).get(activity, {}),
             ),
+        )
+        await self.submit(activity, result)
+
+    async def c4d_preview(self):
+        activity = "c4d-preview"
+        result = await start(
+            "c4d-preview", {"url": self.request["file"]}, task_queue="media-c4d"
         )
         await self.submit(activity, result)
 

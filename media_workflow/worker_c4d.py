@@ -1,130 +1,148 @@
-# Install dependencies with:
-# python3 -m pip install --target /Users/tezign/Library/Preferences/MAXON/python/python311/libs
-# temporalio opentelemetry-exporter-otlp-proto-http aiohttp boto3
-
-# Then install this package as dependency too:
+# To start a worker on MacOS with Cinema 4D 2025, follow these steps:
+#
+# Step 1: Install Python dependencies using regular pip (make sure you're using Python 3.11)
+#
+# ```
+# python3 -m pip install --target /Users/tezign/Library/Preferences/MAXON/python/python311/libs \
+# temporalio opentelemetry-exporter-otlp-proto-http aiohttp aioboto3
+# ```
+#
+# Step 2: Install this package (only a few files are actually used, like trace.py)
+#
+# ```
 # cp -r media_workflow /Users/tezign/Library/Preferences/MAXON/python/python311/libs
+# ```
+#
+# Step 3: Run the Temporal worker with `c4dpy`:
+#
+# ```
+# /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/worker_c4d.py
+# ```
 
-# Finally, run with /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy
-
-import functools
+import asyncio
+from dataclasses import dataclass
 import os
-from datetime import timedelta
-from tempfile import TemporaryDirectory
+import tempfile
 from uuid import uuid4
+from pathlib import Path
+from urllib.parse import urlparse
 
-import c4d
-from temporalio import activity, workflow
+from botocore.config import Config
+from temporalio import activity
 from temporalio.client import Client
 from temporalio.contrib.opentelemetry import TracingInterceptor
 from temporalio.worker import Worker
+import aioboto3
+import aiohttp
+import c4d
 
-with workflow.unsafe.imports_passed_through():
-    from media_workflow.trace import tracer
-    from media_workflow.utils import fetch, upload
-
-
-start = functools.partial(
-    workflow.start_activity, start_to_close_timeout=timedelta(minutes=5)
-)
+from media_workflow.trace import tracer, span_attribute
 
 
-def prog_callback(progress: float, event):
-    if event == c4d.RENDERPROGRESSTYPE_BEFORERENDERING:
-        text = "Before Rendering"
-    elif event == c4d.RENDERPROGRESSTYPE_DURINGRENDERING:
-        text = "During Rendering"
-    elif event == c4d.RENDERPROGRESSTYPE_AFTERRENDERING:
-        text = "After Rendering"
-    elif event == c4d.RENDERPROGRESSTYPE_GLOBALILLUMINATION:
-        text = "GI"
-    elif event == c4d.RENDERPROGRESSTYPE_QUICK_PREVIEW:
-        text = "Quick Preview"
-    elif event == c4d.RENDERPROGRESSTYPE_AMBIENTOCCLUSION:
-        text = "AO"
-    print("prog_callback called [{0} / p: {1}]".format(text, progress * 100.0))
+def url2ext(url) -> str:
+    path = urlparse(url).path
+    return os.path.splitext(path)[1]
 
 
-def write_callback(
-    mode,
-    bitmap: c4d.bitmaps.BaseBitmap,
-    path: str,
-    is_main: bool,
-    frame: int,
-    render_time: int,
-    streamnum: int,
-    streamname: str,
-):
-    if mode == c4d.WRITEMODE_STANDARD:
-        text = "Standard"
-    elif mode == c4d.WRITEMODE_ASSEMBLE_MOVIE:
-        text = "Assemble Movie"
-    elif mode == c4d.WRITEMODE_ASSEMBLE_SINGLEIMAGE:
-        text = "Assemble single image"
-    print("write_callback called [{0} / p: {1}]".format(text, render_time))
+def get_datadir() -> str:
+    return tempfile.mkdtemp()
 
 
-@workflow.defn(name="c4d-preview")
-class C4dPreview:
-    @workflow.run
-    async def run(self, params):
-        result = {
-            "id": workflow.info().workflow_id,
-            **await start("c4d_preview", params),
-        }
-        return result
+@dataclass
+class DownloadParams:
+    url: str
 
 
 @activity.defn
-async def c4d_preview(params):
-    with TemporaryDirectory() as dir:
-        stem = str(uuid4())
-        _c4d = f"{dir}/{stem}.c4d"
-        _gltf = f"{dir}/{stem}.gltf"
-        _png = f"{dir}/{stem}.png"
+async def download(params: DownloadParams) -> str:
+    """Download a file from a URL. Return the file path.
 
-        with open(_c4d, "wb") as file:
-            file.write(await fetch(params["file"]))
+    The filename is randomly generated, but if the original URL contains a file extension, it will
+    be retained."""
+    filename = str(uuid4()) + url2ext(params.url)
+    path = os.path.join(get_datadir(), filename)
 
-        with tracer.start_as_current_span("c4d-load-document"):
-            doc = c4d.documents.LoadDocument(_c4d, c4d.SCENEFILTER_OBJECTS)
-            assert doc is not None
+    timeout = aiohttp.ClientTimeout(total=1500, sock_read=30)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(params.url) as response:
+            response.raise_for_status()
+            with open(path, "wb") as file:
+                async for chunk, _ in response.content.iter_chunks():
+                    file.write(chunk)
+                    activity.heartbeat()
 
-        with tracer.start_as_current_span("c4d-export-gltf"):
-            c4d.documents.SaveDocument(doc, _gltf, 0, c4d.FORMAT_GLTFEXPORT)
+    span_attribute("url", params.url)
+    span_attribute("path", path)
+    return path
 
-        with open(_gltf, "rb") as file:
+
+@dataclass
+class UploadParams:
+    path: str
+    content_type: str = "binary/octet-stream"
+
+
+@activity.defn
+async def upload(params: UploadParams) -> str:
+    """Upload file to S3-compatible storage. Return a presigned URL that can be used to download
+    the file."""
+    session = aioboto3.Session()
+    async with session.client(
+        "s3",
+        endpoint_url=os.environ["S3_ENDPOINT_URL"],
+        config=Config(region_name=os.environ["S3_REGION"], signature_version="v4"),
+    ) as s3:
+        with open(params.path, "rb") as file:
+            key = Path(params.path).name
             data = file.read()
-            gltf_url = upload(f"{stem}.gltf", data)
-
-        with tracer.start_as_current_span("c4d-export-png"):
-            # create a bitmap with Alpha channel
-            rd = doc.GetActiveRenderData()
-            bitmap = c4d.bitmaps.MultipassBitmap(
-                int(rd[c4d.RDATA_XRES]), int(rd[c4d.RDATA_YRES]), c4d.COLORMODE_RGB
+            await s3.put_object(
+                Bucket=os.environ["S3_BUCKET"],
+                Key=key,
+                Body=data,
+                ContentType=params.content_type,
             )
-            bitmap.AddChannel(True, True)
+        presigned_url = await s3.generate_presigned_url(
+            "get_object", Params=dict(Bucket=os.environ["S3_BUCKET"], Key=key)
+        )
+        span_attribute("key", key)
+        span_attribute("path", params.path)
+        span_attribute("content_type", params.content_type)
+        span_attribute("presigned_url", presigned_url)
+        return presigned_url
 
-            # render document into the bitmap
-            ret = c4d.documents.RenderDocument(
-                doc,
-                rd.GetData(),
-                bitmap,
-                c4d.RENDERFLAGS_EXTERNAL,
-                prog=prog_callback,
-                wprog=write_callback,
-            )
-            assert ret == c4d.RENDERRESULT_OK
 
-            # save bitmap as PNG
-            ret = bitmap.Save(_png, c4d.FILTER_PNG)
-            assert ret == c4d.IMAGERESULT_OK
+@dataclass
+class PreviewParams:
+    url: str
 
-        with open(_png, "rb") as file:
-            data = file.read()
-            png_url = upload(f"{stem}.png", data)
 
-        return {"gltf": gltf_url, "png": png_url}
+@activity.defn(name="c4d-preview")
+async def preview(params: PreviewParams):
+    gltf = f"{get_datadir()}/{uuid4()}.gltf"
+    png = f"{get_datadir()}/{uuid4()}.png"
+
+    with tracer.start_as_current_span("c4d-download"):
+        file = await download(DownloadParams(params.url))
+
+    with tracer.start_as_current_span("c4d-load-document"):
+        doc = c4d.documents.LoadDocument(file, c4d.SCENEFILTER_OBJECTS)
+        assert doc is not None
+
+    with tracer.start_as_current_span("c4d-export-gltf"):
+        c4d.documents.SaveDocument(doc, gltf, 0, c4d.FORMAT_GLTFEXPORT)
+
+    with tracer.start_as_current_span("c4d-upload-gltf"):
+        gltf_url = await upload(UploadParams(gltf))
+
+    with tracer.start_as_current_span("c4d-export-png"):
+        bitmap = doc.GetDocPreviewBitmap()
+        ret = bitmap.Save(png, c4d.FILTER_PNG)
+        assert ret == c4d.IMAGERESULT_OK
+
+    with tracer.start_as_current_span("c4d-upload-png"):
+        png_url = await upload(UploadParams(png))
+
+    return {"gltf": gltf_url, "png": png_url}
 
 
 async def get_client():
@@ -141,7 +159,11 @@ async def main():
     worker = Worker(
         client,
         task_queue="media-c4d",
-        workflows=[C4dPreview],
-        activities=[c4d_preview],
+        activities=[preview],
     )
+    print("starting worker on task queue media-c4d")
     await worker.run()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
