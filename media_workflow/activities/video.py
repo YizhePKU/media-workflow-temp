@@ -33,6 +33,7 @@ async def metadata(params: MetadataParams) -> dict:
         "-show_streams",
         params.file,
         stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
     (stdout, stderr) = await process.communicate()
     if process.returncode != 0:
@@ -92,6 +93,8 @@ async def sprite(params: SpriteParams) -> dict:
         stderr=asyncio.subprocess.PIPE,
     )
     (_, stderr) = await process.communicate()
+    if process.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
     for line in stderr.decode().split("\n"):
         if match := re.search(r"Video: png.*?(\d+)x(\d+)", line):
             width = int(match.group(1))
@@ -128,8 +131,11 @@ async def transcode(params: TranscodeParams) -> str:
         "-codec:a",
         params.audio_codec,
         output,
+        stderr=asyncio.subprocess.PIPE,
     )
-    await process.wait()
+    (_, stderr) = await process.communicate()
+    if process.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
     assert os.path.exists(output)
     return output
 
