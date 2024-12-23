@@ -6,9 +6,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-_provider = TracerProvider(
-    resource=Resource(attributes={SERVICE_NAME: "media-workflow"})
-)
+_provider = TracerProvider(resource=Resource(attributes={SERVICE_NAME: "media-workflow"}))
 
 if honeycomb_key := os.environ.get("HONEYCOMB_KEY"):
     _processor = BatchSpanProcessor(

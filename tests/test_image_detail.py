@@ -28,9 +28,7 @@ def mock_openai_chatcompletion(monkeypatch):
         # Use different response according to system prompt
         system_prompt: str = kwargs["messages"][0]["content"]
 
-        if system_prompt.startswith(
-            "You are an assistant skilled at image understanding."
-        ):
+        if system_prompt.startswith("You are an assistant skilled at image understanding."):
             test_detail_response = {
                 "title": "image-detail-title",
                 "description": "image-detail-description",
@@ -38,28 +36,20 @@ def mock_openai_chatcompletion(monkeypatch):
                 "sub_category": "general",
                 "tags": {"aspect": ["tag"]},
             }
-        elif system_prompt.startswith(
-            "You are an assistant skilled at image description."
-        ):
+        elif system_prompt.startswith("You are an assistant skilled at image description."):
             test_detail_response = {"aspect": "content"}
         elif system_prompt.startswith("从图像中提取一个标题和详细描述。"):
             test_detail_response = {"title": "标题", "description": "描述"}
-        elif system_prompt.startswith(
-            "Extract a title and a detailed description from the image."
-        ):
+        elif system_prompt.startswith("Extract a title and a detailed description from the image."):
             test_detail_response = {
                 "title": "image-detail-basic-title",
                 "description": "image-detail-basic-description",
             }
-        elif system_prompt.startswith(
-            "根据以下预定义的方面从图像中提取标签"
-        ) or system_prompt.startswith(
+        elif system_prompt.startswith("根据以下预定义的方面从图像中提取标签") or system_prompt.startswith(
             "Extract tags from the image according to some predefined aspects."
         ):
             test_detail_response = {"aspect": ["tag"]}
-        elif system_prompt.startswith(
-            "根据一些预定义的方面，从图像中提取详细描述"
-        ) or system_prompt.startswith(
+        elif system_prompt.startswith("根据一些预定义的方面，从图像中提取详细描述") or system_prompt.startswith(
             "Extract detailed descriptions from the image according to"
         ):
             test_detail_response = {"aspect": "description"}
@@ -79,11 +69,7 @@ def mock_openai_chatcompletion(monkeypatch):
                 self.message = message
 
         class MockResponse:
-            choices = [
-                MockChoice(
-                    message=MockMessage(content=json.dumps(test_detail_response))
-                )
-            ]
+            choices = [MockChoice(message=MockMessage(content=json.dumps(test_detail_response)))]
 
         return MockResponse()
 
@@ -130,9 +116,7 @@ def test_image_detail_category_tree():
 
         assert get_category_tree(
             ImageDetailParams(file="", language="en-US", industry=[data["name"]])
-        ) == get_category_tree(
-            ImageDetailParams(file="", language="en-US", industry=[data["name_en"]])
-        )
+        ) == get_category_tree(ImageDetailParams(file="", language="en-US", industry=[data["name_en"]]))
 
 
 @pytest.mark.asyncio
@@ -144,9 +128,7 @@ async def test_image_detail(mock_openai_chatcompletion, mock_openfile):
     assert main_response.title == "image-detail-title"
     assert main_response.description == "image-detail-description"
 
-    result = await _image_detail_details(
-        ImageDetailDetailsParams(**params.__dict__, main_response=main_response)
-    )
+    result = await _image_detail_details(ImageDetailDetailsParams(**params.__dict__, main_response=main_response))
 
     assert result.title == main_response.title
     assert result.description == main_response.description

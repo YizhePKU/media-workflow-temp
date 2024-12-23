@@ -29,9 +29,7 @@ async def process(client, video):
         "file": video,
         "activities": ["video-thumbnail", "video-transcode"],
     }
-    await client.execute_workflow(
-        "file-analysis", params, id=str(uuid4()), task_queue="media"
-    )
+    await client.execute_workflow("file-analysis", params, id=str(uuid4()), task_queue="media")
     increment()
 
 

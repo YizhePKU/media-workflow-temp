@@ -26,9 +26,7 @@ async def main():
         activities=media_workflow.activities.activities,
         max_concurrent_activities=max_concurrent_activities,
     )
-    print(
-        f"starting worker on task_queue media, max_concurrent_activities={max_concurrent_activities}"
-    )
+    print(f"starting worker on task_queue media, max_concurrent_activities={max_concurrent_activities}")
     await worker.run()
 
 

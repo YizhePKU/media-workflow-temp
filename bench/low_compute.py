@@ -50,9 +50,7 @@ async def image_thumbnail(client, image):
         "activities": ["image-thumbnail"],
         "params": {"image-thumbnail": {"size": [400, 400]}},
     }
-    await client.execute_workflow(
-        "file-analysis", params, id=str(uuid4()), task_queue="media"
-    )
+    await client.execute_workflow("file-analysis", params, id=str(uuid4()), task_queue="media")
     increment()
 
 
@@ -62,9 +60,7 @@ async def document_thumbnail(client, document):
         "activities": ["document-thumbnail"],
         "params": {"document-thumbnail": {"size": [400, 400], "pages": [0]}},
     }
-    await client.execute_workflow(
-        "file-analysis", params, id=str(uuid4()), task_queue="media"
-    )
+    await client.execute_workflow("file-analysis", params, id=str(uuid4()), task_queue="media")
     increment()
 
 

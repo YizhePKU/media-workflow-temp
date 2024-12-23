@@ -117,9 +117,7 @@ class FileAnalysis:
             image.ThumbnailParams(file, size=(1024, 1024)),
         )
 
-        params = image_detail.ImageDetailParams(
-            png, **self.request.get("params", {}).get(activity, {})
-        )
+        params = image_detail.ImageDetailParams(png, **self.request.get("params", {}).get(activity, {}))
         main_response = await start(
             image_detail.image_detail_main,
             params,
@@ -143,9 +141,7 @@ class FileAnalysis:
             image.ThumbnailParams(file, size=(1024, 1024)),
         )
 
-        params = image_detail.ImageDetailParams(
-            png, **self.request.get("params", {}).get(activity, {})
-        )
+        params = image_detail.ImageDetailParams(png, **self.request.get("params", {}).get(activity, {}))
         main_result = await start(image_detail.image_detail_basic_main, params)
         details_result = await start(image_detail.image_detail_basic_details, params)
         tags_result = await start(image_detail.image_detail_basic_tags, params)
@@ -163,9 +159,7 @@ class FileAnalysis:
         activity = "image-color-palette"
         result = await start(
             image.color_palette,
-            image.ColorPaletteParams(
-                file, **self.request.get("params", {}).get(activity, {})
-            ),
+            image.ColorPaletteParams(file, **self.request.get("params", {}).get(activity, {})),
         )
         await self.submit(activity, result)
 
@@ -187,10 +181,7 @@ class FileAnalysis:
             ),
         )
         result["files"] = await asyncio.gather(
-            *[
-                start(utils.upload, utils.UploadParams(image, "image/png"))
-                for image in result["files"]
-            ]
+            *[start(utils.upload, utils.UploadParams(image, "image/png")) for image in result["files"]]
         )
         await self.submit(activity, result)
 
@@ -200,9 +191,7 @@ class FileAnalysis:
             file,
             **self.request.get("params", {}).get(activity, {}),
         )
-        path = await start(
-            video.transcode, params, start_to_close_timeout=timedelta(minutes=30)
-        )
+        path = await start(video.transcode, params, start_to_close_timeout=timedelta(minutes=30))
         mimetype = f"video/{params.container}"
         result = await start(utils.upload, utils.UploadParams(path, mimetype))
         await self.submit(activity, result)
@@ -211,9 +200,7 @@ class FileAnalysis:
         activity = "audio-waveform"
         result = await start(
             video.waveform,
-            video.WaveformParams(
-                file, **self.request.get("params", {}).get(activity, {})
-            ),
+            video.WaveformParams(file, **self.request.get("params", {}).get(activity, {})),
         )
         await self.submit(activity, result)
 
@@ -231,10 +218,7 @@ class FileAnalysis:
         )
         # upload thumbnails
         result = await asyncio.gather(
-            *[
-                start(utils.upload, utils.UploadParams(image, "image/png"))
-                for image in images
-            ]
+            *[start(utils.upload, utils.UploadParams(image, "image/png")) for image in images]
         )
         await self.submit(activity, result)
 
@@ -254,9 +238,7 @@ class FileAnalysis:
         activity = "font-metadata"
         result = await start(
             font.metadata,
-            font.MetadataParams(
-                file, **self.request.get("params", {}).get(activity, {})
-            ),
+            font.MetadataParams(file, **self.request.get("params", {}).get(activity, {})),
         )
         await self.submit(activity, result)
 
