@@ -4,7 +4,7 @@
 #
 # ```
 # python3 -m pip install --target /Users/tezign/Library/Preferences/MAXON/python/python311/libs \
-# temporalio opentelemetry-exporter-otlp-proto-http aiohttp aioboto3 python-dotenv
+# temporalio opentelemetry-exporter-otlp-proto-http aiohttp aioboto3
 # ```
 #
 # Step 2: Install this package (only a few files are actually used, like trace.py)
