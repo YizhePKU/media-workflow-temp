@@ -21,8 +21,7 @@ class ImageDetailParams:
 
 
 class ImageDetailMainResponse(BaseModel):
-    """
-    First response of image-detail pipeline.
+    """First response of image-detail pipeline.
 
     Include title, description, main_category, sub_category and tags.
     """
@@ -62,11 +61,11 @@ class ImageDetailBasicMainResponse(BaseModel):
 
 
 def validate_detailed_description(data) -> dict[str, Optional[str]]:
-    """
-    Validate format of detailed description.
+    """Validate format of detailed description.
 
     Raises:
         ValueError: If data is not dict[str, str].
+
     """
     if not isinstance(data, dict):
         raise ValueError(f"detailed_description should be a dictionary: {data}")
@@ -81,11 +80,11 @@ def validate_detailed_description(data) -> dict[str, Optional[str]]:
 
 
 def validate_tags(data) -> dict[str, list[str]]:
-    """
-    Validate format of tags.
+    """Validate format of tags.
 
     Raises:
         ValueError: If data is not dict[str, list[str]].
+
     """
     if not isinstance(data, dict):
         raise ValueError(f"tags should be a dictionary: {data}")

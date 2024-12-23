@@ -23,9 +23,7 @@ def url2ext(url) -> str:
 
 def get_datadir() -> str:
     """Create the data directory for this workflow, shared between workers."""
-    dir = os.path.join(
-        os.environ["MEDIA_WORKFLOW_DATADIR"], activity.info().workflow_id
-    )
+    dir = os.path.join(os.environ["MEDIA_WORKFLOW_DATADIR"], activity.info().workflow_id)
     os.makedirs(dir, exist_ok=True)
     return dir
 
@@ -40,7 +38,8 @@ async def download(params: DownloadParams) -> str:
     """Download a file from a URL. Return the file path.
 
     The filename is randomly generated, but if the original URL contains a file extension, it will
-    be retained."""
+    be retained.
+    """
     filename = str(uuid4()) + url2ext(params.url)
     path = os.path.join(get_datadir(), filename)
 
@@ -66,8 +65,10 @@ class UploadParams:
 
 @activity.defn
 async def upload(params: UploadParams) -> str:
-    """Upload file to S3-compatible storage. Return a presigned URL that can be used to download
-    the file."""
+    """Upload file to S3-compatible storage.
+
+    Return a presigned URL that can be used to download the file.
+    """
     session = aioboto3.Session()
     async with session.client(
         "s3",

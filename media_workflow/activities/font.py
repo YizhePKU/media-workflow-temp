@@ -157,7 +157,6 @@ class FontDetailResponse(BaseModel):
 @activity.defn(name="font-detail")
 async def detail(params: DetailParams) -> dict:
     """Get font detail analysis using LLM."""
-
     with open(params.file, "rb") as file:
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"

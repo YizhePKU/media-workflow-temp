@@ -33,7 +33,6 @@ def get_category_tree(params: ImageDetailParams) -> dict[str, dict[str, Optional
 
 def fix_category(main: str, sub: str) -> tuple[str, str]:
     """Validate main category and sub category output, use default one if they are incorrect."""
-
     if main not in CATEGORY_DESCRIPTION:
         return [DEFAULT_MAIN_CATEGORY, DEFAULT_SUB_CATEGORY]
 
@@ -43,11 +42,8 @@ def fix_category(main: str, sub: str) -> tuple[str, str]:
     return [main, sub]
 
 
-def get_description_aspects(
-    main: str, sub: str
-) -> tuple[str, str, dict[str, Optional[str]]]:
-    """Get which aspects should be included in the final description with correct
-    category according to input category."""
+def get_description_aspects(main: str, sub: str) -> tuple[str, str, dict[str, Optional[str]]]:
+    """Get aspects to be included in the final description with correct category according to input category."""
     main, sub = fix_category(main, sub)
 
     aspects = CATEGORY_DESCRIPTION[main][sub]["aspects"]

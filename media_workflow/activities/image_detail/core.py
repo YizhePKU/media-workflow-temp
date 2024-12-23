@@ -25,7 +25,6 @@ from media_workflow.activities.image_detail.schema import (
 
 async def _image_detail_main(params: ImageDetailParams) -> ImageDetailMainResponse:
     """Get image structured description."""
-
     with open(params.file, "rb") as file:
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
@@ -60,8 +59,6 @@ async def _image_detail_main(params: ImageDetailParams) -> ImageDetailMainRespon
 async def _image_detail_details(
     params: ImageDetailDetailsParams,
 ) -> ImageDetailFinalResponse:
-    """"""
-
     with open(params.file, "rb") as file:
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
@@ -98,19 +95,14 @@ async def _image_detail_details(
     return ImageDetailFinalResponse(
         title=params.main_response.title,
         description=params.main_response.description,
-        tags=[
-            tag for tag_list in params.main_response.tags.values() for tag in tag_list
-        ],
-        detailed_description=[
-            {key: value} for key, value in detailed_description.items()
-        ],
+        tags=[tag for tag_list in params.main_response.tags.values() for tag in tag_list],
+        detailed_description=[{key: value} for key, value in detailed_description.items()],
     )
 
 
 @activity.defn(name="image-detail-main")
 async def image_detail_main(params: ImageDetailParams) -> ImageDetailMainResponse:
     """`image-detail-main` activity wrapper."""
-
     return await _image_detail_main(params)
 
 
@@ -119,7 +111,6 @@ async def image_detail_details(
     params: ImageDetailDetailsParams,
 ) -> ImageDetailFinalResponse:
     """`image-detail-details` activity wrapper."""
-
     return await _image_detail_details(params)
 
 
@@ -128,18 +119,13 @@ async def _image_detail_basic(
     task: Literal["main", "details", "tags"] = "main",
 ):
     """Get image structured description with lightweight model."""
-
     with open(params.file, "rb") as file:
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
     client = llm.client()
 
-    model_name = (
-        "qwen2-vl-7b-instruct"
-        if params.model_type == "public"
-        else "minicpm-v:8b-2.6-q4_K_S"
-    )
+    model_name = "qwen2-vl-7b-instruct" if params.model_type == "public" else "minicpm-v:8b-2.6-q4_K_S"
 
     match task:
         case "main":
@@ -194,7 +180,6 @@ async def image_detail_basic_main(
     params: ImageDetailParams,
 ) -> ImageDetailBasicMainResponse:
     """`image-detail-basic-main` activity wrapper."""
-
     return await _image_detail_basic(params, "main")
 
 
@@ -203,7 +188,6 @@ async def image_detail_basic_tags(
     params: ImageDetailParams,
 ) -> list[str]:
     """`image-detail-basic-tags` activity wrapper."""
-
     return await _image_detail_basic(params, "tags")
 
 
@@ -212,5 +196,4 @@ async def image_detail_basic_details(
     params: ImageDetailParams,
 ) -> list[dict[str, Optional[str]]]:
     """`image-detail-basic-details` activity wrapper."""
-
     return await _image_detail_basic(params, "details")

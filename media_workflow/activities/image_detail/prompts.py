@@ -15,11 +15,7 @@ from .schema import (
 
 
 def prompt_image_detail_main(params: ImageDetailParams) -> str:
-    """
-    System prompt for image-detail first step,
-    getting the basic information of the image.
-    """
-
+    """System prompt for image-detail first step, getting the basic information of the image."""
     category_tree = get_category_tree(params)
 
     return f"""You are an assistant skilled at image understanding.
@@ -72,7 +68,6 @@ def prompt_image_detail_detailed_description(
     params: ImageDetailDetailsParams,
 ) -> str:
     """System prompt to generate detailed description in image-detail pipeline."""
-
     _, sub_category, aspects = get_description_aspects(
         params.main_response.main_category, params.main_response.sub_category
     )
@@ -89,7 +84,6 @@ You should try to use {language_to_name(params.language)} in description."""
 
 def prompt_image_detail_basic_main(params: ImageDetailParams) -> str:
     """System prompt for image-detail-basic main result."""
-
     match params.language:
         case "zh-CN":
             return """从图像中提取一个标题和详细描述。输出应为简体中文。
