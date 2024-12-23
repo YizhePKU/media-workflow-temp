@@ -28,6 +28,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from botocore.config import Config
+from dotenv import load_dotenv
 from temporalio import activity
 from temporalio.client import Client
 from temporalio.contrib.opentelemetry import TracingInterceptor
@@ -37,6 +38,8 @@ import aiohttp
 import c4d
 
 from media_workflow.trace import tracer, span_attribute
+
+load_dotenv()
 
 
 def url2ext(url) -> str:

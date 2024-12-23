@@ -4,9 +4,12 @@ import os
 from temporalio.client import Client
 from temporalio.contrib.opentelemetry import TracingInterceptor
 from temporalio.worker import Worker
+from dotenv import load_dotenv
 
 import media_workflow.activities
 import media_workflow.workflows
+
+load_dotenv()
 
 
 async def get_client():
@@ -43,9 +46,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    try:
-        from dotenv import load_dotenv
-
-        load_dotenv()
-    finally:
-        asyncio.run(main())
+    asyncio.run(main())
