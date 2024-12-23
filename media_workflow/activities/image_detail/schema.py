@@ -65,7 +65,6 @@ def validate_detailed_description(data) -> dict[str, str | None]:
 
     Raises:
         ValueError: If data is not dict[str, str].
-
     """
     if not isinstance(data, dict):
         raise ValueError(f"detailed_description should be a dictionary: {data}")
