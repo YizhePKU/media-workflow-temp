@@ -63,13 +63,7 @@ documents = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pdf",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pptx",
 ]
-models = [
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/megapolis.c4d",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/moist.c4d",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/suitcase.c4d",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/tree.c4d",
-]
+models = []
 fonts = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/NotoSansCJK-Regular.ttc",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/comic-sans.ttf",
