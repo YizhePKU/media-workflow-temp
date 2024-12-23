@@ -4,7 +4,7 @@
 #
 # ```
 # python3 -m pip install --target /Users/tezign/Library/Preferences/MAXON/python/python311/libs \
-# temporalio opentelemetry-exporter-otlp-proto-http aiohttp aioboto3
+# temporalio opentelemetry-exporter-otlp-proto-http aiohttp aioboto3 python-dotenv
 # ```
 #
 # Step 2: Install this package (only a few files are actually used, like trace.py)
@@ -130,20 +130,25 @@ async def preview(params: PreviewParams):
     with tracer.start_as_current_span("c4d-load-document"):
         doc = c4d.documents.LoadDocument(file, c4d.SCENEFILTER_OBJECTS)
         assert doc is not None
+        print(f"loaded {file}")
 
     with tracer.start_as_current_span("c4d-export-gltf"):
         c4d.documents.SaveDocument(doc, gltf, 0, c4d.FORMAT_GLTFEXPORT)
+        print(f"exported {gltf}")
 
     with tracer.start_as_current_span("c4d-upload-gltf"):
         gltf_url = await upload(UploadParams(gltf))
+        print(f"uploaded {gltf}")
 
     with tracer.start_as_current_span("c4d-export-png"):
         bitmap = doc.GetDocPreviewBitmap()
         ret = bitmap.Save(png, c4d.FILTER_PNG)
         assert ret == c4d.IMAGERESULT_OK
+        print(f"exported {png}")
 
     with tracer.start_as_current_span("c4d-upload-png"):
         png_url = await upload(UploadParams(png))
+        print(f"uploaded {png}")
 
     return {"gltf": gltf_url, "png": png_url}
 
