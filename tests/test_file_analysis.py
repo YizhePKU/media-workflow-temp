@@ -16,9 +16,9 @@ def url2ext(url) -> str:
 
 
 async def download(url):
-    dir = tempfile.gettempdir()
+    tempdir = tempfile.gettempdir()
     filename = str(uuid4()) + url2ext(url)
-    path = os.path.join(dir, filename)
+    path = os.path.join(tempdir, filename)
     with open(path, "wb") as file:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -120,9 +120,7 @@ async def test_streaming_via_update():
             },
         },
     }
-    handle = await client.start_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    handle = await client.start_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     result = await handle.execute_update("get", "image-thumbnail")
     image = imread(await download(result))
     assert image.mode == "RGB"
@@ -142,9 +140,7 @@ async def test_image_thumbnail(file):
             },
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     image = imread(await download(result["result"]["image-thumbnail"]))
     assert image.mode == "RGB"
     assert image.size[0] <= 400
@@ -163,9 +159,7 @@ async def test_image_detail(file):
             }
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert "image-detail" in result["result"]
 
 
@@ -181,9 +175,7 @@ async def test_image_detail_basic(file):
             }
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert "image-detail-basic" in result["result"]
 
 
@@ -199,9 +191,7 @@ async def test_image_color_palette(file):
             }
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert len(result["result"]["image-color-palette"]) == 5
 
 
@@ -218,9 +208,7 @@ async def test_document_thumbnail(file):
             }
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert len(result["result"]["document-thumbnail"]) == 1
 
 
@@ -236,9 +224,7 @@ async def test_font_thumbnail(file):
             }
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     image = imread(await download(result["result"]["font-thumbnail"]))
     assert image.mode == "RGB"
     assert image.size[0] <= 400
@@ -252,9 +238,7 @@ async def test_font_metadata(file):
         "file": file,
         "activities": ["font-metadata"],
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert "font_family" in result["result"]["font-metadata"]
 
 
@@ -270,9 +254,7 @@ async def test_font_detail(file):
             }
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     description = result["result"]["font-detail"]["description"]
     assert not description.isascii()
 
@@ -284,9 +266,7 @@ async def test_video_metadata(file):
         "file": file,
         "activities": ["video-metadata"],
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert isinstance(result["result"]["video-metadata"]["fps"], float)
 
 
@@ -304,9 +284,7 @@ async def test_video_sprite(file):
             },
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert len(result["result"]["video-sprite"]["files"]) == 2
     assert result["result"]["video-sprite"]["width"] == 200
     image = imread(await download(result["result"]["video-sprite"]["files"][0]))
@@ -320,9 +298,7 @@ async def test_video_transcode(file):
         "file": file,
         "activities": ["video-transcode"],
     }
-    result = await client.execute_workflow(
-        "file-analysis", params, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     await download(result["result"]["video-transcode"])
 
 
@@ -338,9 +314,7 @@ async def test_audio_waveform(file):
             }
         },
     }
-    result = await client.execute_workflow(
-        "file-analysis", arg, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", arg, id=f"{uuid4()}", task_queue="media")
     waveform = result["result"]["audio-waveform"]
     assert len(waveform) == 1000
     assert max(waveform) == 1.0
@@ -353,8 +327,6 @@ async def test_c4d_preview(model):
         "file": model,
         "activities": ["c4d-preview"],
     }
-    result = await client.execute_workflow(
-        "file-analysis", arg, id=f"{uuid4()}", task_queue="media"
-    )
+    result = await client.execute_workflow("file-analysis", arg, id=f"{uuid4()}", task_queue="media")
     assert "gltf" in result["result"]["c4d-preview"]
     imread(await download(result["result"]["c4d-preview"]["png"]))

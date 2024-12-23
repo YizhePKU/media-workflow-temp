@@ -7,10 +7,10 @@ def rgb2hex(rgb: list[int]) -> str:
     return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
 
 
-def hex2rgb(hex: str) -> np.array:
-    r = int(hex[1:3], base=16)
-    g = int(hex[3:5], base=16)
-    b = int(hex[5:7], base=16)
+def hex2rgb(color_hex: str) -> np.array:
+    r = int(color_hex[1:3], base=16)
+    g = int(color_hex[3:5], base=16)
+    b = int(color_hex[5:7], base=16)
     return np.array([r, g, b], dtype=np.uint8)
 
 
