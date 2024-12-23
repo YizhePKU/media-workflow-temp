@@ -1,3 +1,5 @@
+"""Utilities for reading and writing images."""
+
 import os
 from io import BytesIO
 from uuid import uuid4

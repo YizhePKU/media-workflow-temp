@@ -6,7 +6,7 @@ from uuid import uuid4
 import aiohttp
 import pytest
 
-from media_workflow.utils import imread
+from media_workflow.imutils import imread
 from media_workflow.worker import get_client
 
 

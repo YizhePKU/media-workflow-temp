@@ -5,7 +5,7 @@ from PIL import Image
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
-from media_workflow.utils import imread, imwrite
+from media_workflow.imutils import imread, imwrite
 from pylette.color_extraction import extract_colors
 
 

@@ -9,7 +9,7 @@ from PIL import Image
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
-from media_workflow.utils import imwrite
+from media_workflow.imutils import imwrite
 
 
 def page2image(page: pymupdf.Page) -> Image.Image:
