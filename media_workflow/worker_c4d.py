@@ -20,26 +20,23 @@
 # ```
 
 import asyncio
-from dataclasses import dataclass
 import os
 import tempfile
-from uuid import uuid4
+from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
+from uuid import uuid4
 
+import aioboto3
+import aiohttp
+import c4d
 from botocore.config import Config
-from dotenv import load_dotenv
 from temporalio import activity
 from temporalio.client import Client
 from temporalio.contrib.opentelemetry import TracingInterceptor
 from temporalio.worker import Worker
-import aioboto3
-import aiohttp
-import c4d
 
-from media_workflow.trace import tracer, span_attribute
-
-load_dotenv()
+from media_workflow.trace import span_attribute, tracer
 
 
 def url2ext(url) -> str:
