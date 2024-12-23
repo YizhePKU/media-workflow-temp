@@ -117,8 +117,9 @@ jobs:
     env:
       MEDIA_WORKFLOW_DATADIR: /tmp
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
-      TEMPORAL_SERVER_HOST: 40.162.210.3:7233
-      TEMPORAL_NAMESPACE: muse-dev
+      TEMPORAL_SERVER_HOST: temporal-frontend.aws-cn-prod.museai.cc
+      TEMPORAL_NAMESPACE: muse-test
+      TEMPORAL_TLS: 1
       LLM_BASE_URL: ${{ secrets.BASE_URL }}
       LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
       S3_ENDPOINT_URL: https://s3.cn-north-1.amazonaws.com.cn
@@ -130,12 +131,6 @@ jobs:
     steps:
       - name: Reset $HOME back to /root
         run: echo HOME=/root >> "$GITHUB_ENV"
-
-      - name: Install Temporal CLI
-        uses: temporalio/setup-temporal@v0
-
-      - name: Start a local Temporal server
-        run: temporal server start-dev &
 
       - name: Start a worker
         run: poetry run python media_workflow/worker.py &

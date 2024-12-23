@@ -77,14 +77,6 @@ fonts = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/yahei.ttf",
 ]
 
-if os.environ.get("MEDIA_WORKFLOW_TEST_SMALL", False):
-    images = [images[0]]
-    videos = [videos[0]]
-    audios = [audios[0]]
-    documents = [documents[0]]
-    models = [models[0]]
-    fonts = [fonts[0]]
-
 if os.environ.get("MEDIA_WORKFLOW_TEST_LARGE", False):
     images += [
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/float.tiff",
@@ -100,6 +92,27 @@ if os.environ.get("MEDIA_WORKFLOW_TEST_LARGE", False):
     audios += [
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/resurrections.flac",
     ]
+
+if os.environ.get("MEDIA_WORKFLOW_TEST_C4D", False):
+    models += [
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/tree.c4d",
+    ]
+    if os.environ.get("MEDIA_WORKFLOW_TEST_LARGE", False):
+        models += [
+            "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/moist.c4d",
+            "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/megapolis.c4d"
+            "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/suitcase.c4d",
+        ]
+
+if os.environ.get("MEDIA_WORKFLOW_TEST_SMALL", False):
+    images = [images[0]]
+    videos = [videos[0]]
+    audios = [audios[0]]
+    documents = [documents[0]]
+    fonts = [fonts[0]]
+    if models:
+        models = [models[0]]
 
 
 async def test_streaming_via_update():
@@ -337,3 +350,17 @@ async def test_audio_waveform(file):
     waveform = result["result"]["audio-waveform"]
     assert len(waveform) == 1000
     assert max(waveform) == 1.0
+
+
+@pytest.mark.parametrize("model", models)
+async def test_c4d_preview(model):
+    client = await get_client()
+    arg = {
+        "file": model,
+        "activities": ["c4d-preview"],
+    }
+    result = await client.execute_workflow(
+        "file-analysis", arg, id=f"{uuid4()}", task_queue="media"
+    )
+    assert "gltf" in result["result"]["c4d-preview"]
+    imread(await download(result["result"]["c4d-preview"]["png"]))
