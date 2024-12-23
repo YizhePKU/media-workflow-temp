@@ -83,7 +83,7 @@ class Palette:
                         palette_file.write(",{}".format(color.freq))
                     palette_file.write("\n")
 
-    def random_color(self, N, mode="frequency"):
+    def random_color(self, n, mode="frequency"):
         """
         Returns N random colors from the palette, either using the frequency of each color, or choosing uniformly.
 
@@ -94,18 +94,11 @@ class Palette:
         Returns:
             list[Color]: List of N random colors from the palette.
         """
-
         if mode == "frequency":
             pdf = self.frequencies
         elif mode == "uniform":
             pdf = None
-
-        return np.random.choice(self.colors, size=N, p=pdf)
+        return np.random.choice(self.colors, size=n, p=pdf)
 
     def __str__(self):
-        return "".join(
-            [
-                "({}, {}, {}, {}) \n".format(c.rgb[0], c.rgb[1], c.rgb[2], c.freq)
-                for c in self.colors
-            ]
-        )
+        return "".join(["({}, {}, {}, {}) \n".format(c.rgb[0], c.rgb[1], c.rgb[2], c.freq) for c in self.colors])
