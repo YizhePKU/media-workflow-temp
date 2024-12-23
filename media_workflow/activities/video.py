@@ -28,6 +28,8 @@ async def metadata(params: MetadataParams) -> dict:
         "quiet",
         "-print_format",
         "json",
+        "-show_entries",
+        "format=duration",
         "-show_streams",
         params.file,
         stdout=asyncio.subprocess.PIPE,
@@ -38,17 +40,18 @@ async def metadata(params: MetadataParams) -> dict:
 
     data = json.loads(stdout.decode())
     result = {}
+    result["duration"] = float(data["format"]["duration"])
     for stream in data["streams"]:
         if stream["codec_type"] == "video":
-            result["duration"] = float(stream["duration"])
             result["video_codec"] = stream["codec_name"]
             result["width"] = int(stream["width"])
             result["height"] = int(stream["height"])
             numerator, denominator = map(int, stream["avg_frame_rate"].split("/"))
             result["fps"] = float(numerator) / float(denominator)
-            result["bit_rate"] = int(stream["bit_rate"])
-            result["bits_per_raw_sample"] = int(stream["bits_per_raw_sample"])
             result["pix_fmt"] = stream["pix_fmt"]
+            # bitrate info is not available in every video
+            result["bit_rate"] = int(stream.get("bit_rate", 0))
+            result["bits_per_raw_sample"] = int(stream.get("bits_per_raw_sample", 0))
         if stream["codec_type"] == "audio":
             result["audio_codec"] = stream["codec_name"]
             result["sample_fmt"] = stream["sample_fmt"]
