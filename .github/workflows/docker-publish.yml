@@ -133,9 +133,9 @@ jobs:
         run: echo HOME=/root >> "$GITHUB_ENV"
 
       - name: Start a worker
-        run: uvx python worker.py &
+        run: uv run python worker.py &
         working-directory: /app
 
       - name: Run pytest
-        run: uvx pytest -n 8
+        run: uv run pytest -n 8
         working-directory: /app
