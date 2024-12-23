@@ -1,9 +1,7 @@
-from typing import Optional
-
 from .schema import ImageDetailParams
 
 
-def get_category_tree(params: ImageDetailParams) -> dict[str, dict[str, Optional[str]]]:
+def get_category_tree(params: ImageDetailParams) -> dict[str, dict[str, str | None]]:
     """Get category tree according to industry input."""
     # use default main category and sub category
     target_main_category = ["general"]
@@ -42,7 +40,7 @@ def fix_category(main: str, sub: str) -> tuple[str, str]:
     return [main, sub]
 
 
-def get_description_aspects(main: str, sub: str) -> tuple[str, str, dict[str, Optional[str]]]:
+def get_description_aspects(main: str, sub: str) -> tuple[str, str, dict[str, str | None]]:
     """Get aspects to be included in the final description with correct category according to input category."""
     main, sub = fix_category(main, sub)
 

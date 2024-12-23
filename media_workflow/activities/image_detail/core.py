@@ -1,5 +1,5 @@
 from base64 import b64encode
-from typing import Literal, Optional
+from typing import Literal
 
 import json_repair
 from temporalio import activity
@@ -194,6 +194,6 @@ async def image_detail_basic_tags(
 @activity.defn(name="image-detail-basic-details")
 async def image_detail_basic_details(
     params: ImageDetailParams,
-) -> list[dict[str, Optional[str]]]:
+) -> list[dict[str, str | None]]:
     """`image-detail-basic-details` activity wrapper."""
     return await _image_detail_basic(params, "details")

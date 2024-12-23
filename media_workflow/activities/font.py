@@ -4,7 +4,6 @@ import json
 from base64 import b64encode
 from dataclasses import dataclass
 from inspect import cleandoc
-from typing import Optional, Tuple
 
 import json_repair
 from fontTools.ttLib import TTFont
@@ -44,7 +43,7 @@ def supports_chinese(font: TTFont) -> bool:
 @dataclass
 class ThumbnailParams:
     file: str
-    size: Tuple[int, int] = (1000, 1000)
+    size: tuple[int, int] = (1000, 1000)
     font_size: int = 200
 
 
@@ -148,9 +147,9 @@ class DetailParams:
 
 class FontDetailResponse(BaseModel):
     description: str
-    font_category: Optional[str]
-    stroke_characteristics: Optional[str]
-    historical_period: Optional[str]
+    font_category: str | None
+    stroke_characteristics: str | None
+    historical_period: str | None
     tags: list[str] = []
 
 

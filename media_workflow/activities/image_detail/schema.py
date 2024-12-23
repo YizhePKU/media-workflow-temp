@@ -1,7 +1,7 @@
 """Schema definition of image detail tasks."""
 
 from dataclasses import dataclass, field
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -50,7 +50,7 @@ class ImageDetailFinalResponse(BaseModel):
     title: str
     description: str
     tags: list[str]
-    detailed_description: list[dict[str, Optional[str]]]
+    detailed_description: list[dict[str, str | None]]
 
 
 class ImageDetailBasicMainResponse(BaseModel):
@@ -60,7 +60,7 @@ class ImageDetailBasicMainResponse(BaseModel):
     description: str
 
 
-def validate_detailed_description(data) -> dict[str, Optional[str]]:
+def validate_detailed_description(data) -> dict[str, str | None]:
     """Validate format of detailed description.
 
     Raises:

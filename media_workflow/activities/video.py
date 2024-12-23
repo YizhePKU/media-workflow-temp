@@ -5,7 +5,6 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple
 from uuid import uuid4
 
 import numpy as np
@@ -67,7 +66,7 @@ async def metadata(params: MetadataParams) -> dict:
 class SpriteParams:
     file: str
     duration: float
-    layout: Tuple[int, int] = (5, 5)
+    layout: tuple[int, int] = (5, 5)
     count: int = 1
     width: int = 200
     height: int = -1
@@ -77,9 +76,7 @@ class SpriteParams:
 async def sprite(params: SpriteParams) -> dict:
     datadir = get_datadir()
     # calculate time between frames (in seconds)
-    interval = params.duration / float(
-        params.count * params.layout[0] * params.layout[1]
-    )
+    interval = params.duration / float(params.count * params.layout[0] * params.layout[1])
 
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffmpeg",

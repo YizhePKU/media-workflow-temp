@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Tuple
 
 from PIL import Image
 from temporalio import activity
@@ -12,7 +11,7 @@ from pylette.color_extraction import extract_colors
 @dataclass
 class ThumbnailParams:
     file: str
-    size: Tuple[int, int] | None = None
+    size: tuple[int, int] | None = None
 
 
 @activity.defn(name="image-thumbnail")

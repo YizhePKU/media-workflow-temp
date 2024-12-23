@@ -2,7 +2,6 @@ import asyncio
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple
 
 import pymupdf
 from PIL import Image
@@ -46,7 +45,7 @@ async def to_pdf(params: ToPdfParams) -> str:
 class ThumbnailParams:
     file: str
     pages: list[int] | None = None
-    size: Tuple[int, int] | None = None
+    size: tuple[int, int] | None = None
 
 
 @activity.defn(name="pdf-thumbnail")
