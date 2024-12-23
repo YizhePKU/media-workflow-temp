@@ -116,6 +116,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
     env:
       MEDIA_WORKFLOW_DATADIR: /tmp
+      MEDIA_WORKFLOW_TEST_LARGE: ${{ vars.MEDIA_WORKFLOW_TEST_LARGE }}
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
       TEMPORAL_SERVER_HOST: ${{ vars.TEMPORAL_SERVER_HOST }}
       TEMPORAL_NAMESPACE: ${{ vars.TEMPORAL_NAMESPACE }}
