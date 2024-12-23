@@ -8,7 +8,6 @@ import media_workflow.activities.image_detail as image_detail
 import media_workflow.activities.utils as utils
 import media_workflow.activities.video as video
 
-
 activities = []
 for module in [
     calibrate,

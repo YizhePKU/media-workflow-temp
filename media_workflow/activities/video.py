@@ -2,9 +2,9 @@ import asyncio
 import json
 import math
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
-import re
 from typing import Tuple
 from uuid import uuid4
 

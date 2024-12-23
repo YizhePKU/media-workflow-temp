@@ -1,43 +1,39 @@
-[tool.poetry]
+[project]
 name = "media-workflow"
 version = "0.1.0"
-description = ""
-authors = ["sunyizhe <sunyizhe@tezign.com>"]
-readme = "README.md"
+requires-python = ">=3.11,<=3.12"
+dependencies = [
+    "aioboto3>=13.3.0",
+    "aiohttp>=3.11.11",
+    "cairosvg>=2.7.1",
+    "fonttools>=4.55.3",
+    "imageio[pillow-heif,tifffile]>=2.36.1",
+    "json-repair>=0.32.0",
+    "numpy>=2.2.1",
+    "openai>=1.58.1",
+    "opencv-python>=4.10.0.84",
+    "opentelemetry-exporter-otlp-proto-http>=1.29.0",
+    "pillow>=11.0.0",
+    "psd-tools>=1.10.4",
+    "pydub>=0.25.1",
+    "pymupdf>=1.25.1",
+    "scikit-learn>=1.6.0",
+    "temporalio[opentelemetry]>=1.8.0",
+]
 
-[tool.poetry.dependencies]
-aioboto3 = "^13.2.0"
-aiohttp = "^3.11.2"
-cairosvg = "^2.7.1"
-fonttools = "^4.55.0"
-imageio = { extras = ["pillow-heif", "tifffile"], version = "^2.36.1" }
-json-repair = "^0.31.0"
-numpy = "^2.1.3"
-openai = "^1.58.1"
-opencv-python = "^4.10.0.84"
-opentelemetry-api = "^1.28.2"
-opentelemetry-exporter-otlp-proto-http = "^1.28.2"
-opentelemetry-sdk = "^1.28.2"
-pillow = "^11.0.0"
-psd-tools = "^1.10.4"
-pydub = "^0.25.1"
-pymupdf = "^1.24.13"
-python = "^3.11"
-scikit-learn = "^1.5.2"
-temporalio = { extras = ["opentelemetry"], version = "^1.8.0" }
-
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^4.0.1"
-pytest = "^8.3.3"
-pytest-asyncio = "^0.24.0"
-pytest-xdist = "^3.6.1"
-ruff = "^0.8.2"
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.1",
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.0",
+    "pytest-xdist>=3.6.1",
+    "ruff>=0.8.4",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = ["ignore"]
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+[tool.ruff]
+lint.extend-select = ["I"]

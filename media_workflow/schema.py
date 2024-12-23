@@ -1,6 +1,5 @@
 from typing import Literal
 
-
 Language = Literal["zh-CN", "en-US"]
 
 

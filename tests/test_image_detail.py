@@ -5,18 +5,17 @@ import json
 import openai
 import pytest
 
-
 from media_workflow.activities.image_detail import (
-    ImageDetailParams,
     ImageDetailDetailsParams,
-    _image_detail_main,
-    _image_detail_details,
+    ImageDetailParams,
     _image_detail_basic,
+    _image_detail_details,
+    _image_detail_main,
 )
 from media_workflow.activities.image_detail.category import (
-    get_category_tree,
-    INDUSTRY_NAME_MAPPING,
     INDUSTRY_CATEGORY_MAPPING,
+    INDUSTRY_NAME_MAPPING,
+    get_category_tree,
 )
 
 

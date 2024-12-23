@@ -1,7 +1,8 @@
 import asyncio
 from time import time
-from media_workflow.worker import get_client
 from uuid import uuid4
+
+from media_workflow.client import get_client
 
 videos = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.mp4",

@@ -4,6 +4,7 @@ from typing import Literal, Optional
 import json_repair
 from temporalio import activity
 
+from media_workflow import llm
 from media_workflow.activities.image_detail.prompts import (
     prompt_image_detail_basic_details,
     prompt_image_detail_basic_main,
@@ -20,7 +21,6 @@ from media_workflow.activities.image_detail.schema import (
     validate_detailed_description,
     validate_tags,
 )
-from media_workflow import llm
 
 
 async def _image_detail_main(params: ImageDetailParams) -> ImageDetailMainResponse:

@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from media_workflow.worker import get_client
+from media_workflow.client import get_client
 
 
 async def test_color_calibrate():

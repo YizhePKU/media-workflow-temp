@@ -1,3 +1,23 @@
+# Quick Start
+
+Step 1: Install `uv`
+
+```
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Step 2: Install dependencies
+
+```
+uv sync
+```
+
+Step 3: Start the worker:
+
+```
+uv run python worker.py
+```
+
 # Environment Variables
 
 This project reads the following environment variables. If you're using VSCode, you can save the

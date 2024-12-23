@@ -6,8 +6,8 @@ from uuid import uuid4
 import aiohttp
 import pytest
 
+from media_workflow.client import get_client
 from media_workflow.imutils import imread
-from media_workflow.worker import get_client
 
 
 def url2ext(url) -> str:

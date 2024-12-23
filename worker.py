@@ -1,22 +1,11 @@
 import asyncio
 import os
 
-from temporalio.client import Client
-from temporalio.contrib.opentelemetry import TracingInterceptor
 from temporalio.worker import Worker
 
 import media_workflow.activities
 import media_workflow.workflows
-
-
-async def get_client():
-    tracing_interceptor = TracingInterceptor()
-    return await Client.connect(
-        os.environ["TEMPORAL_SERVER_HOST"],
-        namespace=os.environ["TEMPORAL_NAMESPACE"],
-        tls="TEMPORAL_TLS" in os.environ,
-        interceptors=[tracing_interceptor],
-    )
+from media_workflow.client import get_client
 
 
 async def main():

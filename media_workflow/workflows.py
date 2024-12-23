@@ -6,15 +6,14 @@ from datetime import timedelta
 
 from temporalio import workflow
 
-
 with workflow.unsafe.imports_passed_through():
     from media_workflow.activities import (
         document,
         font,
         image,
+        image_detail,
         utils,
         video,
-        image_detail,
     )
 
 
