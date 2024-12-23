@@ -30,10 +30,8 @@ async def calibrate(colors: list[str]) -> dict[str, str]:
     colors_lab = cv2.cvtColor(colors_array.reshape((1, -1, 3)), cv2.COLOR_RGB2Lab)[0]
 
     # For each color, find the closest approximation in the fixed palette.
-    targets = np.array(
-        [min(palette, key=lambda x: distance(x, color)) for color in colors_lab]
-    )
+    targets = np.array([min(palette, key=lambda x: distance(x, color)) for color in colors_lab])
 
     # Convert it back to RGB.
     targets = cv2.cvtColor(targets.reshape((1, -1, 3)), cv2.COLOR_Lab2RGB)[0]
-    return {color: rgb2hex(target) for (color, target) in zip(colors, targets)}
+    return {color: rgb2hex(target) for (color, target) in zip(colors, targets, strict=True)}
