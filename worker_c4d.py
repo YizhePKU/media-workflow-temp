@@ -1,24 +1,3 @@
-# To start a worker on MacOS with Cinema 4D 2025, follow these steps:
-#
-# Step 1: Install Python dependencies using regular pip (make sure you're using Python 3.11)
-#
-# ```
-# python3 -m pip install --target /Users/tezign/Library/Preferences/MAXON/python/python311/libs \
-# temporalio opentelemetry-exporter-otlp-proto-http aiohttp aioboto3
-# ```
-#
-# Step 2: Install this package (only a few files are actually used, like trace.py)
-#
-# ```
-# cp -r media_workflow /Users/tezign/Library/Preferences/MAXON/python/python311/libs
-# ```
-#
-# Step 3: Run the Temporal worker with `c4dpy`:
-#
-# ```
-# /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/worker_c4d.py
-# ```
-
 import asyncio
 import os
 import tempfile
