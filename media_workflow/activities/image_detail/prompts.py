@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 import json
 
 from media_workflow.activities.image_detail.category import (
@@ -75,9 +77,7 @@ def prompt_image_detail_detailed_description(
         params.main_response.main_category, params.main_response.sub_category
     )
 
-    aspects = "\n".join(
-        [f"- {k}" if v is None else f"- {k}: {v}" for k, v in aspects.items()]
-    )
+    aspects = "\n".join([f"- {k}" if v is None else f"- {k}: {v}" for k, v in aspects.items()])
 
     return f"""You are an assistant skilled at image description.
 User will input an image of {sub_category}, you should try to describe it in following aspect:
@@ -100,7 +100,7 @@ def prompt_image_detail_basic_main(params: ImageDetailParams) -> str:
 描述应为长文本，用于详细描述图像的内容。图像中出现的所有对象都应被描述。如果图像中有任何文字，提到该文字并描述其字体类型。"""
 
         case _:
-            return """Extract a title and a detailed description from the image. The output should be in English. 
+            return """Extract a title and a detailed description from the image. The output should be in English.
 The output should be in JSON format. The output JSON should contain the following keys:
 - title
 - description
@@ -151,7 +151,7 @@ The output should be a JSON object with the following keys:
 
 Each tag value should be a JSON list containing zero of more short strings. Each string should briefly describes the image in {{#1730167939128.language#}}. Only use strings inside lists, not complex objects.
 
-If the extracted value is vague or non-informative, or if the tag doesn't apply to this image, set the value to an empty list instead. 
+If the extracted value is vague or non-informative, or if the tag doesn't apply to this image, set the value to an empty list instead.
 If the extracted value is a complex object instead of a string, summarize it in a short string instead.
 If the extracted value is too long, shorten it by summarizing the key information."""
 

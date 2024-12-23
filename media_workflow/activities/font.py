@@ -1,3 +1,5 @@
+# ruff: noqa: E501
+
 import json
 from base64 import b64encode
 from dataclasses import dataclass
@@ -59,9 +61,7 @@ async def thumbnail(params: ThumbnailParams) -> str:
     font = ImageFont.truetype(params.file, size=params.font_size)
 
     # Calculate how large the image needs to be.
-    bbox = ImageDraw.Draw(Image.new("RGB", (0, 0))).multiline_textbbox(
-        (margin, 0), sample, font=font, spacing=spacing
-    )
+    bbox = ImageDraw.Draw(Image.new("RGB", (0, 0))).multiline_textbbox((margin, 0), sample, font=font, spacing=spacing)
     width = bbox[2] + margin
     height = bbox[3] + spacing
 
