@@ -97,7 +97,7 @@ async def sprite(params: SpriteParams) -> dict:
             width = int(match.group(1))
             height = int(match.group(2))
 
-    paths = list(path for path in Path(datadir).iterdir() if path.suffix == ".png")
+    paths = [path for path in Path(datadir).iterdir() if path.suffix == ".png"]
     paths.sort(key=lambda p: int(p.stem))
     return {
         "interval": interval,

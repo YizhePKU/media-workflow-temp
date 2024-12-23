@@ -85,7 +85,7 @@ async def upload(params: UploadParams) -> str:
                 ContentType=params.content_type,
             )
         presigned_url = await s3.generate_presigned_url(
-            "get_object", Params=dict(Bucket=os.environ["S3_BUCKET"], Key=key)
+            "get_object", Params={"Bucket": os.environ["S3_BUCKET"], "Key": key}
         )
         span_attribute("key", key)
         span_attribute("path", params.path)
