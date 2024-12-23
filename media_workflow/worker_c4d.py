@@ -155,6 +155,7 @@ async def get_client():
     return await Client.connect(
         os.environ["TEMPORAL_SERVER_HOST"],
         namespace=os.environ["TEMPORAL_NAMESPACE"],
+        tls="TEMPORAL_TLS" in os.environ,
         interceptors=[tracing_interceptor],
     )
 
