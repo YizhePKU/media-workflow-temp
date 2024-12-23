@@ -1,5 +1,7 @@
 """Utilities for reading and writing images."""
 
+# ruff: noqa: S110
+
 import os
 from io import BytesIO
 from uuid import uuid4
