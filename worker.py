@@ -1,10 +1,23 @@
 import asyncio
+import inspect
 
 from temporalio.worker import Worker
 
-import media_workflow.activities
 import media_workflow.workflows
+from media_workflow.activities import calibrate, document, font, image, image_detail, utils, video
 from media_workflow.client import get_client
+
+workflows = []
+for _name, fn in inspect.getmembers(media_workflow.workflows):
+    if hasattr(fn, "__temporal_workflow_definition"):
+        workflows.append(fn)
+
+
+activities = []
+for module in [calibrate, document, font, image, utils, video, image_detail]:
+    for _name, fn in inspect.getmembers(module):
+        if hasattr(fn, "__temporal_activity_definition"):
+            activities.append(fn)
 
 
 async def main():
@@ -15,8 +28,8 @@ async def main():
     worker = Worker(
         client,
         task_queue="media",
-        workflows=media_workflow.workflows.workflows,
-        activities=media_workflow.activities.activities,
+        workflows=workflows,
+        activities=activities,
     )
     print("starting worker on task_queue media")
     await worker.run()

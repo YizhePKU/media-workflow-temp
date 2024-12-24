@@ -56,30 +56,34 @@ uv run python worker.py
 
 # How to run C4D workers
 
-C4D workers run on a seperate task queue, `media-c4d`.
-
-Currently, only MacOS is supported. This is because c4dpy doesn't run on Linux, and c4dpy on
-Windows doesn't play well with Temporal, which comes with custom DLLs. (It might be possible to work
-around the limitation by using RPC.)
+C4D workers run on a seperate task queue, `media-c4d`. It communicates with a seperate Python
+process, `c4dpy`, which is provided by Cinema 4D. This is a workaround because `c4dpy` doesn't
+support some third-party packages, and Temporal unfortunately is one of them.
 
 Step 1: Install C4D 2025. Make sure it's properly licensed.
 
-Step 2: Python dependencies using `pip` (NOT `c4dpy`):
+Step 2: Install dependencies for the worker
 
 ```
-python3 -m pip install --target /Users/tezign/Library/Preferences/MAXON/python/python311/libs \
-temporalio opentelemetry-exporter-otlp-proto-http aiohttp aioboto3
+uv sync --only-group=c4d
 ```
 
-Step 3: Install this project as a dependency (necessary because c4dpy doesn't start with correct PWD):
+Step 3: Run the worker
 
 ```
+uv run python c4d_worker.py
+```
+
+Step 4: Install dependencies for `c4dpy` using regular `pip` (NOT `c4dpy`):
+
+```
+python3 -m pip install --target /Users/tezign/Library/Preferences/MAXON/python/python311/libs opentelemetry-exporter-otlp-proto-http
 cp -r media_workflow /Users/tezign/Library/Preferences/MAXON/python/python311/libs
 ```
 
-Step 4: Run the worker with `c4dpy`. You must specify full path to `worker_c4d.py` (again,
-necessary because PWD):
+Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.py`.
 
 ```
-/Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/worker_c4d.py
+/Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/c4d_server.py
 ```
+

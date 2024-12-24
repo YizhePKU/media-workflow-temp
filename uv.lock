@@ -678,6 +678,12 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+c4d = [
+    { name = "aioboto3" },
+    { name = "aiohttp" },
+    { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "temporalio", extra = ["opentelemetry"] },
+]
 dev = [
     { name = "pre-commit" },
     { name = "pytest" },
@@ -707,6 +713,12 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+c4d = [
+    { name = "aioboto3", specifier = ">=13.3.0" },
+    { name = "aiohttp", specifier = ">=3.11.11" },
+    { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.29.0" },
+    { name = "temporalio", extras = ["opentelemetry"], specifier = ">=1.8.0" },
+]
 dev = [
     { name = "pre-commit", specifier = ">=4.0.1" },
     { name = "pytest", specifier = ">=8.3.4" },

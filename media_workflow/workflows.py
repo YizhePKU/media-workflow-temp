@@ -1,7 +1,5 @@
 import asyncio
 import functools
-import inspect
-import sys
 from datetime import timedelta
 
 from temporalio import workflow
@@ -279,9 +277,3 @@ class ColorCalibrate:
     @workflow.run
     async def run(self, colors):
         return await start("calibrate", colors)
-
-
-workflows = []
-for _name, fn in inspect.getmembers(sys.modules[__name__]):
-    if hasattr(fn, "__temporal_workflow_definition"):
-        workflows.append(fn)
