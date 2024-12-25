@@ -8,6 +8,9 @@ environment is activated.
 # Data directory shared between workers. If running as a container, this should be a volumn mount.
 MEDIA_WORKFLOW_DATADIR=
 
+# A directory containing test files. If set, workers will mocks download activities.
+MEDIA_WORKFLOW_TEST_DATADIR=
+
 # 256-bit key for signing webhook requests with HMAC-SHA256.
 WEBHOOK_SIGNATURE_KEY=
 

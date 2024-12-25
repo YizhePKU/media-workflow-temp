@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 from urllib.parse import urlparse
 from uuid import uuid4
 
@@ -10,21 +11,21 @@ from media_workflow.client import get_client
 from media_workflow.imutils import imread
 
 
-def url2ext(url) -> str:
-    path = urlparse(url).path
-    return os.path.splitext(path)[1]
+async def download(url: str) -> Path:
+    """Download a file from a URL. Return the file path.
 
-
-async def download(url):
-    tempdir = tempfile.gettempdir()
-    filename = str(uuid4()) + url2ext(url)
-    path = os.path.join(tempdir, filename)
-    with open(path, "wb") as file:
+    The URL can be a local path, in which case this function is a no-op.
+    """
+    path = Path(urlparse(url).path)
+    if urlparse(url).scheme:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
                 response.raise_for_status()
-                async for chunk, _ in response.content.iter_chunks():
-                    file.write(chunk)
+                path = Path(tempfile.gettempdir()) / f"{uuid4()}{path.suffix}"
+                with open(path, "wb") as fp:
+                    async for chunk, _ in response.content.iter_chunks():
+                        fp.write(chunk)
+    assert path.exists()
     return path
 
 
@@ -90,8 +91,13 @@ if os.environ.get("TEST_LARGE"):
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/suitcase.c4d",
     ]
 
-if not os.environ.get("TEST_C4D"):
+if not os.environ.get("MEDIA_WORKFLOW_TEST_C4D"):
     models = [model for model in models if not model.endswith(".c4d")]
+
+if os.environ.get("MEDIA_WORKFLOW_TEST_SMALL"):
+    for group in [images, videos, documents, audios, fonts, models]:
+        if group:
+            group[:] = [group[0]]
 
 
 async def test_streaming_via_update():

@@ -16,15 +16,10 @@ from temporalio import activity
 from media_workflow.trace import span_attribute
 
 
-def url2ext(url) -> str:
-    path = urlparse(url).path
-    return os.path.splitext(path)[1]
-
-
-def get_datadir() -> str:
+def get_datadir() -> Path:
     """Create the data directory for this workflow, shared between workers."""
-    datadir = os.path.join(os.environ["MEDIA_WORKFLOW_DATADIR"], activity.info().workflow_id)
-    os.makedirs(datadir, exist_ok=True)
+    datadir = Path(os.environ["MEDIA_WORKFLOW_DATADIR"]) / activity.info().workflow_id
+    datadir.mkdir(parents=True, exist_ok=True)
     return datadir
 
 
@@ -40,21 +35,26 @@ async def download(params: DownloadParams) -> str:
     The filename is randomly generated, but if the original URL contains a file extension, it will
     be retained.
     """
-    filename = str(uuid4()) + url2ext(params.url)
-    path = os.path.join(get_datadir(), filename)
+    # If MEDIA_WORKFLOW_TEST_DATADIR is set, check that directory for filename matches.
+    path = Path(urlparse(params.url).path)
+    if datadir := os.environ.get("MEDIA_WORKFLOW_TEST_DATADIR"):
+        file = Path(datadir) / path.name
+        if file.exists():
+            return str(file)
 
+    file = f"{get_datadir()}/{uuid4()}{path.suffix}"
     timeout = aiohttp.ClientTimeout(total=1500, sock_read=30)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(params.url) as response:
             response.raise_for_status()
-            with open(path, "wb") as file:
+            with open(file, "wb") as fp:
                 async for chunk, _ in response.content.iter_chunks():
-                    file.write(chunk)
+                    fp.write(chunk)
                     activity.heartbeat()
 
     span_attribute("url", params.url)
-    span_attribute("path", path)
-    return path
+    span_attribute("file", file)
+    return file
 
 
 @dataclass
@@ -88,7 +88,7 @@ async def upload(params: UploadParams) -> str:
             "get_object", Params={"Bucket": os.environ["S3_BUCKET"], "Key": key}
         )
         span_attribute("key", key)
-        span_attribute("path", params.path)
+        span_attribute("path", str(params.path))
         span_attribute("content_type", params.content_type)
         span_attribute("presigned_url", presigned_url)
         return presigned_url
