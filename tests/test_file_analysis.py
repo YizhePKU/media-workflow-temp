@@ -41,11 +41,11 @@ images = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/water-girl.jpeg",
 ]
 videos = [
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.mp4",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dream.mkv",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dream.webm",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/ocean.rm",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.avi",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.mp4",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/surfing.ts",
 ]
 audios = [
@@ -53,60 +53,45 @@ audios = [
 ]
 documents = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/bill.cdr",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.key",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dam.docx",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/materials.xlsx",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/multipage.ai",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.key",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/nova.key",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.ai",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.eps",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pdf",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pptx",
 ]
-models = []
+models = [
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/tree.c4d",
+]
 fonts = [
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/NotoSansCJK-Regular.ttc",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/comic-sans.ttf",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/noto-condensed-extrabold-italic.ttf",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/NotoSansCJK-Regular.ttc",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/yahei.ttf",
 ]
 
-if os.environ.get("MEDIA_WORKFLOW_TEST_LARGE", False):
+if os.environ.get("TEST_LARGE"):
     images += [
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/float.tiff",
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.jpeg",
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.psd",
     ]
-    videos += [
-        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.mp4",
-    ]
-    documents += [
-        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.pptx",
-    ]
-    audios += [
-        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/resurrections.flac",
-    ]
-
-if os.environ.get("MEDIA_WORKFLOW_TEST_C4D", False):
+    videos += ["https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.mp4"]
+    documents += ["https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.pptx"]
+    audios += ["https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/resurrections.flac"]
+    fonts += []
     models += [
-        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
-        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/tree.c4d",
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/megapolis.c4d",
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/moist.c4d",
+        "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/suitcase.c4d",
     ]
-    if os.environ.get("MEDIA_WORKFLOW_TEST_LARGE", False):
-        models += [
-            "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/moist.c4d",
-            "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/megapolis.c4d"
-            "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/suitcase.c4d",
-        ]
 
-if os.environ.get("MEDIA_WORKFLOW_TEST_SMALL", False):
-    images = [images[0]]
-    videos = [videos[0]]
-    audios = [audios[0]]
-    documents = [documents[0]]
-    fonts = [fonts[0]]
-    if models:
-        models = [models[0]]
+if not os.environ.get("TEST_C4D"):
+    models = [model for model in models if not model.endswith(".c4d")]
 
 
 async def test_streaming_via_update():
