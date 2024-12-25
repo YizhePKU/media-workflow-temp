@@ -10,6 +10,8 @@ MEDIA_WORKFLOW_DATADIR=
 
 # A directory containing test files. If set, workers will mocks download activities.
 MEDIA_WORKFLOW_TEST_DATADIR=
+# If set, upload is skipped and the local path is returned instead of signed S3 URLs.
+MEDIA_WORKFLOW_TEST_SKIP_UPLOAD=
 
 # 256-bit key for signing webhook requests with HMAC-SHA256.
 WEBHOOK_SIGNATURE_KEY=

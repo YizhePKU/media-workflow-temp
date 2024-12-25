@@ -69,6 +69,10 @@ async def upload(params: UploadParams) -> str:
 
     Return a presigned URL that can be used to download the file.
     """
+    # If MEDIA_WORKFLOW_TEST_SKIP_UPLOAD is set, return the path as is.
+    if os.environ.get("MEDIA_WORKFLOW_TEST_SKIP_UPLOAD"):
+        return params.path
+
     session = aioboto3.Session()
     async with session.client(
         "s3",
