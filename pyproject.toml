@@ -15,7 +15,6 @@ dependencies = [
     "opentelemetry-exporter-otlp-proto-http>=1.29.0",
     "pillow>=11.0.0",
     "psd-tools>=1.10.4",
-    "pydub>=0.25.1",
     "pymupdf>=1.25.1",
     "scikit-learn>=1.6.0",
     "temporalio[opentelemetry]>=1.8.0",

@@ -8,7 +8,6 @@ from pathlib import Path
 from uuid import uuid4
 
 import numpy as np
-from pydub import AudioSegment
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
@@ -145,8 +144,23 @@ class WaveformParams:
 
 @activity.defn(name="audio-waveform")
 async def waveform(params: WaveformParams) -> list[float]:
-    audio = AudioSegment.from_file(params.file)
-    data = np.array(audio.get_array_of_samples())
+    # Convert the audio to raw 16-bit little-endian samples.
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "ffmpeg",
+        "-i",
+        params.file,
+        "-f",
+        "s16le",
+        "-codec:a",
+        "pcm_s16le",
+        "-",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    (stdout, stderr) = await process.communicate()
+    if process.returncode != 0:
+        raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
+    data = np.frombuffer(stdout, dtype=np.int16)
 
     samples = np.zeros(params.num_samples)
     step = math.ceil(len(data) / params.num_samples)
