@@ -1,7 +1,6 @@
 import asyncio
 import json
 import os
-import socket
 from dataclasses import dataclass
 
 from temporalio import activity
