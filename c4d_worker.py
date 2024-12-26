@@ -25,12 +25,16 @@ async def c4d_preview(params: PreviewParams):
     host = os.environ.get("C4D_SERVER_HOST", "localhost")
     port = os.environ.get("C4D_SERVER_PORT", 8848)
     with tracer.start_as_current_span("c4d-server", attributes={"host": host, "port": port}):
-        with socket.create_connection((host, port)) as conn:
-            conn.send(json.dumps(file).encode())
-            response = json.loads(conn.recv(1000))  # TODO: make this async
-            if response["status"] != "success":
-                reason = response["reason"]
-                raise ValueError(f"C4D server returned error: {reason}")
+        (reader, writer) = await asyncio.open_connection(host, port)
+        writer.write(json.dumps(file).encode())
+        await writer.drain()
+
+        response = json.loads(await reader.read(-1))
+        if response["status"] != "success":
+            reason = response["reason"]
+            raise ValueError(f"C4D server returned error: {reason}")
+
+        writer.close()
 
     with tracer.start_as_current_span("c4d-upload", attributes={"png": response["png"], "gltf": response["gltf"]}):
         png_task = utils.upload(utils.UploadParams(response["png"], "image/png"))
