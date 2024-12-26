@@ -25,7 +25,7 @@ def imread(path: str) -> Image:
     try:
         arr = iio.imread(path)
         if arr.dtype != np.uint8:
-            arr = (arr * 256 / np.max(arr)).astype(np.uint8)
+            arr = (arr.clip(0, 1) * 255).astype(np.uint8)
         return Image.fromarray(arr)
     except Exception:
         pass
