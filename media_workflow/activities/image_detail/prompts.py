@@ -6,7 +6,7 @@ from media_workflow.activities.image_detail.category import (
     get_category_tree,
     get_description_aspects,
 )
-from media_workflow.schema import language_to_name
+from media_workflow.llm import language_to_name
 
 from .schema import (
     ImageDetailDetailsParams,

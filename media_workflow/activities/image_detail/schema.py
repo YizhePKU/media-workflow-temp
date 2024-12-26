@@ -5,7 +5,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from media_workflow.schema import Language
+from media_workflow.llm import Language
 
 ModelType = Literal["public", "private"]
 
