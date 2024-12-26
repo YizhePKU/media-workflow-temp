@@ -35,8 +35,6 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      packages: write
-      id-token: write
     outputs:
       tags: ${{ steps.meta.outputs.tags }}
     steps:
@@ -83,8 +81,6 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     needs: build
-    permissions:
-      packages: read
     container:
       image: ${{ needs.build.outputs.tags }}
       credentials:
