@@ -130,7 +130,8 @@ jobs:
   deploy:
     runs-on: ubuntu-24.04
     needs: [build, test]
-    if: github.event_name != 'pull_request'
+    # https://stackoverflow.com/a/77066140
+    if: github.event_name != 'pull_request' && !failure() && !cancelled()
     steps:
       - name: Setup Kubernetes Config And Update Deployment
         run: |
