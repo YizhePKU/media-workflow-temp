@@ -79,21 +79,18 @@ class FileAnalysis:
     async def submit(self, activity, result):
         self.results[activity] = result
         if callback := self.request.get("callback"):
-            payload = {
-                "id": workflow.info().workflow_id,
-                "request": self.request,
-                "result": {
-                    activity: result,
+            params = utils.WebhookParams(
+                url=callback,
+                msg_id=str(workflow.uuid4()),
+                payload={
+                    "id": workflow.info().workflow_id,
+                    "request": self.request,
+                    "result": {
+                        activity: result,
+                    },
                 },
-            }
-            await start(
-                utils.callback,
-                utils.CallbackParams(
-                    url=callback,
-                    msg_id=str(workflow.uuid4()),
-                    payload=payload,
-                ),
             )
+            await workflow.start_child_workflow(Webhook, params, parent_close_policy=workflow.ParentClosePolicy.ABANDON)
 
     async def image_thumbnail(self, file):
         activity = "image-thumbnail"
@@ -277,3 +274,10 @@ class ColorCalibrate:
     @workflow.run
     async def run(self, colors):
         return await start("calibrate", colors)
+
+
+@workflow.defn(name="webhook")
+class Webhook:
+    @workflow.run
+    async def run(self, params):
+        await start(utils.webhook, params, task_queue="webhook")

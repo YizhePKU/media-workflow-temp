@@ -99,17 +99,14 @@ async def upload(params: UploadParams) -> str:
 
 
 @dataclass
-class CallbackParams:
+class WebhookParams:
     url: str
     msg_id: str
     payload: dict
 
 
 @activity.defn
-async def callback(params: CallbackParams):
-    span_attribute("msg_id", params.msg_id)
-    span_attribute("url", params.url)
-
+async def webhook(params: WebhookParams):
     msg_id = params.msg_id
     timestamp = int(time())
     payload = json_dumps(params.payload)

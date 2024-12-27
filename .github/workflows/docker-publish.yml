@@ -12,7 +12,7 @@ concurrency:
 
 env:
   REGISTRY: musecr.azurecr.cn
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: muse/muse-media-process-workflow
 
 jobs:
   check:
@@ -88,7 +88,7 @@ jobs:
         password: ${{ secrets.AZURE_REGISTRY_PASSWORD }}
     env:
       MEDIA_WORKFLOW_DATADIR: /tmp
-      MEDIA_WORKFLOW_TEST_LARGE: ${{ vars.MEDIA_WORKFLOW_TEST_LARGE }}
+      MEDIA_WORKFLOW_TEST_WEBHOOK: 1
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
       TEMPORAL_SERVER_HOST: ${{ vars.TEMPORAL_SERVER_HOST }}
       TEMPORAL_NAMESPACE: ${{ vars.TEMPORAL_NAMESPACE }}
@@ -105,8 +105,12 @@ jobs:
       - name: Reset $HOME back to /root
         run: echo HOME=/root >> "$GITHUB_ENV"
 
-      - name: Start a worker
+      - name: Start a Worker
         run: uv run python worker.py &
+        working-directory: /app
+
+      - name: Start a Webhook Worker
+        run: uv run python webhook_worker.py &
         working-directory: /app
 
       - name: Run pytest
@@ -124,7 +128,11 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
-          kubectl --namespace media-process-workers set image deployment/muse-worker media-process-workers-worker=${{ needs.build.outputs.tags }}
+          kubectl --namespace media-process-workers set image deployment/media-process-worker worker=${{ needs.build.outputs.tags }}
+          kubectl --namespace media-process-workers set image deployment/webhook-worker worker=${{ needs.build.outputs.tags }}
 
       - name: Wait for rollout to complete
-        run: KUBECONFIG=$HOME/.kube/config kubectl --namespace media-process-workers rollout status deployment/muse-worker
+        run: |
+          export KUBECONFIG=$HOME/.kube/config
+          kubectl --namespace media-process-workers rollout status deployment/media-process-worker
+          kubectl --namespace media-process-workers rollout status deployment/webhook-worker
