@@ -92,3 +92,8 @@ Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.p
 /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/c4d_server.py
 ```
 
+
+# Deployment
+
+Deployment is fully automatic. If the commit message contains `hotfix:`, Github Actions will skip
+testing and deploy directly to production.
