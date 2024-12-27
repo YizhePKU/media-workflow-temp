@@ -82,6 +82,8 @@ jobs:
   test:
     runs-on: ubuntu-24.04
     needs: build
+    # Skip this job if the commit message contains "[skip test]".
+    if: ${{ !contains(github.event.head_commit.message, '[skip test]') }}
     container:
       image: ${{ needs.build.outputs.tags }}
       credentials:
@@ -90,6 +92,7 @@ jobs:
     env:
       MEDIA_WORKFLOW_DATADIR: /tmp
       MEDIA_WORKFLOW_TEST_WEBHOOK: 1
+      WEBHOOK_SIGNATURE_KEY: ${{ secrets.WEBHOOK_SIGNATURE_KEY }}
       HONEYCOMB_KEY: ${{ secrets.HONEYCOMB_KEY }}
       TEMPORAL_SERVER_HOST: ${{ vars.TEMPORAL_SERVER_HOST }}
       TEMPORAL_NAMESPACE: ${{ vars.TEMPORAL_NAMESPACE }}
