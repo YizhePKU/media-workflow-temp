@@ -139,8 +139,8 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
-          kubectl --namespace media-process-workers set image deployment/media-process-worker worker=musecr.azurecr.cn/muse/muse-media-process-workflow:${{ needs.build.output.version }}
-          kubectl --namespace media-process-workers set image deployment/webhook-worker worker=musecr.azurecr.cn/muse/muse-media-process-workflow:${{ needs.build.output.version }}
+          kubectl --namespace media-process-workers set image deployment/media-process-worker worker=musecr.azurecr.cn/muse/muse-media-process-workflow:${{ needs.build.outputs.version }}
+          kubectl --namespace media-process-workers set image deployment/webhook-worker worker=musecr.azurecr.cn/muse/muse-media-process-workflow:${{ needs.build.outputs.version }}
 
       - name: Wait for rollout to complete
         run: |
