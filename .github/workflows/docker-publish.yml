@@ -112,3 +112,19 @@ jobs:
       - name: Run pytest
         run: uv run pytest -n 8
         working-directory: /app
+
+  deploy:
+    runs-on: ubuntu-24.04
+    needs: [build, test]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    steps:
+      - name: Setup Kubernetes Config And Update Deployment
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+          export KUBECONFIG=$HOME/.kube/config
+          kubectl --namespace media-process-workers set image deployment/muse-worker media-process-workers-worker=${{ needs.build.outputs.tags }}
+
+      - name: Wait for rollout to complete
+        run: KUBECONFIG=$HOME/.kube/config kubectl --namespace media-process-workers rollout status deployment/muse-worker
