@@ -12,13 +12,13 @@ from cairosvg import svg2png
 from PIL import Image
 from psd_tools import PSDImage
 
-from media_workflow.trace import span_attribute, tracer
+from media_workflow.trace import instrument
 
 # remove image size limit
 Image.MAX_IMAGE_PIXELS = None
 
 
-@tracer.start_as_current_span("imread")
+@instrument(return_value=False)
 def imread(path: str) -> Image:
     """Read an image from a local path."""
     # open the image with imageio
@@ -46,7 +46,7 @@ def imread(path: str) -> Image:
     raise ValueError(f"failed to open image {path}")
 
 
-@tracer.start_as_current_span("imwrite")
+@instrument(skip=["image"])
 def imwrite(image: Image, datadir: str) -> str:
     """Write an image to a temporary file in PNG format. Return the file path."""
     # If the image is in floating point mode, scale the value by 255
@@ -56,5 +56,4 @@ def imwrite(image: Image, datadir: str) -> str:
 
     path = os.path.join(datadir, f"{uuid4()}.png")
     image.convert("RGB").save(path)
-    span_attribute("path", path)
     return path

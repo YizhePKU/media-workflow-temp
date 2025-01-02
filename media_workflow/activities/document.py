@@ -9,6 +9,7 @@ from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
 from media_workflow.imutils import imwrite
+from media_workflow.trace import instrument
 
 
 def page2image(page: pymupdf.Page) -> Image.Image:
@@ -21,6 +22,7 @@ class ToPdfParams:
     file: str
 
 
+@instrument
 @activity.defn(name="convert-to-pdf")
 async def to_pdf(params: ToPdfParams) -> str:
     datadir = get_datadir()
@@ -48,6 +50,7 @@ class ThumbnailParams:
     size: tuple[int, int] | None = None
 
 
+@instrument
 @activity.defn(name="pdf-thumbnail")
 async def thumbnail(params: ThumbnailParams) -> list[str]:
     images = []

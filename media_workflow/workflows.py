@@ -13,6 +13,7 @@ with workflow.unsafe.imports_passed_through():
         utils,
         video,
     )
+    from media_workflow.trace import instrument
 
 
 start = functools.partial(
@@ -26,11 +27,13 @@ class FileAnalysis:
     def __init__(self):
         self.results = {}
 
+    @instrument
     @workflow.update
     async def get(self, key):
         await workflow.wait_condition(lambda: key in self.results)
         return self.results[key]
 
+    @instrument
     @workflow.run
     async def run(self, request):
         self.request = request
@@ -76,6 +79,7 @@ class FileAnalysis:
             "result": self.results,
         }
 
+    @instrument
     async def submit(self, activity, result):
         self.results[activity] = result
         if callback := self.request.get("callback"):
@@ -92,6 +96,7 @@ class FileAnalysis:
             )
             await workflow.start_child_workflow(Webhook, params, parent_close_policy=workflow.ParentClosePolicy.ABANDON)
 
+    @instrument
     async def image_thumbnail(self, file):
         activity = "image-thumbnail"
         file = await start(
@@ -104,6 +109,7 @@ class FileAnalysis:
         result = await start(utils.upload, utils.UploadParams(file, "image/png"))
         await self.submit(activity, result)
 
+    @instrument
     async def image_detail(self, file):
         activity = "image-detail"
         # convert image to PNG first
@@ -111,13 +117,11 @@ class FileAnalysis:
             image.thumbnail,
             image.ThumbnailParams(file, size=(1024, 1024)),
         )
-
         params = image_detail.ImageDetailParams(png, **self.request.get("params", {}).get(activity, {}))
         main_response = await start(
             image_detail.image_detail_main,
             params,
         )
-
         result = await start(
             image_detail.image_detail_details,
             image_detail.ImageDetailDetailsParams(
@@ -125,9 +129,9 @@ class FileAnalysis:
                 main_response=main_response,
             ),
         )
-
         await self.submit(activity, result)
 
+    @instrument
     async def image_detail_basic(self, file):
         activity = "image-detail-basic"
         # convert image to PNG first
@@ -135,21 +139,19 @@ class FileAnalysis:
             image.thumbnail,
             image.ThumbnailParams(file, size=(1024, 1024)),
         )
-
         params = image_detail.ImageDetailParams(png, **self.request.get("params", {}).get(activity, {}))
         main_result = await start(image_detail.image_detail_basic_main, params)
         details_result = await start(image_detail.image_detail_basic_details, params)
         tags_result = await start(image_detail.image_detail_basic_tags, params)
-
         result = {
             "title": main_result.title,
             "description": main_result.description,
             "tags": tags_result,
             "detailed_description": details_result,
         }
-
         await self.submit(activity, result)
 
+    @instrument
     async def image_color_palette(self, file):
         activity = "image-color-palette"
         result = await start(
@@ -158,11 +160,13 @@ class FileAnalysis:
         )
         await self.submit(activity, result)
 
+    @instrument
     async def video_metadata(self, file):
         activity = "video-metadata"
         result = await start(video.metadata, video.MetadataParams(file))
         await self.submit(activity, result)
 
+    @instrument
     async def video_sprite(self, file):
         activity = "video-sprite"
         metadata = await start(video.metadata, video.MetadataParams(file))
@@ -180,6 +184,7 @@ class FileAnalysis:
         )
         await self.submit(activity, result)
 
+    @instrument
     async def video_transcode(self, file):
         activity = "video-transcode"
         params = video.TranscodeParams(
@@ -191,6 +196,7 @@ class FileAnalysis:
         result = await start(utils.upload, utils.UploadParams(path, mimetype))
         await self.submit(activity, result)
 
+    @instrument
     async def audio_waveform(self, file):
         activity = "audio-waveform"
         result = await start(
@@ -199,6 +205,7 @@ class FileAnalysis:
         )
         await self.submit(activity, result)
 
+    @instrument
     async def document_thumbnail(self, file):
         activity = "document-thumbnail"
         # convert the document to PDF
@@ -217,6 +224,7 @@ class FileAnalysis:
         )
         await self.submit(activity, result)
 
+    @instrument
     async def font_thumbnail(self, file):
         activity = "font-thumbnail"
         image = await start(
@@ -229,6 +237,7 @@ class FileAnalysis:
         result = await start(utils.upload, utils.UploadParams(image, "image/png"))
         await self.submit(activity, result)
 
+    @instrument
     async def font_metadata(self, file):
         activity = "font-metadata"
         result = await start(
@@ -237,6 +246,7 @@ class FileAnalysis:
         )
         await self.submit(activity, result)
 
+    @instrument
     async def font_detail(self, file):
         activity = "font-detail"
         image = await start(font.thumbnail, font.ThumbnailParams(file))
@@ -258,6 +268,7 @@ class FileAnalysis:
         )
         await self.submit(activity, result)
 
+    @instrument
     async def c4d_preview(self):
         activity = "c4d-preview"
         result = await start(
@@ -271,6 +282,7 @@ class FileAnalysis:
 
 @workflow.defn(name="color-calibrate")
 class ColorCalibrate:
+    @instrument
     @workflow.run
     async def run(self, colors):
         return await start("calibrate", colors)
@@ -278,6 +290,7 @@ class ColorCalibrate:
 
 @workflow.defn(name="webhook")
 class Webhook:
+    @instrument
     @workflow.run
     async def run(self, params):
         await start(utils.webhook, params, task_queue="webhook")

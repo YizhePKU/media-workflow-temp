@@ -11,6 +11,7 @@ import numpy as np
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
+from media_workflow.trace import instrument
 
 
 @dataclass
@@ -18,6 +19,7 @@ class MetadataParams:
     file: str
 
 
+@instrument
 @activity.defn(name="video-metadata")
 async def metadata(params: MetadataParams) -> dict:
     process = await asyncio.subprocess.create_subprocess_exec(
@@ -71,6 +73,7 @@ class SpriteParams:
     height: int = -1
 
 
+@instrument
 @activity.defn(name="video-sprite")
 async def sprite(params: SpriteParams) -> dict:
     datadir = get_datadir()
@@ -114,6 +117,7 @@ class TranscodeParams:
     container: str = "mp4"
 
 
+@instrument
 @activity.defn(name="video-transcode")
 async def transcode(params: TranscodeParams) -> str:
     datadir = get_datadir()
@@ -142,6 +146,7 @@ class WaveformParams:
     num_samples: int = 1000
 
 
+@instrument
 @activity.defn(name="audio-waveform")
 async def waveform(params: WaveformParams) -> list[float]:
     # Convert the audio to raw 16-bit little-endian samples.

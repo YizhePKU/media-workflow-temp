@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 from temporalio import activity
 
+from media_workflow.trace import instrument
+
 
 def rgb2hex(rgb: list[int]) -> str:
     return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
@@ -18,6 +20,7 @@ def distance(arr1, arr2):
     return np.linalg.norm(arr1.astype(np.int64) - arr2.astype(np.int64))
 
 
+@instrument
 @activity.defn
 async def calibrate(colors: list[str]) -> dict[str, str]:
     # Load the fixed palette from file, which is in BGR, and convert it to LAB.

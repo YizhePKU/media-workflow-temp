@@ -15,6 +15,7 @@ from media_workflow import llm
 from media_workflow.activities.utils import get_datadir
 from media_workflow.imutils import imwrite
 from media_workflow.llm import Language, language_to_name
+from media_workflow.trace import instrument
 
 CHINESE_SAMPLE = cleandoc(
     """
@@ -47,6 +48,7 @@ class ThumbnailParams:
     font_size: int = 200
 
 
+@instrument
 @activity.defn(name="font-thumbnail")
 async def thumbnail(params: ThumbnailParams) -> str:
     margin = int(params.font_size * 0.5)
@@ -83,6 +85,7 @@ class MetadataParams:
     language: Language = "en-US"
 
 
+@instrument
 @activity.defn(name="font-metadata")
 async def metadata(params: MetadataParams) -> dict:
     platform_id = 3  # Microsoft
@@ -153,6 +156,7 @@ class FontDetailResponse(BaseModel):
     tags: list[str] = []
 
 
+@instrument
 @activity.defn(name="font-detail")
 async def detail(params: DetailParams) -> dict:
     """Get font detail analysis using LLM."""

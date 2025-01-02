@@ -13,7 +13,7 @@ import aiohttp
 from botocore.config import Config
 from temporalio import activity
 
-from media_workflow.trace import span_attribute
+from media_workflow.trace import instrument
 
 
 def get_datadir() -> Path:
@@ -28,6 +28,7 @@ class DownloadParams:
     url: str
 
 
+@instrument
 @activity.defn
 async def download(params: DownloadParams) -> str:
     """Download a file from a URL. Return the file path.
@@ -51,9 +52,6 @@ async def download(params: DownloadParams) -> str:
                 async for chunk, _ in response.content.iter_chunks():
                     fp.write(chunk)
                     activity.heartbeat()
-
-    span_attribute("url", params.url)
-    span_attribute("file", file)
     return file
 
 
@@ -63,6 +61,7 @@ class UploadParams:
     content_type: str = "binary/octet-stream"
 
 
+@instrument
 @activity.defn
 async def upload(params: UploadParams) -> str:
     """Upload file to S3-compatible storage.
@@ -91,10 +90,6 @@ async def upload(params: UploadParams) -> str:
         presigned_url = await s3.generate_presigned_url(
             "get_object", Params={"Bucket": os.environ["S3_BUCKET"], "Key": key}
         )
-        span_attribute("key", key)
-        span_attribute("path", str(params.path))
-        span_attribute("content_type", params.content_type)
-        span_attribute("presigned_url", presigned_url)
         return presigned_url
 
 
@@ -105,6 +100,7 @@ class WebhookParams:
     payload: dict
 
 
+@instrument
 @activity.defn
 async def webhook(params: WebhookParams):
     msg_id = params.msg_id
