@@ -41,13 +41,13 @@ HONEYCOMB_KEY=
 
 # How to run regular workers
 
-Step 1: Install `uv`
+Step 1: Install `uv`.
 
 ```
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Step 2: Install dependencies
+Step 2: Install dependencies.
 
 ```
 uv sync
@@ -67,13 +67,13 @@ support some third-party packages, and Temporal unfortunately is one of them.
 
 Step 1: Install C4D 2025. Make sure it's properly licensed.
 
-Step 2: Install dependencies for the worker
+Step 2: Install dependencies for the worker.
 
 ```
 uv sync --only-group=c4d
 ```
 
-Step 3: Run the worker
+Step 3: Run the worker.
 
 ```
 uv run python c4d_worker.py
