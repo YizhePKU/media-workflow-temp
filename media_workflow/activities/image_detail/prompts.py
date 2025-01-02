@@ -1,17 +1,27 @@
 # ruff: noqa: E501
 
 import json
+from typing import Literal
 
 from media_workflow.activities.image_detail.category import (
     get_category_tree,
     get_description_aspects,
 )
-from media_workflow.llm import language_to_name
 
 from .schema import (
     ImageDetailDetailsParams,
     ImageDetailParams,
 )
+
+
+# NOTE: intentionally not DRY across modules
+def language_to_name(language: Literal["zh-CN", "en-US"]) -> str:
+    """Convert language code to language name."""
+    match language:
+        case "zh-CN":
+            return "Simplified Chinese"
+        case _:
+            return "English"
 
 
 def prompt_image_detail_main(params: ImageDetailParams) -> str:

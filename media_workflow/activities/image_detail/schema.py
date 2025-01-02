@@ -5,8 +5,6 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from media_workflow.llm import Language
-
 ModelType = Literal["public", "private"]
 
 
@@ -15,7 +13,7 @@ class ImageDetailParams:
     """Basic params of image detail related activities."""
 
     file: str
-    language: Language = "en-US"
+    language: Literal["zh-CN", "en-US"] = "en-US"
     model_type: ModelType = "public"
     industry: list[str] = field(default_factory=list)
 

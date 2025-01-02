@@ -4,6 +4,7 @@ import json
 from base64 import b64encode
 from dataclasses import dataclass
 from inspect import cleandoc
+from typing import Literal
 
 import json_repair
 from fontTools.ttLib import TTFont
@@ -14,8 +15,18 @@ from temporalio import activity
 from media_workflow import llm
 from media_workflow.activities.utils import get_datadir
 from media_workflow.imutils import imwrite
-from media_workflow.llm import Language, language_to_name
 from media_workflow.trace import instrument
+
+
+# NOTE: intentionally not DRY across modules
+def language_to_name(language: Literal["zh-CN", "en-US"]) -> str:
+    """Convert language code to language name."""
+    match language:
+        case "zh-CN":
+            return "Simplified Chinese"
+        case _:
+            return "English"
+
 
 CHINESE_SAMPLE = cleandoc(
     """
@@ -82,7 +93,7 @@ async def thumbnail(params: ThumbnailParams) -> str:
 @dataclass
 class MetadataParams:
     file: str
-    language: Language = "en-US"
+    language: Literal["zh-CN", "en-US"] = "en-US"
 
 
 @instrument
@@ -145,7 +156,7 @@ async def metadata(params: MetadataParams) -> dict:
 class DetailParams:
     file: str
     basic_info: dict
-    language: Language = "en-US"
+    language: Literal["zh-CN", "en-US"] = "en-US"
 
 
 class FontDetailResponse(BaseModel):
