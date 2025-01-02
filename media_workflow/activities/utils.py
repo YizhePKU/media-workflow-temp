@@ -117,6 +117,7 @@ async def webhook(params: WebhookParams):
 
     async with aiohttp.ClientSession() as session:
         headers = {
+            "content-type": "application/json",
             "webhook-id": msg_id,
             "webhook-timestamp": str(timestamp),
             "webhook-signature": f"v1,{b64encode(signature).decode()}",
