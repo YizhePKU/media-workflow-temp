@@ -1,10 +1,11 @@
+import os
 from base64 import b64encode
 from typing import Literal
 
 import json_repair
+from openai import AsyncOpenAI
 from temporalio import activity
 
-from media_workflow import llm
 from media_workflow.activities.image_detail.prompts import (
     prompt_image_detail_basic_details,
     prompt_image_detail_basic_main,
@@ -29,8 +30,7 @@ async def _image_detail_main(params: ImageDetailParams) -> ImageDetailMainRespon
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
-    client = llm.client()
-
+    client = AsyncOpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"])
     response = await client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -63,8 +63,7 @@ async def _image_detail_details(
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
-    client = llm.client()
-
+    client = AsyncOpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"])
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
@@ -123,8 +122,7 @@ async def _image_detail_basic(
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
-    client = llm.client()
-
+    client = AsyncOpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"])
     model_name = "qwen2-vl-7b-instruct" if params.model_type == "public" else "minicpm-v:8b-2.6-q4_K_S"
 
     match task:
