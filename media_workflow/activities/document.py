@@ -33,11 +33,12 @@ async def to_pdf(params: ToPdfParams) -> str:
         "--outdir",
         datadir,
         params.file,
+        stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    (_, stderr) = await process.communicate()
+    (stdout, stderr) = await process.communicate()
     if process.returncode != 0:
-        raise RuntimeError(f"soffice failed: {stderr.decode()}")
+        raise RuntimeError(f"soffice failed: {stdout.decode()} {stderr.decode()}")
     output = f"{datadir}/{Path(params.file).stem}.pdf"
     assert os.path.exists(output)
     return output
