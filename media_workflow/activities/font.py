@@ -1,7 +1,6 @@
 # ruff: noqa: E501
 
 import json
-import os
 from base64 import b64encode
 from dataclasses import dataclass
 from inspect import cleandoc
@@ -9,11 +8,11 @@ from typing import Literal
 
 import json_repair
 from fontTools.ttLib import TTFont
-from openai import AsyncOpenAI
 from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
 from temporalio import activity
 
+from media_workflow import llm
 from media_workflow.activities.utils import get_datadir
 from media_workflow.imutils import imwrite
 from media_workflow.trace import instrument
@@ -176,7 +175,8 @@ async def detail(params: DetailParams) -> dict:
         encoded_string = b64encode(file.read()).decode("utf-8")
         b64image = f"data:image/png;base64,{encoded_string}"
 
-    client = AsyncOpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"])
+    client = llm.client()
+
     response = await client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
