@@ -1,7 +1,7 @@
 import asyncio
 import inspect
 
-from temporalio.worker import Worker
+from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 import media_workflow.workflows
 from media_workflow.activities import calibrate, document, font, image, image_detail, utils, video
@@ -30,6 +30,7 @@ async def main():
         task_queue="media",
         workflows=workflows,
         activities=activities,
+        workflow_runner=UnsandboxedWorkflowRunner(),
     )
     print("starting worker on task_queue media")
     await worker.run()

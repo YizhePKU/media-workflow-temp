@@ -4,17 +4,15 @@ from datetime import timedelta
 
 from temporalio import workflow
 
-with workflow.unsafe.imports_passed_through():
-    from media_workflow.activities import (
-        document,
-        font,
-        image,
-        image_detail,
-        utils,
-        video,
-    )
-    from media_workflow.trace import instrument
-
+from media_workflow.activities import (
+    document,
+    font,
+    image,
+    image_detail,
+    utils,
+    video,
+)
+from media_workflow.trace import instrument
 
 start = functools.partial(
     workflow.start_activity,

@@ -13,6 +13,7 @@ dependencies = [
     "openai>=1.58.1",
     "opencv-python>=4.10.0.84",
     "opentelemetry-exporter-otlp-proto-http>=1.29.0",
+    "pedantic>=2.1.8",
     "pillow>=11.0.0",
     "psd-tools>=1.10.4",
     "pymupdf>=1.25.1",
