@@ -47,3 +47,7 @@ lint.ignore = ["D10", "S101"]
 lint.pydocstyle.convention = "pep257"
 line-length = 120
 extend-exclude = ["pylette"]
+
+[tool.pyright]
+include = ["media_workflow"]
+pythonVersion = "3.13"

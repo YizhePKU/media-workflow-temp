@@ -51,9 +51,10 @@ async def _image_detail_main(params: ImageDetailParams) -> ImageDetailMainRespon
         stream=False,
         response_format={"type": "json_object"},
     )
-
-    repaired_response = json_repair.loads(response.choices[0].message.content)
-    return ImageDetailMainResponse(**repaired_response)
+    content = response.choices[0].message.content
+    assert content is not None
+    repaired_response = json_repair.loads(content)
+    return ImageDetailMainResponse(**repaired_response)  # type: ignore
 
 
 async def _image_detail_details(
@@ -87,8 +88,9 @@ async def _image_detail_details(
         stream=False,
         response_format={"type": "json_object"},
     )
-
-    detailed_description = json_repair.loads(response.choices[0].message.content)
+    content = response.choices[0].message.content
+    assert content is not None
+    detailed_description = json_repair.loads(content)
     detailed_description = validate_detailed_description(detailed_description)
 
     return ImageDetailFinalResponse(
@@ -157,12 +159,13 @@ async def _image_detail_basic(
         ],
         stream=False,
     )
-
-    response = json_repair.loads(response.choices[0].message.content)
+    content = response.choices[0].message.content
+    assert content is not None
+    response = json_repair.loads(content)
 
     match task:
         case "main":
-            return ImageDetailBasicMainResponse(**response)
+            return ImageDetailBasicMainResponse(**response)  # type: ignore
         case "details":
             detailed_description = validate_detailed_description(response)
             return [{key: value} for key, value in detailed_description.items()]
@@ -178,7 +181,7 @@ async def image_detail_basic_main(
     params: ImageDetailParams,
 ) -> ImageDetailBasicMainResponse:
     """`image-detail-basic-main` activity wrapper."""
-    return await _image_detail_basic(params, "main")
+    return await _image_detail_basic(params, "main")  # type: ignore
 
 
 @activity.defn(name="image-detail-basic-tags")
@@ -186,7 +189,7 @@ async def image_detail_basic_tags(
     params: ImageDetailParams,
 ) -> list[str]:
     """`image-detail-basic-tags` activity wrapper."""
-    return await _image_detail_basic(params, "tags")
+    return await _image_detail_basic(params, "tags")  # type: ignore
 
 
 @activity.defn(name="image-detail-basic-details")
@@ -194,4 +197,4 @@ async def image_detail_basic_details(
     params: ImageDetailParams,
 ) -> list[dict[str, str | None]]:
     """`image-detail-basic-details` activity wrapper."""
-    return await _image_detail_basic(params, "details")
+    return await _image_detail_basic(params, "details")  # type: ignore

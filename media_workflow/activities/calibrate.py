@@ -9,7 +9,7 @@ def rgb2hex(rgb: list[int]) -> str:
     return f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
 
 
-def hex2rgb(color_hex: str) -> np.array:
+def hex2rgb(color_hex: str) -> np.ndarray:
     r = int(color_hex[1:3], base=16)
     g = int(color_hex[3:5], base=16)
     b = int(color_hex[5:7], base=16)
@@ -33,7 +33,7 @@ async def calibrate(colors: list[str]) -> dict[str, str]:
     colors_lab = cv2.cvtColor(colors_array.reshape((1, -1, 3)), cv2.COLOR_RGB2Lab)[0]
 
     # For each color, find the closest approximation in the fixed palette.
-    targets = np.array([min(palette, key=lambda x: distance(x, color)) for color in colors_lab])
+    targets = np.array([min(palette, key=lambda x: distance(x, color)) for color in colors_lab])  # type: ignore
 
     # Convert it back to RGB.
     targets = cv2.cvtColor(targets.reshape((1, -1, 3)), cv2.COLOR_Lab2RGB)[0]

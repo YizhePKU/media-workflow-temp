@@ -19,7 +19,7 @@ Image.MAX_IMAGE_PIXELS = None
 
 
 @instrument(return_value=False)
-def imread(path: str) -> Image:
+def imread(path: str) -> Image.Image:
     """Read an image from a local path."""
     # open the image with imageio
     try:
@@ -32,13 +32,17 @@ def imread(path: str) -> Image:
 
     # open the image with psd-tools
     try:
-        return PSDImage.open(path).composite()
+        image = PSDImage.open(path).composite()
+        assert image is not None
+        return image
     except Exception:
         pass
 
     # open the image with cairosvg
     try:
-        return Image.open(BytesIO(svg2png(url=path)))
+        png = svg2png(url=path)
+        assert png is not None
+        return Image.open(BytesIO(png))
     except Exception:
         pass
 
@@ -47,7 +51,7 @@ def imread(path: str) -> Image:
 
 
 @instrument(skip=["image"])
-def imwrite(image: Image, datadir: str) -> str:
+def imwrite(image: Image.Image, datadir: str) -> str:
     """Write an image to a temporary file in PNG format. Return the file path."""
     # If the image is in floating point mode, scale the value by 255
     # See https://github.com/python-pillow/Pillow/issues/3159

@@ -94,7 +94,9 @@ class FileAnalysis:
                     },
                 },
             )
-            await workflow.start_child_workflow(Webhook, params, parent_close_policy=workflow.ParentClosePolicy.ABANDON)
+            await workflow.start_child_workflow(
+                Webhook.run, params, parent_close_policy=workflow.ParentClosePolicy.ABANDON
+            )
 
     @instrument
     async def image_thumbnail(self, file):
