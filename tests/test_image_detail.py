@@ -119,7 +119,6 @@ def test_image_detail_category_tree():
         ) == get_category_tree(ImageDetailParams(file="", language="en-US", industry=[data["name_en"]]))
 
 
-@pytest.mark.asyncio
 async def test_image_detail(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailParams(file="")
 
@@ -134,7 +133,6 @@ async def test_image_detail(mock_openai_chatcompletion, mock_openfile):
     assert result.description == main_response.description
 
 
-@pytest.mark.asyncio
 async def test_image_detail_basic(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailParams(file="")
     result = await _image_detail_basic(params, "main")
@@ -143,7 +141,6 @@ async def test_image_detail_basic(mock_openai_chatcompletion, mock_openfile):
     assert result.description == "image-detail-basic-description"
 
 
-@pytest.mark.asyncio
 async def test_image_detail_basic_zh(mock_openai_chatcompletion, mock_openfile):
     params = ImageDetailParams(file="", language="zh-CN")
     result = await _image_detail_basic(params, "main")
