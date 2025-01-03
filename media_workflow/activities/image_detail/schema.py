@@ -1,21 +1,18 @@
 """Schema definition of image detail tasks."""
 
-from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel
 
-ModelType = Literal["public", "private"]
 
-
-@dataclass
-class ImageDetailParams:
+class ImageDetailParams(BaseModel):
     """Basic params of image detail related activities."""
 
-    file: str
+    file: Path
     language: Literal["zh-CN", "en-US"] = "en-US"
-    model_type: ModelType = "public"
-    industry: list[str] = field(default_factory=list)
+    model_type: Literal["public", "private"] = "public"
+    industry: list[str] = []
 
 
 class ImageDetailMainResponse(BaseModel):
@@ -31,14 +28,15 @@ class ImageDetailMainResponse(BaseModel):
     tags: dict[str, list[str]]
 
 
-@dataclass
-class ImageDetailDetailsParams(ImageDetailParams):
+class ImageDetailDetailsParams(BaseModel):
     """Params of image-detail-details activity."""
 
-    main_response: ImageDetailMainResponse = field(
-        default_factory=lambda: ImageDetailMainResponse(
-            title="", description="", main_category="", sub_category="", tags={}
-        )
+    file: Path
+    language: Literal["zh-CN", "en-US"] = "en-US"
+    model_type: Literal["public", "private"] = "public"
+    industry: list[str] = []
+    main_response: ImageDetailMainResponse = ImageDetailMainResponse(
+        title="", description="", main_category="", sub_category="", tags={}
     )
 
 

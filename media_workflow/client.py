@@ -1,8 +1,11 @@
-"""Temporal client that supports pydentic models and OpenTelemetry tracing."""
+"""Temporal client that supports Path, BaseModel, and OpenTelemetry tracing."""
 
 import json
 import os
+from pathlib import Path
+from typing import Type
 
+from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
 from temporalio.api.common.v1 import Payload
 from temporalio.client import Client
@@ -12,10 +15,24 @@ from temporalio.converter import (
     DataConverter,
     DefaultPayloadConverter,
     JSONPlainPayloadConverter,
+    JSONTypeConverter,
 )
 
 
+class PydanticJSONTypeConverter(JSONTypeConverter):
+    def to_typed_value(self, hint, value):
+        if isinstance(hint, Type) and issubclass(hint, BaseModel):
+            return hint.model_validate(value)
+        elif isinstance(hint, Type) and issubclass(hint, Path):
+            return Path(value)
+        else:
+            return JSONTypeConverter.Unhandled
+
+
 class PydanticJSONPayloadConverter(JSONPlainPayloadConverter):
+    def __init__(self):
+        super().__init__(custom_type_converters=[PydanticJSONTypeConverter()])
+
     def to_payload(self, value) -> Payload | None:
         return Payload(
             metadata={"encoding": self.encoding.encode()},

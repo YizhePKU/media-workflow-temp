@@ -3,20 +3,19 @@ import json
 import math
 import os
 import re
-from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
 import numpy as np
+from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
 from media_workflow.trace import instrument
 
 
-@dataclass
-class MetadataParams:
-    file: str
+class MetadataParams(BaseModel):
+    file: Path
 
 
 @instrument
@@ -63,9 +62,8 @@ async def metadata(params: MetadataParams) -> dict:
     return result
 
 
-@dataclass
-class SpriteParams:
-    file: str
+class SpriteParams(BaseModel):
+    file: Path
     duration: float
     layout: tuple[int, int] = (5, 5)
     count: int = 1
@@ -94,6 +92,8 @@ async def sprite(params: SpriteParams) -> dict:
     (_, stderr) = await process.communicate()
     if process.returncode != 0:
         raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
+    width = 0
+    height = 0
     for line in stderr.decode().split("\n"):
         if match := re.search(r"Video: png.*?(\d+)x(\d+)", line):
             width = int(match.group(1))
@@ -109,9 +109,8 @@ async def sprite(params: SpriteParams) -> dict:
     }
 
 
-@dataclass
-class TranscodeParams:
-    file: str
+class TranscodeParams(BaseModel):
+    file: Path
     video_codec: str = "h264"
     audio_codec: str = "libopus"
     container: str = "mp4"
@@ -119,9 +118,9 @@ class TranscodeParams:
 
 @instrument
 @activity.defn(name="video-transcode")
-async def transcode(params: TranscodeParams) -> str:
+async def transcode(params: TranscodeParams) -> Path:
     datadir = get_datadir()
-    output = f"{datadir}/{uuid4()}.{params.container}"
+    output = datadir / f"{uuid4()}.{params.container}"
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffmpeg",
         "-i",
@@ -136,13 +135,12 @@ async def transcode(params: TranscodeParams) -> str:
     (_, stderr) = await process.communicate()
     if process.returncode != 0:
         raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
-    assert os.path.exists(output)
+    assert output.exists()
     return output
 
 
-@dataclass
-class WaveformParams:
-    file: str
+class WaveformParams(BaseModel):
+    file: Path
     num_samples: int = 1000
 
 
@@ -174,4 +172,4 @@ async def waveform(params: WaveformParams) -> list[float]:
 
     # Normalize the data
     samples = samples / np.max(samples)
-    return samples.tolist()
+    return samples.tolist()  # type: ignore

@@ -1,7 +1,9 @@
 import asyncio
 import functools
 from datetime import timedelta
+from pathlib import Path
 
+from pydantic import BaseModel
 from temporalio import workflow
 
 from media_workflow.activities import (
@@ -36,9 +38,9 @@ class FileAnalysis:
     async def run(self, request):
         self.request = request
 
-        file = await start(
+        file = await workflow.start_activity(
             utils.download,
-            utils.DownloadParams(request["file"]),
+            utils.DownloadParams(url=request["file"]),
             start_to_close_timeout=timedelta(minutes=30),
             heartbeat_timeout=timedelta(seconds=30),
         )
@@ -102,11 +104,11 @@ class FileAnalysis:
         file = await start(
             image.thumbnail,
             image.ThumbnailParams(
-                file,
+                file=file,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
-        result = await start(utils.upload, utils.UploadParams(file, "image/png"))
+        result = await start(utils.upload, utils.UploadParams(file=file, content_type="image/png"))
         await self.submit(activity, result)
 
     @instrument
@@ -115,9 +117,9 @@ class FileAnalysis:
         # convert image to PNG first
         png = await start(
             image.thumbnail,
-            image.ThumbnailParams(file, size=(1024, 1024)),
+            image.ThumbnailParams(file=file, size=(1024, 1024)),
         )
-        params = image_detail.ImageDetailParams(png, **self.request.get("params", {}).get(activity, {}))
+        params = image_detail.ImageDetailParams(file=png, **self.request.get("params", {}).get(activity, {}))
         main_response = await start(
             image_detail.image_detail_main,
             params,
@@ -137,9 +139,9 @@ class FileAnalysis:
         # convert image to PNG first
         png = await start(
             image.thumbnail,
-            image.ThumbnailParams(file, size=(1024, 1024)),
+            image.ThumbnailParams(file=file, size=(1024, 1024)),
         )
-        params = image_detail.ImageDetailParams(png, **self.request.get("params", {}).get(activity, {}))
+        params = image_detail.ImageDetailParams(file=png, **self.request.get("params", {}).get(activity, {}))
         main_result = await start(image_detail.image_detail_basic_main, params)
         details_result = await start(image_detail.image_detail_basic_details, params)
         tags_result = await start(image_detail.image_detail_basic_tags, params)
@@ -156,31 +158,34 @@ class FileAnalysis:
         activity = "image-color-palette"
         result = await start(
             image.color_palette,
-            image.ColorPaletteParams(file, **self.request.get("params", {}).get(activity, {})),
+            image.ColorPaletteParams(file=file, **self.request.get("params", {}).get(activity, {})),
         )
         await self.submit(activity, result)
 
     @instrument
     async def video_metadata(self, file):
         activity = "video-metadata"
-        result = await start(video.metadata, video.MetadataParams(file))
+        result = await start(video.metadata, video.MetadataParams(file=file))
         await self.submit(activity, result)
 
     @instrument
     async def video_sprite(self, file):
         activity = "video-sprite"
-        metadata = await start(video.metadata, video.MetadataParams(file))
+        metadata = await start(video.metadata, video.MetadataParams(file=file))
         duration = metadata["duration"]
         result = await start(
             video.sprite,
             video.SpriteParams(
-                file,
-                duration,
+                file=file,
+                duration=duration,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
         result["files"] = await asyncio.gather(
-            *[start(utils.upload, utils.UploadParams(image, "image/png")) for image in result["files"]]
+            *[
+                start(utils.upload, utils.UploadParams(file=image, content_type="image/png"))
+                for image in result["files"]
+            ]
         )
         await self.submit(activity, result)
 
@@ -188,12 +193,12 @@ class FileAnalysis:
     async def video_transcode(self, file):
         activity = "video-transcode"
         params = video.TranscodeParams(
-            file,
+            file=file,
             **self.request.get("params", {}).get(activity, {}),
         )
         path = await start(video.transcode, params, start_to_close_timeout=timedelta(minutes=30))
         mimetype = f"video/{params.container}"
-        result = await start(utils.upload, utils.UploadParams(path, mimetype))
+        result = await start(utils.upload, utils.UploadParams(file=path, content_type=mimetype))
         await self.submit(activity, result)
 
     @instrument
@@ -201,7 +206,7 @@ class FileAnalysis:
         activity = "audio-waveform"
         result = await start(
             video.waveform,
-            video.WaveformParams(file, **self.request.get("params", {}).get(activity, {})),
+            video.WaveformParams(file=file, **self.request.get("params", {}).get(activity, {})),
         )
         await self.submit(activity, result)
 
@@ -209,18 +214,18 @@ class FileAnalysis:
     async def document_thumbnail(self, file):
         activity = "document-thumbnail"
         # convert the document to PDF
-        pdf = await start(document.to_pdf, document.ToPdfParams(file))
+        pdf = await start(document.to_pdf, document.ToPdfParams(file=file))
         # extract thumbnails from pdf pages
         images = await start(
             document.thumbnail,
             document.ThumbnailParams(
-                pdf,
+                file=pdf,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
         # upload thumbnails
         result = await asyncio.gather(
-            *[start(utils.upload, utils.UploadParams(image, "image/png")) for image in images]
+            *[start(utils.upload, utils.UploadParams(file=image, content_type="image/png")) for image in images]
         )
         await self.submit(activity, result)
 
@@ -230,11 +235,11 @@ class FileAnalysis:
         image = await start(
             font.thumbnail,
             font.ThumbnailParams(
-                file,
+                file=file,
                 **self.request.get("params", {}).get(activity, {}),
             ),
         )
-        result = await start(utils.upload, utils.UploadParams(image, "image/png"))
+        result = await start(utils.upload, utils.UploadParams(file=image, content_type="image/png"))
         await self.submit(activity, result)
 
     @instrument
@@ -242,15 +247,15 @@ class FileAnalysis:
         activity = "font-metadata"
         result = await start(
             font.metadata,
-            font.MetadataParams(file, **self.request.get("params", {}).get(activity, {})),
+            font.MetadataParams(file=file, **self.request.get("params", {}).get(activity, {})),
         )
         await self.submit(activity, result)
 
     @instrument
     async def font_detail(self, file):
         activity = "font-detail"
-        image = await start(font.thumbnail, font.ThumbnailParams(file))
-        metadata = await start(font.metadata, font.MetadataParams(file))
+        image = await start(font.thumbnail, font.ThumbnailParams(file=file))
+        metadata = await start(font.metadata, font.MetadataParams(file=file))
         basic_info = {
             "name": metadata["full_name"],
             "designer": metadata["designer"],
@@ -294,3 +299,15 @@ class Webhook:
     @workflow.run
     async def run(self, params):
         await start(utils.webhook, params, task_queue="webhook")
+
+
+@workflow.defn
+class MyWorkflow:
+    @workflow.run
+    async def run(self, person):
+        return person
+
+
+class Person(BaseModel):
+    name: str
+    path: Path

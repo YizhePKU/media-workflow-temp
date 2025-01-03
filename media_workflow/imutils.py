@@ -2,8 +2,8 @@
 
 # ruff: noqa: S110
 
-import os
 from io import BytesIO
+from pathlib import Path
 from uuid import uuid4
 
 import imageio.v3 as iio
@@ -19,7 +19,7 @@ Image.MAX_IMAGE_PIXELS = None
 
 
 @instrument(return_value=False)
-def imread(path: str) -> Image.Image:
+def imread(path: Path) -> Image.Image:
     """Read an image from a local path."""
     # open the image with imageio
     try:
@@ -40,7 +40,7 @@ def imread(path: str) -> Image.Image:
 
     # open the image with cairosvg
     try:
-        png = svg2png(url=path)
+        png = svg2png(url=str(path))
         assert png is not None
         return Image.open(BytesIO(png))
     except Exception:
@@ -51,13 +51,13 @@ def imread(path: str) -> Image.Image:
 
 
 @instrument(skip=["image"])
-def imwrite(image: Image.Image, datadir: str) -> str:
+def imwrite(image: Image.Image, datadir: Path) -> Path:
     """Write an image to a temporary file in PNG format. Return the file path."""
     # If the image is in floating point mode, scale the value by 255
     # See https://github.com/python-pillow/Pillow/issues/3159
     if image.mode == "F":
         image = Image.fromarray((np.array(image) * 255).astype(np.uint8), mode="L")
 
-    path = os.path.join(datadir, f"{uuid4()}.png")
+    path = datadir / f"{uuid4()}.png"
     image.convert("RGB").save(path)
     return path

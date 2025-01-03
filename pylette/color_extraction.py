@@ -12,7 +12,7 @@ from pylette.color import Color
 from pylette.palette import Palette
 from pylette.utils import ColorBox
 
-ImageType_T: TypeAlias = Union["os.PathLike[Any]", bytes, NDArray[float], str]
+ImageType_T: TypeAlias = Union["os.PathLike[Any]", bytes, NDArray, str, Image.Image]
 
 
 class ImageType(str, Enum):

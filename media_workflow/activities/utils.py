@@ -1,7 +1,6 @@
 import hmac
 import os
 from base64 import b64decode, b64encode
-from dataclasses import dataclass
 from json import dumps as json_dumps
 from pathlib import Path
 from time import time
@@ -11,6 +10,7 @@ from uuid import uuid4
 import aioboto3
 import aiohttp
 from botocore.config import Config
+from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.trace import instrument
@@ -23,14 +23,13 @@ def get_datadir() -> Path:
     return datadir
 
 
-@dataclass
-class DownloadParams:
+class DownloadParams(BaseModel):
     url: str
 
 
 @instrument
 @activity.defn
-async def download(params: DownloadParams) -> str:
+async def download(params: DownloadParams) -> Path:
     """Download a file from a URL. Return the file path.
 
     The filename is randomly generated, but if the original URL contains a file extension, it will
@@ -38,12 +37,12 @@ async def download(params: DownloadParams) -> str:
     """
     # If MEDIA_WORKFLOW_TEST_DATADIR is set, check that directory for filename matches.
     path = Path(urlparse(params.url).path)
-    if datadir := os.environ.get("MEDIA_WORKFLOW_TEST_DATADIR"):
-        file = Path(datadir) / path.name
+    if test_datadir := os.environ.get("MEDIA_WORKFLOW_TEST_DATADIR"):
+        file = Path(test_datadir) / path.name
         if file.exists():
-            return str(file)
+            return file
 
-    file = f"{get_datadir()}/{uuid4()}{path.suffix}"
+    file = get_datadir() / f"{uuid4()}{path.suffix}"
     timeout = aiohttp.ClientTimeout(total=1500, sock_read=30)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(params.url) as response:
@@ -55,31 +54,23 @@ async def download(params: DownloadParams) -> str:
     return file
 
 
-@dataclass
-class UploadParams:
-    path: str
+class UploadParams(BaseModel):
+    file: Path
     content_type: str = "binary/octet-stream"
 
 
 @instrument
 @activity.defn
 async def upload(params: UploadParams) -> str:
-    """Upload file to S3-compatible storage.
-
-    Return a presigned URL that can be used to download the file.
-    """
-    # If MEDIA_WORKFLOW_TEST_SKIP_UPLOAD is set, return the path as is.
-    if os.environ.get("MEDIA_WORKFLOW_TEST_SKIP_UPLOAD"):
-        return params.path
-
+    """Upload file and return a presigned URL that can be used to download it."""
     session = aioboto3.Session()
     async with session.client(
         "s3",
         endpoint_url=os.environ["S3_ENDPOINT_URL"],
         config=Config(region_name=os.environ["S3_REGION"], signature_version="v4"),
-    ) as s3:
-        with open(params.path, "rb") as file:
-            key = Path(params.path).name
+    ) as s3:  # type: ignore
+        with open(params.file, "rb") as file:
+            key = params.file.name
             data = file.read()
             await s3.put_object(
                 Bucket=os.environ["S3_BUCKET"],
@@ -93,8 +84,7 @@ async def upload(params: UploadParams) -> str:
         return presigned_url
 
 
-@dataclass
-class WebhookParams:
+class WebhookParams(BaseModel):
     url: str
     msg_id: str
     payload: dict
@@ -102,7 +92,7 @@ class WebhookParams:
 
 @instrument
 @activity.defn
-async def webhook(params: WebhookParams):
+async def webhook(params: WebhookParams) -> None:
     msg_id = params.msg_id
     timestamp = int(time())
     payload = json_dumps(params.payload)

@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from pathlib import Path
 
 from PIL import Image
+from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.activities.utils import get_datadir
@@ -9,28 +10,26 @@ from media_workflow.trace import instrument
 from pylette.color_extraction import extract_colors
 
 
-@dataclass
-class ThumbnailParams:
-    file: str
+class ThumbnailParams(BaseModel):
+    file: Path
     size: tuple[int, int] | None = None
 
 
 @instrument
 @activity.defn(name="image-thumbnail")
-async def thumbnail(params: ThumbnailParams) -> str:
+async def thumbnail(params: ThumbnailParams) -> Path:
     image = imread(params.file)
     if params.size is not None:
-        image.thumbnail(params.size, resample=Image.LANCZOS)
+        image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
     return imwrite(image, datadir=get_datadir())
 
 
-def rgb2hex(rgb: list[int]) -> str:
+def rgb2hex(rgb: tuple[int, int, int]) -> str:
     return f"#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}"
 
 
-@dataclass
-class ColorPaletteParams:
-    file: str
+class ColorPaletteParams(BaseModel):
+    file: Path
     count: int = 10
 
 

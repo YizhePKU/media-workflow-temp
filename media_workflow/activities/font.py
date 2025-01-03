@@ -2,8 +2,8 @@
 
 import json
 from base64 import b64encode
-from dataclasses import dataclass
 from inspect import cleandoc
+from pathlib import Path
 from typing import Literal
 
 import json_repair
@@ -52,16 +52,15 @@ def supports_chinese(font: TTFont) -> bool:
     return all(ord(char) in cmap for char in CHINESE_SAMPLE if not char.isspace())
 
 
-@dataclass
-class ThumbnailParams:
-    file: str
+class ThumbnailParams(BaseModel):
+    file: Path
     size: tuple[int, int] = (1000, 1000)
     font_size: int = 200
 
 
 @instrument
 @activity.defn(name="font-thumbnail")
-async def thumbnail(params: ThumbnailParams) -> str:
+async def thumbnail(params: ThumbnailParams) -> Path:
     margin = int(params.font_size * 0.5)
     spacing = int(params.font_size * 0.25)
 
@@ -74,8 +73,8 @@ async def thumbnail(params: ThumbnailParams) -> str:
 
     # Calculate how large the image needs to be.
     bbox = ImageDraw.Draw(Image.new("RGB", (0, 0))).multiline_textbbox((margin, 0), sample, font=font, spacing=spacing)
-    width = bbox[2] + margin
-    height = bbox[3] + spacing
+    width = int(bbox[2]) + margin
+    height = int(bbox[3]) + spacing
 
     image = Image.new("RGB", (width, height), "white")
     ImageDraw.ImageDraw(image).multiline_text(
@@ -86,13 +85,12 @@ async def thumbnail(params: ThumbnailParams) -> str:
         fill="black",
     )
     if params.size is not None:
-        image.thumbnail(params.size, resample=Image.LANCZOS)
+        image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
     return imwrite(image, datadir=get_datadir())
 
 
-@dataclass
-class MetadataParams:
-    file: str
+class MetadataParams(BaseModel):
+    file: Path
     language: Literal["zh-CN", "en-US"] = "en-US"
 
 
@@ -129,7 +127,7 @@ async def metadata(params: MetadataParams) -> dict:
     meta = {}
     font = TTFont(params.file, fontNumber=0)
     for key, index in indices.items():
-        if record := font["name"].getName(index, platform_id, encoding_id, language_id):
+        if record := font["name"].getName(index, platform_id, encoding_id, language_id):  # type: ignore
             meta[key] = record.toStr()
         else:
             meta[key] = None
@@ -139,22 +137,21 @@ async def metadata(params: MetadataParams) -> dict:
     meta["chinese"] = supports_chinese(font)
 
     try:
-        height = font["hhea"].lineGap + font["hhea"].ascent - font["hhea"].descent
-        meta["line_height"] = (height / font["head"].unitsPerEm) * 16
+        height = font["hhea"].lineGap + font["hhea"].ascent - font["hhea"].descent  # type: ignore
+        meta["line_height"] = (height / font["head"].unitsPerEm) * 16  # type: ignore
     except Exception:
         meta["line_height"] = None
 
     try:
-        meta["sx_height"] = font["OS/2"].sxHeight
+        meta["sx_height"] = font["OS/2"].sxHeight  # type: ignore
     except Exception:
         meta["sx_height"] = None
 
     return meta
 
 
-@dataclass
-class DetailParams:
-    file: str
+class DetailParams(BaseModel):
+    file: Path
     basic_info: dict
     language: Literal["zh-CN", "en-US"] = "en-US"
 
@@ -211,7 +208,7 @@ Try to classify the font into correct category
         stream=False,
         response_format={"type": "json_object"},
     )
-
-    response = json_repair.loads(response.choices[0].message.content)
-
-    return FontDetailResponse(**response)
+    content = response.choices[0].message.content
+    assert content is not None
+    response = json_repair.loads(content)
+    return FontDetailResponse(**response)  # type: ignore
