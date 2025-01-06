@@ -62,7 +62,7 @@ _pydantic_data_converter = DataConverter(payload_converter_class=_PydanticPayloa
 
 
 async def connect():
-    """Create a temporal client."""
+    """Create a temporal client. Configurations are read from the environment."""
     tracing_interceptor = TracingInterceptor()
     return await Client.connect(
         os.environ["TEMPORAL_SERVER_HOST"],
