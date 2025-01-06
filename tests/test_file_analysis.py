@@ -7,7 +7,7 @@ from uuid import uuid4
 import aiohttp
 import pytest
 
-from media_workflow.client import get_client
+from media_workflow.client import connect
 from media_workflow.imutils import imread
 
 
@@ -101,7 +101,7 @@ if os.environ.get("MEDIA_WORKFLOW_TEST_SMALL"):
 
 
 async def test_streaming_via_update():
-    client = await get_client()
+    client = await connect()
     params = {
         "file": images[0],
         "activities": ["image-thumbnail"],
@@ -121,7 +121,7 @@ async def test_streaming_via_update():
 
 @pytest.mark.parametrize("file", images)
 async def test_image_thumbnail(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["image-thumbnail"],
@@ -140,7 +140,7 @@ async def test_image_thumbnail(file):
 
 @pytest.mark.parametrize("file", images)
 async def test_image_detail(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["image-detail"],
@@ -156,7 +156,7 @@ async def test_image_detail(file):
 
 @pytest.mark.parametrize("file", images)
 async def test_image_detail_basic(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["image-detail-basic"],
@@ -172,7 +172,7 @@ async def test_image_detail_basic(file):
 
 @pytest.mark.parametrize("file", images)
 async def test_image_color_palette(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["image-color-palette"],
@@ -188,7 +188,7 @@ async def test_image_color_palette(file):
 
 @pytest.mark.parametrize("file", documents)
 async def test_document_thumbnail(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["document-thumbnail"],
@@ -205,7 +205,7 @@ async def test_document_thumbnail(file):
 
 @pytest.mark.parametrize("file", fonts)
 async def test_font_thumbnail(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["font-thumbnail"],
@@ -224,7 +224,7 @@ async def test_font_thumbnail(file):
 
 @pytest.mark.parametrize("file", fonts)
 async def test_font_metadata(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["font-metadata"],
@@ -235,7 +235,7 @@ async def test_font_metadata(file):
 
 @pytest.mark.parametrize("file", fonts)
 async def test_font_detail(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["font-detail"],
@@ -252,7 +252,7 @@ async def test_font_detail(file):
 
 @pytest.mark.parametrize("file", videos)
 async def test_video_metadata(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["video-metadata"],
@@ -263,7 +263,7 @@ async def test_video_metadata(file):
 
 @pytest.mark.parametrize("file", videos)
 async def test_video_sprite(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["video-sprite"],
@@ -284,7 +284,7 @@ async def test_video_sprite(file):
 
 @pytest.mark.parametrize("file", videos)
 async def test_video_transcode(file):
-    client = await get_client()
+    client = await connect()
     params = {
         "file": file,
         "activities": ["video-transcode"],
@@ -294,7 +294,7 @@ async def test_video_transcode(file):
 
 @pytest.mark.parametrize("file", audios)
 async def test_audio_waveform(file):
-    client = await get_client()
+    client = await connect()
     arg = {
         "file": file,
         "activities": ["audio-waveform"],
@@ -312,7 +312,7 @@ async def test_audio_waveform(file):
 
 @pytest.mark.parametrize("model", models)
 async def test_c4d_preview(model):
-    client = await get_client()
+    client = await connect()
     arg = {
         "file": model,
         "activities": ["c4d-preview"],

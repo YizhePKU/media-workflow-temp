@@ -7,7 +7,7 @@ from temporalio import activity
 from temporalio.worker import Worker
 
 from media_workflow.activities import utils
-from media_workflow.client import get_client
+from media_workflow.client import connect
 from media_workflow.trace import tracer
 
 
@@ -46,7 +46,7 @@ async def main():
     # With asyncio debug mode, warn if a coroutine takes more than 300ms to yield.
     asyncio.get_running_loop().slow_callback_duration = 300
 
-    client = await get_client()
+    client = await connect()
     worker = Worker(
         client,
         task_queue="media-c4d",

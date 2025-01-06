@@ -1,4 +1,12 @@
-"""Temporal client that supports Path, BaseModel, and OpenTelemetry tracing."""
+"""Temporal client that supports `pathlib.Path`, pydantic models, and OpenTelemetry tracing.
+
+This module is adapted from the [offical pydantic converter
+example](https://github.com/temporalio/samples-python/tree/main/pydantic_converter), with
+modifications to support `pathlib.Path`.
+
+This module also adds a `TracingInterceptor` to support OpenTelemetry, but the actual tracing
+configurations are defined in `trace.py`.
+"""
 
 import json
 import os
@@ -19,7 +27,7 @@ from temporalio.converter import (
 )
 
 
-class PydanticJSONTypeConverter(JSONTypeConverter):
+class _PydanticJSONTypeConverter(JSONTypeConverter):
     def to_typed_value(self, hint, value):
         if isinstance(hint, Type) and issubclass(hint, BaseModel):
             return hint.model_validate(value)
@@ -29,9 +37,9 @@ class PydanticJSONTypeConverter(JSONTypeConverter):
             return JSONTypeConverter.Unhandled
 
 
-class PydanticJSONPayloadConverter(JSONPlainPayloadConverter):
+class _PydanticJSONPayloadConverter(JSONPlainPayloadConverter):
     def __init__(self):
-        super().__init__(custom_type_converters=[PydanticJSONTypeConverter()])
+        super().__init__(custom_type_converters=[_PydanticJSONTypeConverter()])
 
     def to_payload(self, value) -> Payload | None:
         return Payload(
@@ -40,25 +48,26 @@ class PydanticJSONPayloadConverter(JSONPlainPayloadConverter):
         )
 
 
-class PydanticPayloadConverter(CompositePayloadConverter):
+class _PydanticPayloadConverter(CompositePayloadConverter):
     def __init__(self) -> None:
         super().__init__(
             *(
-                c if not isinstance(c, JSONPlainPayloadConverter) else PydanticJSONPayloadConverter()
+                c if not isinstance(c, JSONPlainPayloadConverter) else _PydanticJSONPayloadConverter()
                 for c in DefaultPayloadConverter.default_encoding_payload_converters
             )
         )
 
 
-pydantic_data_converter = DataConverter(payload_converter_class=PydanticPayloadConverter)
+_pydantic_data_converter = DataConverter(payload_converter_class=_PydanticPayloadConverter)
 
 
-async def get_client():
+async def connect():
+    """Create a temporal client."""
     tracing_interceptor = TracingInterceptor()
     return await Client.connect(
         os.environ["TEMPORAL_SERVER_HOST"],
         namespace=os.environ["TEMPORAL_NAMESPACE"],
         tls="TEMPORAL_TLS" in os.environ,
         interceptors=[tracing_interceptor],
-        data_converter=pydantic_data_converter,
+        data_converter=_pydantic_data_converter,
     )

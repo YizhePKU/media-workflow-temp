@@ -2,7 +2,7 @@ import asyncio
 from time import time
 from uuid import uuid4
 
-from media_workflow.client import get_client
+from media_workflow.client import connect
 
 videos = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.mp4",
@@ -34,7 +34,7 @@ async def process(client, video):
 
 
 async def main():
-    client = await get_client()
+    client = await connect()
 
     tasks = []
     for _ in range(sets):

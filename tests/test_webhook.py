@@ -5,7 +5,7 @@ import pytest
 from aiohttp import web
 
 from media_workflow.activities.utils import WebhookParams
-from media_workflow.client import get_client
+from media_workflow.client import connect
 from media_workflow.workflows import Webhook
 
 
@@ -24,6 +24,6 @@ async def test_webhook():
     site = web.TCPSite(runner, "localhost", 8848)
     await site.start()
 
-    client = await get_client()
+    client = await connect()
     params = WebhookParams(url="http://localhost:8848", msg_id=f"{uuid4()}", payload={"name": "my-payload"})
-    await client.execute_workflow(Webhook, params, id=f"{uuid4()}", task_queue="webhook")
+    await client.execute_workflow(Webhook.run, params, id=f"{uuid4()}", task_queue="webhook")

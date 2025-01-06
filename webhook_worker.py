@@ -4,14 +4,14 @@ from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 import media_workflow.activities.utils
 import media_workflow.workflows
-from media_workflow.client import get_client
+from media_workflow.client import connect
 
 
 async def main():
     # With asyncio debug mode, warn if a coroutine takes more than 300ms to yield.
     asyncio.get_running_loop().slow_callback_duration = 300
 
-    client = await get_client()
+    client = await connect()
     worker = Worker(
         client,
         task_queue="webhook",
