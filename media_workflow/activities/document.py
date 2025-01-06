@@ -62,4 +62,4 @@ async def thumbnail(params: ThumbnailParams) -> list[Path]:
     if params.size is not None:
         for image in images:
             image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
-    return [imwrite(image, datadir=get_datadir()) for image in images]
+    return [imwrite(image, _dir=get_datadir()) for image in images]

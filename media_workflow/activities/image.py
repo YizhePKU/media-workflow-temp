@@ -21,7 +21,7 @@ async def thumbnail(params: ThumbnailParams) -> Path:
     image = imread(params.file)
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
-    return imwrite(image, datadir=get_datadir())
+    return imwrite(image, _dir=get_datadir())
 
 
 def rgb2hex(rgb: tuple[int, int, int]) -> str:

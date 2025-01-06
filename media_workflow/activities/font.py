@@ -86,7 +86,7 @@ async def thumbnail(params: ThumbnailParams) -> Path:
     )
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
-    return imwrite(image, datadir=get_datadir())
+    return imwrite(image, _dir=get_datadir())
 
 
 class MetadataParams(BaseModel):

@@ -1,6 +1,6 @@
 """OpenTelemetry tracing.
 
-This module exposes a global `tracer` that can be used to create spans. The `instrument` decorator
+This module provides a global `tracer` that can be used to create spans. The `instrument` decorator
 can be used to trace a function and record its arguments and return value.
 
 Currently, only [Honeycomb](https://www.honeycomb.io) is supported as the tracing backend.
