@@ -27,6 +27,9 @@ class FileAnalysis:
     def __init__(self):
         self.results = {}
 
+    def _params(self, activity):
+        return self.request.get("params", {}).get(activity, {})
+
     @instrument
     @workflow.update
     async def get(self, key):
@@ -105,7 +108,7 @@ class FileAnalysis:
             image.thumbnail,
             image.ThumbnailParams(
                 file=file,
-                **self.request.get("params", {}).get(activity, {}),
+                **self._params(activity),
             ),
         )
         result = await start(utils.upload, utils.UploadParams(file=file, content_type="image/png"))
@@ -119,7 +122,7 @@ class FileAnalysis:
             image.thumbnail,
             image.ThumbnailParams(file=file, size=(1024, 1024)),
         )
-        params = image_detail.ImageDetailParams(file=png, **self.request.get("params", {}).get(activity, {}))
+        params = image_detail.ImageDetailParams(file=png, **self._params(activity))
         main_response = await start(
             image_detail.image_detail_main,
             params,
@@ -127,7 +130,7 @@ class FileAnalysis:
         result = await start(
             image_detail.image_detail_details,
             image_detail.ImageDetailDetailsParams(
-                **params.__dict__,
+                **params.model_dump(),
                 main_response=main_response,
             ),
         )
@@ -141,7 +144,7 @@ class FileAnalysis:
             image.thumbnail,
             image.ThumbnailParams(file=file, size=(1024, 1024)),
         )
-        params = image_detail.ImageDetailParams(file=png, **self.request.get("params", {}).get(activity, {}))
+        params = image_detail.ImageDetailParams(file=png, **self._params(activity))
         main_result = await start(image_detail.image_detail_basic_main, params)
         details_result = await start(image_detail.image_detail_basic_details, params)
         tags_result = await start(image_detail.image_detail_basic_tags, params)
@@ -158,7 +161,7 @@ class FileAnalysis:
         activity = "image-color-palette"
         result = await start(
             image.color_palette,
-            image.ColorPaletteParams(file=file, **self.request.get("params", {}).get(activity, {})),
+            image.ColorPaletteParams(file=file, **self._params(activity)),
         )
         await self.submit(activity, result)
 
@@ -178,7 +181,7 @@ class FileAnalysis:
             video.SpriteParams(
                 file=file,
                 duration=duration,
-                **self.request.get("params", {}).get(activity, {}),
+                **self._params(activity),
             ),
         )
         result["files"] = await asyncio.gather(
@@ -194,7 +197,7 @@ class FileAnalysis:
         activity = "video-transcode"
         params = video.TranscodeParams(
             file=file,
-            **self.request.get("params", {}).get(activity, {}),
+            **self._params(activity),
         )
         path = await start(video.transcode, params, start_to_close_timeout=timedelta(minutes=30))
         mimetype = f"video/{params.container}"
@@ -206,7 +209,7 @@ class FileAnalysis:
         activity = "audio-waveform"
         result = await start(
             video.waveform,
-            video.WaveformParams(file=file, **self.request.get("params", {}).get(activity, {})),
+            video.WaveformParams(file=file, **self._params(activity)),
         )
         await self.submit(activity, result)
 
@@ -220,7 +223,7 @@ class FileAnalysis:
             document.thumbnail,
             document.ThumbnailParams(
                 file=pdf,
-                **self.request.get("params", {}).get(activity, {}),
+                **self._params(activity),
             ),
         )
         # upload thumbnails
@@ -236,7 +239,7 @@ class FileAnalysis:
             font.thumbnail,
             font.ThumbnailParams(
                 file=file,
-                **self.request.get("params", {}).get(activity, {}),
+                **self._params(activity),
             ),
         )
         result = await start(utils.upload, utils.UploadParams(file=image, content_type="image/png"))
@@ -247,7 +250,7 @@ class FileAnalysis:
         activity = "font-metadata"
         result = await start(
             font.metadata,
-            font.MetadataParams(file=file, **self.request.get("params", {}).get(activity, {})),
+            font.MetadataParams(file=file, **self._params(activity)),
         )
         await self.submit(activity, result)
 
@@ -268,7 +271,7 @@ class FileAnalysis:
             font.DetailParams(
                 file=image,
                 basic_info=basic_info,
-                **self.request.get("params", {}).get(activity, {}),
+                **self._params(activity),
             ),
         )
         await self.submit(activity, result)
