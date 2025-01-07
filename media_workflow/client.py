@@ -11,7 +11,6 @@ configurations are defined in `trace.py`.
 import json
 import os
 from pathlib import Path
-from typing import Type
 
 from pydantic import BaseModel
 from pydantic_core import to_jsonable_python
@@ -29,9 +28,9 @@ from temporalio.converter import (
 
 class _PydanticJSONTypeConverter(JSONTypeConverter):
     def to_typed_value(self, hint, value):
-        if isinstance(hint, Type) and issubclass(hint, BaseModel):
+        if isinstance(hint, type) and issubclass(hint, BaseModel):
             return hint.model_validate(value)
-        elif isinstance(hint, Type) and issubclass(hint, Path):
+        elif isinstance(hint, type) and issubclass(hint, Path):
             return Path(value)
         else:
             return JSONTypeConverter.Unhandled
