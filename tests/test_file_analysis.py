@@ -8,7 +8,7 @@ import aiohttp
 import pytest
 
 from media_workflow.client import connect
-from media_workflow.imutils import imread
+from media_workflow.utils.image import imread
 
 
 async def download(url: str) -> Path:

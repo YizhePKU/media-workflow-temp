@@ -4,8 +4,8 @@ from typing import TypedDict
 from pydantic import BaseModel
 from temporalio import activity
 
-from media_workflow.imutils import imread
 from media_workflow.trace import instrument
+from media_workflow.utils.image import imread
 from pylette.color_extraction import extract_colors
 
 

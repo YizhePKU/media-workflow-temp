@@ -5,8 +5,8 @@ import jinja2
 from pydantic import BaseModel
 from temporalio import activity
 
-from media_workflow.llmutils import language_to_name, llm
 from media_workflow.trace import instrument
+from media_workflow.utils.llm import language_to_name, llm
 
 env = jinja2.Environment(loader=jinja2.PackageLoader("media_workflow"), autoescape=False)  # noqa: S701
 

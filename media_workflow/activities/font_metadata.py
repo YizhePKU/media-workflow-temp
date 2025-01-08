@@ -5,8 +5,8 @@ from fontTools.ttLib import TTFont
 from pydantic import BaseModel
 from temporalio import activity
 
-from media_workflow.fontutils import supports_chinese
 from media_workflow.trace import instrument
+from media_workflow.utils.font import supports_chinese
 
 
 class FontMetadataParams(BaseModel):

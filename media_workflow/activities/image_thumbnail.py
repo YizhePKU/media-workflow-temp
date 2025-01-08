@@ -4,8 +4,8 @@ from PIL import Image
 from pydantic import BaseModel
 from temporalio import activity
 
-from media_workflow.imutils import imread, imwrite
 from media_workflow.trace import instrument
+from media_workflow.utils.image import imread, imwrite
 
 
 class ImageThumbnailParams(BaseModel):
