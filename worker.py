@@ -1,4 +1,5 @@
 import asyncio
+from warnings import filterwarnings
 
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
@@ -27,6 +28,8 @@ from media_workflow.activities.video_sprite import video_sprite
 from media_workflow.activities.video_transcode import video_transcode
 from media_workflow.client import connect
 from media_workflow.workflows import ColorCalibrate, FileAnalysis
+
+filterwarnings("ignore", message="datetime.datetime.utcnow() is deprecated")
 
 workflows = [FileAnalysis, ColorCalibrate]
 activities = [
