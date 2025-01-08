@@ -19,6 +19,8 @@ async def document_to_pdf(params: DocumentToPdfParams) -> Path:
     _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
     process = await asyncio.subprocess.create_subprocess_exec(
         "soffice",
+        # To run multiple instances of LibreOffice concurrently, they must have different profile directories.
+        f"-env:UserInstallation=file://{mkdtemp()}",
         "--convert-to",
         "pdf",
         "--outdir",
