@@ -2,9 +2,9 @@ import asyncio
 
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
-import media_workflow.activities.utils
-import media_workflow.workflows
+from media_workflow.activities.webhook import webhook
 from media_workflow.client import connect
+from media_workflow.workflows import Webhook
 
 
 async def main():
@@ -15,8 +15,8 @@ async def main():
     worker = Worker(
         client,
         task_queue="webhook",
-        workflows=[media_workflow.workflows.Webhook],
-        activities=[media_workflow.activities.utils.webhook],
+        workflows=[Webhook],
+        activities=[webhook],
         workflow_runner=UnsandboxedWorkflowRunner(),
     )
     print("starting worker on task_queue webhook")

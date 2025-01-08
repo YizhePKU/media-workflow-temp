@@ -15,7 +15,7 @@ class FontMetadataParams(BaseModel):
 
 
 @instrument
-@activity.defn(name="font-metadata")
+@activity.defn
 async def font_metadata(params: FontMetadataParams) -> dict:
     platform_id = 3  # Microsoft
     encoding_id = 1  # Unicode BMP

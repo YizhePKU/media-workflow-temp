@@ -10,8 +10,10 @@ mostly as a convienience.
 
 # ruff: noqa: S110
 
+import os
 from io import BytesIO
 from pathlib import Path
+from tempfile import mkdtemp
 from uuid import uuid4
 
 import imageio.v3 as iio
@@ -60,8 +62,8 @@ def imread(path: Path) -> Image.Image:
 
 
 @instrument(skip=["image"])
-def imwrite(image: Image.Image, _dir: Path) -> Path:
+def imwrite(image: Image.Image) -> Path:
     """Write an image to a temporary file. Return the file path."""
-    path = _dir / f"{uuid4()}.png"
+    path = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"])) / f"{uuid4()}.png"
     image.save(path)
     return path

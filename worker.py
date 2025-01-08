@@ -1,45 +1,55 @@
 import asyncio
-import inspect
 
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
-import media_workflow.workflows
-from media_workflow.activities import (
-    calibrate,
-    document,
-    font_detail,
-    font_metadata,
-    font_thumbnail,
-    image,
-    image_detail,
-    image_detail_basic,
-    utils,
-    video,
+from media_workflow.activities.audio_waveform import audio_waveform
+from media_workflow.activities.color_calibrate import color_calibrate
+from media_workflow.activities.document_thumbnail import document_thumbnail
+from media_workflow.activities.document_to_pdf import document_to_pdf
+from media_workflow.activities.download import download
+from media_workflow.activities.font_detail import font_detail
+from media_workflow.activities.font_metadata import font_metadata
+from media_workflow.activities.font_thumbnail import font_thumbnail
+from media_workflow.activities.image_color_palette import image_color_palette
+from media_workflow.activities.image_detail import (
+    image_detail_details,
+    image_detail_main,
 )
+from media_workflow.activities.image_detail_basic import (
+    image_detail_basic_details,
+    image_detail_basic_main,
+    image_detail_basic_tags,
+)
+from media_workflow.activities.image_thumbnail import image_thumbnail
+from media_workflow.activities.upload import upload
+from media_workflow.activities.video_metadata import video_metadata
+from media_workflow.activities.video_sprite import video_sprite
+from media_workflow.activities.video_transcode import video_transcode
 from media_workflow.client import connect
+from media_workflow.workflows import ColorCalibrate, FileAnalysis
 
-workflows = []
-for _name, fn in inspect.getmembers(media_workflow.workflows):
-    if hasattr(fn, "__temporal_workflow_definition"):
-        workflows.append(fn)
-
-# TODO: rename all activities to full, remove module name prefix
-activities = []
-for module in [
-    calibrate,
-    document,
-    image,
-    utils,
-    video,
-    image_detail,
-    image_detail_basic,
+workflows = [FileAnalysis, ColorCalibrate]
+activities = [
+    audio_waveform,
+    color_calibrate,
+    document_thumbnail,
+    document_to_pdf,
+    download,
     font_detail,
     font_metadata,
     font_thumbnail,
-]:
-    for _name, fn in inspect.getmembers(module):
-        if hasattr(fn, "__temporal_activity_definition"):
-            activities.append(fn)
+    image_color_palette,
+    image_detail_details,
+    image_detail_main,
+    image_detail_basic_details,
+    image_detail_basic_main,
+    image_detail_basic_tags,
+    image_thumbnail,
+    upload,
+    video_metadata,
+    video_sprite,
+    video_transcode,
+]
 
 
 async def main():

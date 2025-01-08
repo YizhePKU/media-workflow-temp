@@ -22,7 +22,7 @@ def distance(arr1, arr2):
 
 @instrument
 @activity.defn
-async def calibrate(colors: list[str]) -> dict[str, str]:
+async def color_calibrate(colors: list[str]) -> dict[str, str]:
     # Load the fixed palette from file, which is in BGR, and convert it to LAB.
     palette = np.load("colors.npy").astype(np.uint8)
     palette = cv2.cvtColor(palette, cv2.COLOR_BGR2Lab)[0]

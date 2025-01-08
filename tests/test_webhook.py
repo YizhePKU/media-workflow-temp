@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 from aiohttp import web
 
-from media_workflow.activities.utils import WebhookParams
+from media_workflow.activities.webhook import WebhookParams
 from media_workflow.client import connect
 from media_workflow.workflows import Webhook
 

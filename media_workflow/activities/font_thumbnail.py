@@ -6,7 +6,6 @@ from PIL import Image, ImageDraw, ImageFont
 from pydantic import BaseModel
 from temporalio import activity
 
-from media_workflow.activities.utils import get_datadir
 from media_workflow.fontutils import supports_chinese
 from media_workflow.imutils import imwrite
 from media_workflow.trace import instrument
@@ -63,4 +62,4 @@ async def font_thumbnail(params: FontThumbnailParams) -> Path:
     )
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
-    return imwrite(image, _dir=get_datadir())
+    return imwrite(image)
