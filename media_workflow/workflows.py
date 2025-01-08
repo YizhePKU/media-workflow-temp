@@ -44,10 +44,6 @@ class FileAnalysis:
     def __init__(self):
         self.results = {}
 
-    # TODO: get rid of this, pass params directly to methods like image_thumbnail()
-    def _params(self, activity):
-        return self.request.get("params", {}).get(activity, {})
-
     @instrument
     @workflow.update
     async def get(self, key):
@@ -57,6 +53,7 @@ class FileAnalysis:
     @instrument
     @workflow.run
     async def run(self, request):
+        # Save the request. This is only used in c4d-preview.
         self.request = request
 
         file = await start(
@@ -66,33 +63,47 @@ class FileAnalysis:
             heartbeat_timeout=timedelta(seconds=30),
         )
 
+        # Dispatch tasks to workflow code.
+        activity2fn = {
+            "audio-waveform": self._audio_waveform,
+            "c4d-preview": self._c4d_preview,
+            "document-thumbnail": self._document_thumbnail,
+            "font-detail": self._font_detail,
+            "font-metadata": self._font_metadata,
+            "font-thumbnail": self._font_thumbnail,
+            "image-color-palette": self._image_color_palette,
+            "image-detail-basic": self._image_detail_basic,
+            "image-detail": self._image_detail,
+            "image-thumbnail": self._image_thumbnail,
+            "video-metadata": self._video_metadata,
+            "video-sprite": self._video_sprite,
+            "video-transcode": self._video_transcode,
+        }
+
+        # Start all tasks in the background concurrently.
         async with asyncio.TaskGroup() as tg:
-            if "image-thumbnail" in request["activities"]:
-                tg.create_task(self._image_thumbnail(file))
-            if "image-detail" in request["activities"]:
-                tg.create_task(self._image_detail(file))
-            if "image-detail-basic" in request["activities"]:
-                tg.create_task(self._image_detail_basic(file))
-            if "image-color-palette" in request["activities"]:
-                tg.create_task(self._image_color_palette(file))
-            if "video-metadata" in request["activities"]:
-                tg.create_task(self._video_metadata(file))
-            if "video-sprite" in request["activities"]:
-                tg.create_task(self._video_sprite(file))
-            if "video-transcode" in request["activities"]:
-                tg.create_task(self._video_transcode(file))
-            if "audio-waveform" in request["activities"]:
-                tg.create_task(self._audio_waveform(file))
-            if "document-thumbnail" in request["activities"]:
-                tg.create_task(self._document_thumbnail(file))
-            if "font-thumbnail" in request["activities"]:
-                tg.create_task(self._font_thumbnail(file))
-            if "font-metadata" in request["activities"]:
-                tg.create_task(self._font_metadata(file))
-            if "font-detail" in request["activities"]:
-                tg.create_task(self._font_detail(file))
-            if "c4d-preview" in request["activities"]:
-                tg.create_task(self.c4d_preview())
+            for activity in request["activities"]:
+                assert activity in activity2fn
+
+                async def task(activity):
+                    params = request.get("params", {}).get(activity, {})
+                    self.results[activity] = await activity2fn[activity](file, params)
+                    if url := request.get("callback"):
+                        await workflow.start_child_workflow(
+                            Webhook.run,
+                            WebhookParams(
+                                url=url,
+                                msg_id=str(workflow.uuid4()),
+                                payload={
+                                    "id": workflow.info().workflow_id,
+                                    "request": request,
+                                    "result": {activity: self.results[activity]},
+                                },
+                            ),
+                            parent_close_policy=workflow.ParentClosePolicy.ABANDON,
+                        )
+
+                tg.create_task(task(activity))
 
         return {
             "id": workflow.info().workflow_id,
@@ -101,144 +112,101 @@ class FileAnalysis:
         }
 
     @instrument
-    async def submit(self, activity, result):
-        self.results[activity] = result
-        if callback := self.request.get("callback"):
-            params = WebhookParams(
-                url=callback,
-                msg_id=str(workflow.uuid4()),
-                payload={
-                    "id": workflow.info().workflow_id,
-                    "request": self.request,
-                    "result": {
-                        activity: result,
-                    },
-                },
-            )
-            await workflow.start_child_workflow(
-                Webhook.run, params, parent_close_policy=workflow.ParentClosePolicy.ABANDON
-            )
+    async def _image_thumbnail(self, file, params):
+        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, **params))
+        return await start(upload, UploadParams(file=thumbnail, content_type="image/png"))
 
     @instrument
-    async def _image_thumbnail(self, file):
-        activity = "image-thumbnail"
-        file = await start(image_thumbnail, ImageThumbnailParams(file=file, **self._params(activity)))
-        result = await start(upload, UploadParams(file=file, content_type="image/png"))
-        await self.submit(activity, result)
-
-    @instrument
-    async def _image_detail(self, file):
-        activity = "image-detail"
-        png = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
-
+    async def _image_detail(self, file, params):
+        # convert image to PNG
+        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
         # extract title, description, main/sub category, and tags
-        main_response = await start(image_detail_main, ImageDetailMainParams(file=png, **self._params(activity)))
-
+        main = await start(image_detail_main, ImageDetailMainParams(file=thumbnail, **params))
         # extract details from aspects derived from main/sub category
-        details_response = await start(
+        details = await start(
             image_detail_details,
             ImageDetailDetailsParams(
-                file=png,
-                main_category=main_response.main_category,
-                sub_category=main_response.sub_category,
-                **self._params(activity),
+                file=thumbnail, main_category=main.main_category, sub_category=main.sub_category, **params
             ),
         )
-        result = {
-            "title": main_response.title,
-            "description": main_response.description,
-            "tags": [tag for tags in main_response.tags.values() for tag in tags],
-            "detailed_description": [{key: value} for key, value in details_response.model_dump().items()],
+        return {
+            "title": main.title,
+            "description": main.description,
+            "tags": [tag for tags in main.tags.values() for tag in tags],
+            "detailed_description": [{key: value} for key, value in details.model_dump().items()],
         }
-        await self.submit(activity, result)
 
     @instrument
-    async def _image_detail_basic(self, file):
-        activity = "image-detail-basic"
-        png = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
-
-        params = ImageDetailBasicParams(file=png, **self._params(activity))
+    async def _image_detail_basic(self, file, params):
+        # convert image to PNG
+        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
+        # invoke LLM three times
+        params = ImageDetailBasicParams(file=thumbnail, **params)
         main = start(image_detail_basic_main, params)
         details = start(image_detail_basic_details, params)
         tags = start(image_detail_basic_tags, params)
         [main, details, tags] = await asyncio.gather(main, details, tags)
-        result = {
+        return {
             "title": main.title,
             "description": main.description,
             "tags": tags.model_dump(),
             "detailed_description": details.model_dump(),
         }
-        await self.submit(activity, result)
 
     @instrument
-    async def _image_color_palette(self, file):
-        activity = "image-color-palette"
-        result = await start(image_color_palette, ImageColorPaletteParams(file=file, **self._params(activity)))
-        await self.submit(activity, result)
+    async def _image_color_palette(self, file, params):
+        return await start(image_color_palette, ImageColorPaletteParams(file=file, **params))
 
     @instrument
-    async def _video_metadata(self, file):
-        activity = "video-metadata"
-        result = await start(video_metadata, VideoMetadataParams(file=file))
-        await self.submit(activity, result)
+    async def _video_metadata(self, file, params):
+        return await start(video_metadata, VideoMetadataParams(file=file, **params))
 
     @instrument
-    async def _video_sprite(self, file):
-        activity = "video-sprite"
-        metadata = await start(video_metadata, VideoMetadataParams(file=file))
-        duration = metadata["duration"]
-        result = await start(video_sprite, VideoSpriteParams(file=file, duration=duration, **self._params(activity)))
-        result["files"] = await asyncio.gather(
-            *[start(upload, UploadParams(file=image, content_type="image/png")) for image in result["files"]]
+    async def _video_sprite(self, file, params):
+        metadata = await start(video_metadata, VideoMetadataParams(file=file, **params))
+        result = await start(video_sprite, VideoSpriteParams(file=file, duration=metadata["duration"], **params))
+        files = await asyncio.gather(
+            *[start(upload, UploadParams(file=image, content_type="image/png")) for image in result["sprites"]]
         )
-        await self.submit(activity, result)
+        return {
+            "interval": result["interval"],
+            "width": result["width"],
+            "height": result["height"],
+            "files": files,
+        }
 
     @instrument
-    async def _video_transcode(self, file):
-        activity = "video-transcode"
-        params = VideoTranscodeParams(file=file, **self._params(activity))
-        path = await start(video_transcode, params, start_to_close_timeout=timedelta(minutes=30))
-        result = await start(upload, UploadParams(file=path, content_type=f"video/{params.container}"))
-        await self.submit(activity, result)
+    async def _video_transcode(self, file, params):
+        params = VideoTranscodeParams(file=file, **params)
+        transcoded = await start(video_transcode, params, start_to_close_timeout=timedelta(minutes=30))
+        return await start(upload, UploadParams(file=transcoded, content_type=f"video/{params.container}"))
 
     @instrument
-    async def _audio_waveform(self, file):
-        activity = "audio-waveform"
-        result = await start(
-            audio_waveform,
-            AudioWaveformParams(file=file, **self._params(activity)),
-        )
-        await self.submit(activity, result)
+    async def _audio_waveform(self, file, params):
+        return await start(audio_waveform, AudioWaveformParams(file=file, **params))
 
     @instrument
-    async def _document_thumbnail(self, file):
-        activity = "document-thumbnail"
+    async def _document_thumbnail(self, file, params):
         # convert the document to PDF
         pdf = await start(document_to_pdf, DocumentToPdfParams(file=file))
         # extract thumbnails from pdf pages
-        images = await start(document_thumbnail, DocumentThumbnailParams(file=pdf, **self._params(activity)))
+        images = await start(document_thumbnail, DocumentThumbnailParams(file=pdf, **params))
         # upload thumbnails
-        result = await asyncio.gather(
+        return await asyncio.gather(
             *[start(upload, UploadParams(file=image, content_type="image/png")) for image in images]
         )
-        await self.submit(activity, result)
 
     @instrument
-    async def _font_thumbnail(self, file):
-        activity = "font-thumbnail"
-        image = await start(font_thumbnail, FontThumbnailParams(file=file, **self._params(activity)))
-        result = await start(upload, UploadParams(file=image, content_type="image/png"))
-        await self.submit(activity, result)
+    async def _font_thumbnail(self, file, params):
+        image = await start(font_thumbnail, FontThumbnailParams(file=file, **params))
+        return await start(upload, UploadParams(file=image, content_type="image/png"))
 
     @instrument
-    async def _font_metadata(self, file):
-        activity = "font-metadata"
-        result = await start(font_metadata, FontMetadataParams(file=file, **self._params(activity)))
-        await self.submit(activity, result)
+    async def _font_metadata(self, file, params):
+        return await start(font_metadata, FontMetadataParams(file=file, **params))
 
     @instrument
-    async def _font_detail(self, file):
-        activity = "font-detail"
+    async def _font_detail(self, file, params):
         image = await start(font_thumbnail, FontThumbnailParams(file=file))
         metadata = await start(font_metadata, FontMetadataParams(file=file))
         basic_info = {
@@ -248,19 +216,15 @@ class FileAnalysis:
             "supports_kerning": metadata["kerning"],
             "supports_chinese": metadata["chinese"],
         }
-        result = await start(font_detail, FontDetailParams(file=image, basic_info=basic_info, **self._params(activity)))
-        await self.submit(activity, result)
+        return await start(font_detail, FontDetailParams(file=image, basic_info=basic_info, **params))
 
     @instrument
-    async def c4d_preview(self):
-        activity = "c4d-preview"
-        result = await start(
+    async def _c4d_preview(self, file, params):
+        return await start(
             "c4d-preview",
             {"url": self.request["file"]},
             task_queue="media-c4d",
-            start_to_close_timeout=timedelta(minutes=15),
         )
-        await self.submit(activity, result)
 
 
 @workflow.defn(name="color-calibrate")

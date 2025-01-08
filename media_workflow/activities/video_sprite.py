@@ -3,6 +3,7 @@ import os
 import re
 from pathlib import Path
 from tempfile import mkdtemp
+from typing import TypedDict
 
 from pydantic import BaseModel
 from temporalio import activity
@@ -19,9 +20,20 @@ class VideoSpriteParams(BaseModel):
     height: int = -1
 
 
+VideoSpriteResponse = TypedDict(
+    "VideoSpriteResponse",
+    {
+        "interval": float,
+        "width": int,
+        "height": int,
+        "sprites": list[Path],
+    },
+)
+
+
 @instrument
 @activity.defn
-async def video_sprite(params: VideoSpriteParams) -> dict:
+async def video_sprite(params: VideoSpriteParams) -> VideoSpriteResponse:
     _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
     # calculate time between frames (in seconds)
     interval = params.duration / float(params.count * params.layout[0] * params.layout[1])
@@ -47,11 +59,11 @@ async def video_sprite(params: VideoSpriteParams) -> dict:
             width = int(match.group(1))
             height = int(match.group(2))
 
-    paths = [path for path in Path(_dir).iterdir() if path.suffix == ".png"]
-    paths.sort(key=lambda p: int(p.stem))
+    sprites = [path for path in Path(_dir).iterdir() if path.suffix == ".png"]
+    sprites.sort(key=lambda p: int(p.stem))
     return {
         "interval": interval,
         "width": width // params.layout[0],
         "height": height // params.layout[1],
-        "files": [str(path) for path in paths],
+        "sprites": sprites,
     }

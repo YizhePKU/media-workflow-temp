@@ -10,12 +10,13 @@ from media_workflow.trace import instrument
 
 class ImageThumbnailParams(BaseModel):
     file: Path
-    size: tuple[int, int] = (1000, 1000)
+    size: tuple[int, int] | None = None
 
 
 @instrument
 @activity.defn
 async def image_thumbnail(params: ImageThumbnailParams) -> Path:
     image = imread(params.file)
-    image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
+    if size := params.size:
+        image.thumbnail(size, resample=Image.Resampling.LANCZOS)
     return imwrite(image)
