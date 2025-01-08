@@ -55,7 +55,7 @@ def instrument(func=None, skip=["self"], return_value=True):  # noqa: B006
 
     Args:
         skip: arguments that should not be saved return_value: whether to save the return value
-    """  # noqa: D401
+    """
     if func is None:
         return lambda func: instrument(func, skip, return_value)
 

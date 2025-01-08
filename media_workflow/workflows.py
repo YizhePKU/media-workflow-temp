@@ -53,7 +53,7 @@ class FileAnalysis:
     @instrument
     @workflow.run
     async def run(self, request):
-        # Save the request. This is only used in c4d-preview.
+        """The main entrypoint of the application."""
         self.request = request
 
         file = await start(

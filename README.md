@@ -1,3 +1,9 @@
+# Overview
+
+This is the source repository of the Media Processing service for Tezign.
+It is implemented as a set of Temporal workflows and activities.
+API definitions and more are available [here](https://tezign.feishu.cn/wiki/Q8HVw91AziK8u7k7Fy6c2SPNneR).
+
 # Environment variables
 
 This project reads the following environment variables. If you're using VSCode, you can save the
@@ -5,15 +11,10 @@ values in an `.env` file, and the VSCode Python extension will load the values w
 environment is activated.
 
 ```bash
-# Data directory shared between workers. If running as a container, this should be a volumn mount.
+# Directory for temporary files shared between workers. If running as a container, this should be a volumn mount.
 MEDIA_WORKFLOW_DATADIR=
 
-# A directory containing test files. If set, workers will mocks download activities.
-MEDIA_WORKFLOW_TEST_DATADIR=
-# If set, upload is skipped and the local path is returned instead of signed S3 URLs.
-MEDIA_WORKFLOW_TEST_SKIP_UPLOAD=
-
-# 256-bit key for signing webhook requests with HMAC-SHA256.
+# Private key for signing webhook requests.
 WEBHOOK_SIGNATURE_KEY=
 
 # Temporal endpoint.
@@ -31,12 +32,25 @@ AWS_SECRET_ACCESS_KEY=
 LLM_BASE_URL=
 LLM_API_KEY=
 
-# Force OpenCV to enable OpenEXR.
+# Force OpenCV to enable OpenEXR. Should always be set to 1.
 # See https://github.com/opencv/opencv/issues/21326
-OPENCV_IO_ENABLE_OPENEXR=1
+OPENCV_IO_ENABLE_OPENEXR=
 
-# OpenTelemetry endpoint. Currently only honeycomb is supported.
+# (Optional) Honeycomb ingest key.
 HONEYCOMB_KEY=
+
+# (Optional) Set this to the directory of test files to skip download during tests.
+MEDIA_WORKFLOW_TEST_DATADIR=
+# (Optional) Set this to 1 to skip upload during tests.
+MEDIA_WORKFLOW_TEST_SKIP_UPLOAD=
+# (Optional) Set this to 1 to only perform 1 test for each file category.
+MEDIA_WORKFLOW_TEST_SMALL=
+# (Optional) Set this to 1 to perform tests that are very slow.
+MEDIA_WORKFLOW_TEST_LARGE=
+# (Optional) Set this to 1 to perform tests that requires a C4D worker.
+MEDIA_WORKFLOW_TEST_C4D=
+# (Optional) Set this to 1 to perform tests that requires a local HTTP server at port 8848.
+MEDIA_WORKFLOW_TEST_WEBHOOK=
 ```
 
 # How to run regular workers
@@ -56,7 +70,7 @@ uv sync
 Step 3: Start the worker:
 
 ```
-uv run python worker.py
+python worker.py
 ```
 
 # How to run C4D workers
@@ -76,7 +90,7 @@ uv sync --only-group=c4d
 Step 3: Run the worker.
 
 ```
-uv run python c4d_worker.py
+python c4d_worker.py
 ```
 
 Step 4: Install dependencies for `c4dpy` using regular `pip` (NOT `c4dpy`):
@@ -93,7 +107,29 @@ Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.p
 ```
 
 
-# Deployment
+# CI/CD
 
-Deployment is fully automatic. If the commit message contains `hotfix:`, Github Actions will skip
-testing and deploy directly to production.
+This project uses Github Actions for CI/CD. Commits pushed to the main branch are built, tested, and pushed to
+production automatically. If the commit message contains `hotfix:`, the commit is deployed directly without testing (not
+recommended).
+
+If you want to build your code on CI without deploying it, you can push your commits to another branch and open a pull
+request to the main branch. The commits are built and tested, but won't be deployed until merged into the main branch.
+
+# Project structure
+
+This project contains two python packages (`media_workflow/` and `pylette/`) and associated tests, several scripts meant
+to be run directly (`worker.py`, `webhook_worker.py`, `c4d_worker.py`, `c4d_server.py`), and benchmarks (`bench/`).
+
+The main entry point of the application is `FileAnalysis.run()` in `media_workflow/workflows.py`. This is where we
+accept requests from the users and process them. A workflow can start various activities defined in
+`media_workflow/activities`. After an activity is completed, the result is saved in `self.results` for queries and
+(optionally) posted to the user via webhook.
+
+It should be noted that the term "activity" is being overloaded in the codebase. Sometimes it doesn't actually refer to
+a Temporal Activity, but rather a functionality that users want. This is unfortunate, but I'd rather not change the
+interface without a better reason.
+
+The `pylette` package is forked from https://github.com/qTipTip/Pylette. Forking is necessary because `pylette` declares
+numpy v1.x as a dependency, which is incompatible with other dependencies of this project (Python dependency management
+is an absolute dumpster fire lol).
