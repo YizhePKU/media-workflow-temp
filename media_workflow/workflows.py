@@ -8,11 +8,24 @@ from temporalio import workflow
 
 from media_workflow.activities import (
     document,
-    font,
     image,
-    image_detail,
     utils,
     video,
+)
+from media_workflow.activities.font_detail import FontDetailParams, font_detail
+from media_workflow.activities.font_metadata import FontMetadataParams, font_metadata
+from media_workflow.activities.font_thumbnail import FontThumbnailParams, font_thumbnail
+from media_workflow.activities.image_detail import (
+    ImageDetailDetailsParams,
+    ImageDetailMainParams,
+    image_detail_details,
+    image_detail_main,
+)
+from media_workflow.activities.image_detail_basic import (
+    ImageDetailBasicParams,
+    image_detail_basic_details,
+    image_detail_basic_main,
+    image_detail_basic_tags,
 )
 from media_workflow.trace import instrument
 
@@ -27,6 +40,7 @@ class FileAnalysis:
     def __init__(self):
         self.results = {}
 
+    # TODO: get rid of this, pass params directly to methods like image_thumbnail()
     def _params(self, activity):
         return self.request.get("params", {}).get(activity, {})
 
@@ -68,11 +82,11 @@ class FileAnalysis:
             if "document-thumbnail" in request["activities"]:
                 tg.create_task(self.document_thumbnail(file))
             if "font-thumbnail" in request["activities"]:
-                tg.create_task(self.font_thumbnail(file))
+                tg.create_task(self._font_thumbnail(file))
             if "font-metadata" in request["activities"]:
-                tg.create_task(self.font_metadata(file))
+                tg.create_task(self._font_metadata(file))
             if "font-detail" in request["activities"]:
-                tg.create_task(self.font_detail(file))
+                tg.create_task(self._font_detail(file))
             if "c4d-preview" in request["activities"]:
                 tg.create_task(self.c4d_preview())
 
@@ -117,42 +131,56 @@ class FileAnalysis:
     @instrument
     async def image_detail(self, file):
         activity = "image-detail"
-        # convert image to PNG first
-        png = await start(
-            image.thumbnail,
-            image.ThumbnailParams(file=file, size=(1024, 1024)),
-        )
-        params = image_detail.ImageDetailParams(file=png, **self._params(activity))
+        png = await start(image.thumbnail, image.ThumbnailParams(file=file, size=(1024, 1024)))
+
+        # extract title, description, main/sub category, and tags
         main_response = await start(
-            image_detail.image_detail_main,
-            params,
-        )
-        result = await start(
-            image_detail.image_detail_details,
-            image_detail.ImageDetailDetailsParams(
-                **params.model_dump(),
-                main_response=main_response,
+            image_detail_main,
+            ImageDetailMainParams(
+                file=png,
+                language=self._params(activity)["language"],
+                industries=self._params(activity)["industries"],
             ),
         )
+
+        # extract details from aspects derived from main/sub category
+        details_response = await start(
+            image_detail_details,
+            ImageDetailDetailsParams(
+                file=png,
+                main_category=main_response.main_category,
+                sub_category=main_response.sub_category,
+                language=self._params(activity)["language"],
+            ),
+        )
+        result = {
+            "title": main_response.title,
+            "description": main_response.description,
+            "tags": [tag for tags in main_response.tags.values() for tag in tags],
+            "detailed_description": [{key: value} for key, value in details_response.model_dump().items()],
+        }
         await self.submit(activity, result)
 
     @instrument
     async def image_detail_basic(self, file):
         activity = "image-detail-basic"
-        # convert image to PNG first
-        png = await start(
-            image.thumbnail,
-            image.ThumbnailParams(file=file, size=(1024, 1024)),
+        png = await start(image.thumbnail, image.ThumbnailParams(file=file, size=(1024, 1024)))
+
+        # TODO: handle optional arguments
+        params = ImageDetailBasicParams(
+            file=png,
+            language=self._params(activity)["language"],
+            model_type=self._params(activity)["model_type"],
         )
-        params = image_detail.ImageDetailParams(file=png, **self._params(activity))
-        main_result = await start(image_detail.image_detail_basic_main, params)
-        details_result = await start(image_detail.image_detail_basic_details, params)
-        tags_result = await start(image_detail.image_detail_basic_tags, params)
+        main = start(image_detail_basic_main, params)
+        details = start(image_detail_basic_details, params)
+        tags = start(image_detail_basic_tags, params)
+        [main, details, tags] = await asyncio.gather(main, details, tags)
         result = {
-            "title": main_result.title,
-            "description": main_result.description,
-            "tags": tags_result,
-            "detailed_description": details_result,
+            "title": main.title,
+            "description": main.description,
+            "tags": tags.model_dump(),
+            "detailed_description": details.model_dump(),
         }
         await self.submit(activity, result)
 
@@ -232,33 +260,25 @@ class FileAnalysis:
         )
         await self.submit(activity, result)
 
+    # TODO: make all these methods private to prevent name clash
     @instrument
-    async def font_thumbnail(self, file):
+    async def _font_thumbnail(self, file):
         activity = "font-thumbnail"
-        image = await start(
-            font.thumbnail,
-            font.ThumbnailParams(
-                file=file,
-                **self._params(activity),
-            ),
-        )
+        image = await start(font_thumbnail, FontThumbnailParams(file=file, **self._params(activity)))
         result = await start(utils.upload, utils.UploadParams(file=image, content_type="image/png"))
         await self.submit(activity, result)
 
     @instrument
-    async def font_metadata(self, file):
+    async def _font_metadata(self, file):
         activity = "font-metadata"
-        result = await start(
-            font.metadata,
-            font.MetadataParams(file=file, **self._params(activity)),
-        )
+        result = await start(font_metadata, FontMetadataParams(file=file, **self._params(activity)))
         await self.submit(activity, result)
 
     @instrument
-    async def font_detail(self, file):
+    async def _font_detail(self, file):
         activity = "font-detail"
-        image = await start(font.thumbnail, font.ThumbnailParams(file=file))
-        metadata = await start(font.metadata, font.MetadataParams(file=file))
+        image = await start(font_thumbnail, FontThumbnailParams(file=file))
+        metadata = await start(font_metadata, FontMetadataParams(file=file))
         basic_info = {
             "name": metadata["full_name"],
             "designer": metadata["designer"],
@@ -266,14 +286,7 @@ class FileAnalysis:
             "supports_kerning": metadata["kerning"],
             "supports_chinese": metadata["chinese"],
         }
-        result = await start(
-            font.detail,
-            font.DetailParams(
-                file=image,
-                basic_info=basic_info,
-                **self._params(activity),
-            ),
-        )
+        result = await start(font_detail, FontDetailParams(file=image, basic_info=basic_info, **self._params(activity)))
         await self.submit(activity, result)
 
     @instrument

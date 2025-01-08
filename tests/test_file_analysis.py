@@ -147,6 +147,7 @@ async def test_image_detail(file):
         "params": {
             "image-detail": {
                 "language": "zh-CN",
+                "industries": ["工业设计", "Game Design"],
             }
         },
     }

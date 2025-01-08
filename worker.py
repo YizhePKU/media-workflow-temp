@@ -4,7 +4,18 @@ import inspect
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 import media_workflow.workflows
-from media_workflow.activities import calibrate, document, font, image, image_detail, utils, video
+from media_workflow.activities import (
+    calibrate,
+    document,
+    font_detail,
+    font_metadata,
+    font_thumbnail,
+    image,
+    image_detail,
+    image_detail_basic,
+    utils,
+    video,
+)
 from media_workflow.client import connect
 
 workflows = []
@@ -12,9 +23,20 @@ for _name, fn in inspect.getmembers(media_workflow.workflows):
     if hasattr(fn, "__temporal_workflow_definition"):
         workflows.append(fn)
 
-
+# TODO: rename all activities to full, remove module name prefix
 activities = []
-for module in [calibrate, document, font, image, utils, video, image_detail]:
+for module in [
+    calibrate,
+    document,
+    image,
+    utils,
+    video,
+    image_detail,
+    image_detail_basic,
+    font_detail,
+    font_metadata,
+    font_thumbnail,
+]:
     for _name, fn in inspect.getmembers(module):
         if hasattr(fn, "__temporal_activity_definition"):
             activities.append(fn)

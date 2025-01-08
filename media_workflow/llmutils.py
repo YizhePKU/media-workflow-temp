@@ -1,27 +1,108 @@
-from .schema import ImageDetailParams
+import os
+from base64 import b64encode
+from pathlib import Path
+from typing import Literal
+
+import json_repair
+from openai import AsyncOpenAI
+from pydantic import BaseModel
+
+from media_workflow.trace import instrument
 
 
-def get_category_tree(params: ImageDetailParams) -> dict[str, dict[str, str | None]]:
-    """Get category tree according to industry input."""
-    # use default main category and sub category
-    target_main_category = ["general"]
+@instrument(skip=["result_type"])
+async def llm[T: BaseModel](model: str, prompt: str, image: Path, result_type: type[T]) -> T:
+    """Invoke LLM with some prompt and an image. The response is validated against a pydantic model."""
+    with open(image, "rb") as file:
+        b64image = b64encode(file.read()).decode("utf-8")
 
-    target_category_set = set()
+    client = AsyncOpenAI(base_url=os.environ["LLM_BASE_URL"], api_key=os.environ["LLM_API_KEY"])
+    response = await client.chat.completions.create(
+        model=model,
+        messages=[
+            {
+                "role": "system",
+                "content": prompt,
+            },
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{b64image}",
+                            "detail": "low",
+                        },
+                    }
+                ],
+            },
+        ],
+        stream=False,
+        # NOTE: leaving response_format unset for now because not all models support JSON.
+        # response_format={"type": "json_object"},
+    )
+    content = response.choices[0].message.content
+    assert content is not None
+    return result_type.model_validate(json_repair.loads(content))
 
-    for industry_name in params.industry:
-        industry_name = INDUSTRY_NAME_MAPPING.get(industry_name, industry_name.lower())
 
-        if industry_name in INDUSTRY_CATEGORY_MAPPING:
-            for value in INDUSTRY_CATEGORY_MAPPING[industry_name]:
-                target_category_set.add(value)
+def language_to_name(language: Literal["zh-CN", "en-US"]) -> str:
+    """Convert language code to language name."""
+    match language:
+        case "zh-CN":
+            return "Simplified Chinese"
+        case "en-US":
+            return "English"
 
-    if len(target_category_set) > 0:
-        target_main_category = list(target_category_set)
+
+# NOTE: The rest of the file is under-documented. I'll come back to it later.
+
+
+def get_category_tree(industries: list[str]) -> dict[str, dict[str, str | None]]:
+    zh2en = {
+        "室内设计": "interior design",
+        "建筑设计": "architecture design",
+        "服装设计": "fashion design",
+        "插画设计": "illustration",
+        "视觉设计": "graphic design",
+        "UI/UX 设计": "ui/ux",
+        "3D 设计": "3d",
+        "游戏设计": "game design",
+        "自媒体运营": "social media",
+        "摄影": "photography",
+        "电商": "e-commerce",
+        "互联网": "internet",
+    }
+
+    industry2categories = {
+        "interior design": [
+            "architecture_and_interior_design",
+            "furniture_and_equipment",
+        ],
+        "architecture design": ["architecture_and_interior_design"],
+        "illustration": ["visual_design"],
+        "graphic design": ["visual_design"],
+        "ui/ux": [],
+        "3d": ["game_design"],
+        "game design": ["game_design"],
+        "social media": ["visual_design"],
+        "photography": [],
+        "e-commerce": [],
+        "internet": [],
+        "fashion design": [],
+    }
+
+    categories = {"general"}
+    for industry in industries:
+        # convert industry to lowercase English
+        industry = zh2en.get(industry, industry.lower())
+        # add all matching categories for this industry
+        categories.update(industry2categories.get(industry, []))
 
     category_tree = {}
 
     for key, value in CATEGORY_DESCRIPTION.items():
-        if key in target_main_category:
+        if key in categories:
             category_tree[key] = {}
             for k, v in value.items():
                 category_tree[key][k] = v["description"]
@@ -29,28 +110,14 @@ def get_category_tree(params: ImageDetailParams) -> dict[str, dict[str, str | No
     return category_tree
 
 
-def fix_category(main: str, sub: str) -> tuple[str, str]:
-    """Validate main category and sub category output, use default one if they are incorrect."""
-    if main not in CATEGORY_DESCRIPTION:
-        return (DEFAULT_MAIN_CATEGORY, DEFAULT_SUB_CATEGORY)
-
-    if sub not in CATEGORY_DESCRIPTION[main]:
-        return (main, next(iter(CATEGORY_DESCRIPTION[main].keys())))
-
-    return (main, sub)
-
-
-def get_description_aspects(main: str, sub: str) -> tuple[str, str, dict[str, str | None]]:
+def get_description_aspects(main: str, sub: str) -> list[str]:
     """Get aspects to be included in the final description with correct category according to input category."""
-    main, sub = fix_category(main, sub)
+    if main not in CATEGORY_DESCRIPTION:
+        main = "general"
+    if sub not in CATEGORY_DESCRIPTION[main]:
+        sub = next(iter(CATEGORY_DESCRIPTION[main].keys()))
+    return list(CATEGORY_DESCRIPTION[main][sub]["aspects"].keys())
 
-    aspects = CATEGORY_DESCRIPTION[main][sub]["aspects"]
-
-    return main, sub, aspects
-
-
-DEFAULT_MAIN_CATEGORY = "general"
-DEFAULT_SUB_CATEGORY = "general"
 
 # 根据两层级的标签，找到需要描述的字段
 # 字段对应的 value 是用于描述这个字段的，如果不需要就设置为 None
@@ -752,41 +819,4 @@ CATEGORY_DESCRIPTION = {
             },
         }
     },
-}
-
-INDUSTRY_NAME_MAPPING = {
-    "室内设计": "interior design",
-    "建筑设计": "architecture design",
-    "服装设计": "fashion design",
-    "插画设计": "illustration",
-    "视觉设计": "graphic design",
-    "UI/UX 设计": "ui/ux",
-    "3D 设计": "3d",
-    "游戏设计": "game design",
-    "自媒体运营": "social media",
-    "摄影": "photography",
-    "电商": "e-commerce",
-    "互联网": "internet",
-    "其他": "others",
-}
-
-
-INDUSTRY_CATEGORY_MAPPING = {
-    "interior design": [
-        "general",
-        "architecture_and_interior_design",
-        "furniture_and_equipment",
-    ],
-    "architecture design": ["general", "architecture_and_interior_design"],
-    "illustration": ["general", "visual_design"],
-    "graphic design": ["general", "visual_design"],
-    "ui/ux": ["general"],
-    "3d": ["general", "game_design"],
-    "game design": ["general", "game_design"],
-    "social media": ["general", "visual_design"],
-    "photography": ["general"],
-    "e-commerce": ["general"],
-    "internet": ["general"],
-    "fashion design": ["general"],
-    "others": ["general"],
 }

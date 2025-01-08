@@ -15,6 +15,7 @@ class ThumbnailParams(BaseModel):
     size: tuple[int, int] | None = None
 
 
+# TODO: remove activity names, seperate image_thumbnail from color_palette
 @instrument
 @activity.defn(name="image-thumbnail")
 async def thumbnail(params: ThumbnailParams) -> Path:
