@@ -100,6 +100,7 @@ class FileAnalysis:
                                     "result": {activity: self.results[activity]},
                                 },
                             ),
+                            task_queue="webhook",
                             parent_close_policy=workflow.ParentClosePolicy.ABANDON,
                         )
 
@@ -240,4 +241,4 @@ class Webhook:
     @instrument
     @workflow.run
     async def run(self, params: WebhookParams):
-        await start(webhook, params, task_queue="webhook")
+        await start(webhook, params)
