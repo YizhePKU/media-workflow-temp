@@ -156,7 +156,8 @@ class FileAnalysis:
 
     @instrument
     async def _image_color_palette(self, file, params):
-        return await start(image_color_palette, ImageColorPaletteParams(file=file, **params))
+        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1000, 1000)))
+        return await start(image_color_palette, ImageColorPaletteParams(file=thumbnail, **params))
 
     @instrument
     async def _video_metadata(self, file, params):

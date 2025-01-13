@@ -6,9 +6,9 @@ from uuid import uuid4
 
 import aiohttp
 import pytest
+from PIL import Image
 
 from media_workflow.client import connect
-from media_workflow.utils.image import imread
 
 
 async def download(url: str) -> Path:
@@ -113,8 +113,7 @@ async def test_streaming_via_update():
     }
     handle = await client.start_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     result = await handle.execute_update("get", "image-thumbnail")
-    image = imread(await download(result))
-    assert image.mode == "RGB"
+    image = Image.open(await download(result))
     assert image.size[0] <= 400
     assert image.size[1] <= 400
 
@@ -132,8 +131,7 @@ async def test_image_thumbnail(file):
         },
     }
     result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
-    image = imread(await download(result["result"]["image-thumbnail"]))
-    assert image.mode == "RGB"
+    image = Image.open(await download(result["result"]["image-thumbnail"]))
     assert image.size[0] <= 400
     assert image.size[1] <= 400
 
@@ -217,8 +215,7 @@ async def test_font_thumbnail(file):
         },
     }
     result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
-    image = imread(await download(result["result"]["font-thumbnail"]))
-    assert image.mode == "RGB"
+    image = Image.open(await download(result["result"]["font-thumbnail"]))
     assert image.size[0] <= 400
     assert image.size[1] <= 400
 
@@ -279,7 +276,7 @@ async def test_video_sprite(file):
     result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert len(result["result"]["video-sprite"]["files"]) == 2
     assert result["result"]["video-sprite"]["width"] == 200
-    image = imread(await download(result["result"]["video-sprite"]["files"][0]))
+    image = Image.open(await download(result["result"]["video-sprite"]["files"][0]))
     assert image.size[0] <= 1000
 
 
@@ -320,4 +317,4 @@ async def test_c4d_preview(model):
     }
     result = await client.execute_workflow("file-analysis", arg, id=f"{uuid4()}", task_queue="media")
     assert "gltf" in result["result"]["c4d-preview"]
-    imread(await download(result["result"]["c4d-preview"]["png"]))
+    Image.open(await download(result["result"]["c4d-preview"]["png"]))

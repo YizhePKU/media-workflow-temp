@@ -1,11 +1,13 @@
+import os
 from pathlib import Path
+from tempfile import mkdtemp
+from uuid import uuid4
 
-from PIL import Image
+import pyvips
 from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.otel import instrument
-from media_workflow.utils.image import imread, imwrite
 
 
 class ImageThumbnailParams(BaseModel):
@@ -16,7 +18,7 @@ class ImageThumbnailParams(BaseModel):
 @instrument
 @activity.defn
 async def image_thumbnail(params: ImageThumbnailParams) -> Path:
-    image = imread(params.file)
-    if size := params.size:
-        image.thumbnail(size, resample=Image.Resampling.LANCZOS)
-    return imwrite(image)
+    thumbnail = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"])) / f"{uuid4()}.png"
+    pyvips.Image.thumbnail(params.file, params.size[0]).write_to_file(thumbnail)  # type: ignore
+    assert thumbnail.exists()
+    return thumbnail

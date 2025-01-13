@@ -6,7 +6,7 @@ ENV PATH="$PATH:$HOME/.local/bin"
 WORKDIR /app
 
 RUN apt-get update
-RUN apt-get install -y curl libcairo2-dev ffmpeg libreoffice fonts-recommended fonts-noto-cjk ghostscript libfreeimage3
+RUN apt-get install -y curl ffmpeg libreoffice fonts-recommended fonts-noto-cjk ghostscript libvips-dev
 
 RUN curl -LsSf https://astral.sh/uv/0.5.11/install.sh | sh
 
