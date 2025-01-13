@@ -22,7 +22,7 @@ from cairosvg import svg2png
 from PIL import Image
 from psd_tools import PSDImage
 
-from media_workflow.trace import instrument
+from media_workflow.otel import instrument
 
 # Remove the image size limit. This prevents pillow from complaining about extremely large images.
 Image.MAX_IMAGE_PIXELS = None

@@ -8,7 +8,7 @@ from typing import AsyncGenerator
 from pydantic import BaseModel
 from temporalio import activity
 
-from media_workflow.trace import instrument
+from media_workflow.otel import instrument
 
 # To run multiple instances of LibreOffice concurrently, they must have different profile directories.
 # We use a pool to limit the maximum concurrency, otherwise the worker can run out of memory.

@@ -5,7 +5,7 @@ from PIL import Image
 from pydantic import BaseModel
 from temporalio import activity
 
-from media_workflow.trace import instrument
+from media_workflow.otel import instrument
 from media_workflow.utils.image import imwrite
 
 

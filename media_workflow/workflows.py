@@ -31,7 +31,7 @@ from media_workflow.activities.video_metadata import VideoMetadataParams, video_
 from media_workflow.activities.video_sprite import VideoSpriteParams, video_sprite
 from media_workflow.activities.video_transcode import VideoTranscodeParams, video_transcode
 from media_workflow.activities.webhook import WebhookParams, webhook
-from media_workflow.trace import instrument
+from media_workflow.otel import instrument
 
 start = functools.partial(
     workflow.start_activity,

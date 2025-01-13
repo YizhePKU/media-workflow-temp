@@ -7,7 +7,7 @@ import json_repair
 from openai import AsyncOpenAI
 from pydantic import BaseModel
 
-from media_workflow.trace import instrument
+from media_workflow.otel import instrument
 
 
 @instrument(skip=["result_type"])

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from temporalio import activity
 
-from media_workflow.trace import instrument
+from media_workflow.otel import instrument
 
 
 def rgb2hex(rgb: list[int]) -> str:
