@@ -6,7 +6,7 @@ from pathlib import Path
 
 import c4d
 
-from media_workflow.trace import tracer
+from media_workflow.otel import tracer
 
 
 def preview(file: str):

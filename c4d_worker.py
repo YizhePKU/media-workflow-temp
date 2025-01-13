@@ -1,45 +1,9 @@
 import asyncio
-import json
-import os
 
-from pydantic import BaseModel
-from temporalio import activity
-from temporalio.worker import Worker
+from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
-from media_workflow.activities import utils
+from media_workflow.activities.c4d_preview import c4d_preview
 from media_workflow.client import connect
-from media_workflow.trace import tracer
-
-
-class PreviewParams(BaseModel):
-    url: str
-
-
-@activity.defn(name="c4d-preview")
-async def c4d_preview(params: PreviewParams):
-    with tracer.start_as_current_span("c4d-download"):
-        file = await utils.download(utils.DownloadParams(url=params.url))
-
-    host = os.environ.get("C4D_SERVER_HOST", "localhost")
-    port = os.environ.get("C4D_SERVER_PORT", 8848)
-    with tracer.start_as_current_span("c4d-server", attributes={"host": host, "port": port}):
-        (reader, writer) = await asyncio.open_connection(host, port)
-        writer.write(json.dumps(file).encode())
-        await writer.drain()
-
-        response = json.loads(await reader.read(-1))
-        if response["status"] != "success":
-            reason = response["reason"]
-            raise ValueError(f"C4D server returned error: {reason}")
-
-        writer.close()
-
-    with tracer.start_as_current_span("c4d-upload", attributes={"png": response["png"], "gltf": response["gltf"]}):
-        png_task = utils.upload(utils.UploadParams(file=response["png"], content_type="image/png"))
-        gltf_task = utils.upload(utils.UploadParams(file=response["gltf"]))
-        (png_url, gltf_url) = await asyncio.gather(png_task, gltf_task)
-
-    return {"gltf": gltf_url, "png": png_url}
 
 
 async def main():
@@ -51,6 +15,7 @@ async def main():
         client,
         task_queue="media-c4d",
         activities=[c4d_preview],
+        workflow_runner=UnsandboxedWorkflowRunner(),
     )
     print("starting C4D worker on task queue media-c4d")
     await worker.run()

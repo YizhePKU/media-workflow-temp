@@ -5,7 +5,7 @@ example](https://github.com/temporalio/samples-python/tree/main/pydantic_convert
 modifications to support `pathlib.Path`.
 
 This module also adds a `TracingInterceptor` to support OpenTelemetry, but the actual tracing
-configurations are defined in `trace.py`.
+configurations are defined in `otel.py`.
 """
 
 import json
