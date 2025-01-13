@@ -43,7 +43,7 @@ async def video_sprite(params: VideoSpriteParams) -> VideoSpriteResponse:
         "-i",
         params.file,
         "-vf",
-        f"fps={1/interval},scale={params.width}:{params.height},tile={params.layout[0]}x{params.layout[1]}",
+        f"fps={1 / interval},scale={params.width}:{params.height},tile={params.layout[0]}x{params.layout[1]}",
         "-vframes",
         str(params.count),
         f"{_dir}/%03d.png",
