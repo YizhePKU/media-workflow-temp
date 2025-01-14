@@ -12,7 +12,7 @@ from media_workflow.otel import instrument
 
 class ImageThumbnailParams(BaseModel):
     file: Path
-    size: tuple[int, int] | None = None
+    size: tuple[int, int] = (1000, 1000)
 
 
 @instrument
