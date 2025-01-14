@@ -33,9 +33,9 @@ async def c4d_preview(params: C4dPreviewParams):
 
         writer.close()
 
-    with tracer.start_as_current_span("c4d-upload", attributes={"png": response["png"], "gltf": response["gltf"]}):
-        png_task = upload(UploadParams(file=response["png"], content_type="image/png"))
+    with tracer.start_as_current_span("c4d-upload", attributes={"jpeg": response["jpeg"], "gltf": response["gltf"]}):
+        jpeg_task = upload(UploadParams(file=response["jpeg"], content_type="image/jpeg"))
         gltf_task = upload(UploadParams(file=response["gltf"]))
-        (png_url, gltf_url) = await asyncio.gather(png_task, gltf_task)
+        (jpeg_url, gltf_url) = await asyncio.gather(jpeg_task, gltf_task)
 
-    return {"gltf": gltf_url, "png": png_url}
+    return {"gltf": gltf_url, "jpeg": jpeg_url}

@@ -18,7 +18,7 @@ class ImageThumbnailParams(BaseModel):
 @instrument
 @activity.defn
 async def image_thumbnail(params: ImageThumbnailParams) -> Path:
-    thumbnail = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"])) / f"{uuid4()}.png"
+    thumbnail = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"])) / f"{uuid4()}.jpeg"
     pyvips.Image.thumbnail(params.file, params.size[0]).write_to_file(thumbnail)  # type: ignore
     assert thumbnail.exists()
     return thumbnail

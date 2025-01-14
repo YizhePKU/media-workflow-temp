@@ -115,11 +115,11 @@ class FileAnalysis:
     @instrument
     async def _image_thumbnail(self, file, params):
         thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, **params))
-        return await start(upload, UploadParams(file=thumbnail, content_type="image/png"))
+        return await start(upload, UploadParams(file=thumbnail, content_type="image/jpeg"))
 
     @instrument
     async def _image_detail(self, file, params):
-        # convert image to PNG
+        # convert image to jpeg
         thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
         # extract title, description, main/sub category, and tags
         main = await start(image_detail_main, ImageDetailMainParams(file=thumbnail, **params))
@@ -139,7 +139,7 @@ class FileAnalysis:
 
     @instrument
     async def _image_detail_basic(self, file, params):
-        # convert image to PNG
+        # convert image to jpeg
         thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
         # invoke LLM three times
         params = ImageDetailBasicParams(file=thumbnail, **params)
@@ -168,7 +168,7 @@ class FileAnalysis:
         metadata = await start(video_metadata, VideoMetadataParams(file=file, **params))
         result = await start(video_sprite, VideoSpriteParams(file=file, duration=metadata["duration"], **params))
         files = await asyncio.gather(
-            *[start(upload, UploadParams(file=image, content_type="image/png")) for image in result["sprites"]]
+            *[start(upload, UploadParams(file=image, content_type="image/jpeg")) for image in result["sprites"]]
         )
         return {
             "interval": result["interval"],
@@ -195,13 +195,13 @@ class FileAnalysis:
         images = await start(document_thumbnail, DocumentThumbnailParams(file=pdf, **params))
         # upload thumbnails
         return await asyncio.gather(
-            *[start(upload, UploadParams(file=image, content_type="image/png")) for image in images]
+            *[start(upload, UploadParams(file=image, content_type="image/jpeg")) for image in images]
         )
 
     @instrument
     async def _font_thumbnail(self, file, params):
         image = await start(font_thumbnail, FontThumbnailParams(file=file, **params))
-        return await start(upload, UploadParams(file=image, content_type="image/png"))
+        return await start(upload, UploadParams(file=image, content_type="image/jpeg"))
 
     @instrument
     async def _font_metadata(self, file, params):

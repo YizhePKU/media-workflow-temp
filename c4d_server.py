@@ -14,7 +14,7 @@ def preview(file: str):
 
     tempdir = tempfile.mkdtemp()
     gltf = f"{tempdir}/{Path(file).stem}.gltf"
-    png = f"{tempdir}/{Path(file).stem}.png"
+    jpeg = f"{tempdir}/{Path(file).stem}.jpeg"
 
     with tracer.start_as_current_span("c4d-load-document"):
         doc = c4d.documents.LoadDocument(file, c4d.SCENEFILTER_OBJECTS)
@@ -25,13 +25,13 @@ def preview(file: str):
         c4d.documents.SaveDocument(doc, gltf, 0, c4d.FORMAT_GLTFEXPORT)
         print(f"exported {gltf}")
 
-    with tracer.start_as_current_span("c4d-export-png"):
+    with tracer.start_as_current_span("c4d-export-jpeg"):
         bitmap = doc.GetDocPreviewBitmap()
-        ret = bitmap.Save(str(png), c4d.FILTER_PNG)
+        ret = bitmap.Save(str(jpeg), c4d.FILTER_JPEG)
         assert ret == c4d.IMAGERESULT_OK
-        print(f"exported {png}")
+        print(f"exported {jpeg}")
 
-    return {"gltf": gltf, "png": png}
+    return {"gltf": gltf, "jpeg": jpeg}
 
 
 def main():

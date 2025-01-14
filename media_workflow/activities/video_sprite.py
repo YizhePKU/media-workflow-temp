@@ -46,7 +46,7 @@ async def video_sprite(params: VideoSpriteParams) -> VideoSpriteResponse:
         f"fps={1 / interval},scale={params.width}:{params.height},tile={params.layout[0]}x{params.layout[1]}",
         "-vframes",
         str(params.count),
-        f"{_dir}/%03d.png",
+        f"{_dir}/%03d.jpeg",
         stderr=asyncio.subprocess.PIPE,
     )
     (_, stderr) = await process.communicate()
@@ -55,11 +55,11 @@ async def video_sprite(params: VideoSpriteParams) -> VideoSpriteResponse:
     width = 0
     height = 0
     for line in stderr.decode().split("\n"):
-        if match := re.search(r"Video: png.*?(\d+)x(\d+)", line):
+        if match := re.search(r"Video:.*?(\d+)x(\d+)", line):
             width = int(match.group(1))
             height = int(match.group(2))
 
-    sprites = [path for path in Path(_dir).iterdir() if path.suffix == ".png"]
+    sprites = [path for path in Path(_dir).iterdir() if path.suffix == ".jpeg"]
     sprites.sort(key=lambda p: int(p.stem))
     return {
         "interval": interval,

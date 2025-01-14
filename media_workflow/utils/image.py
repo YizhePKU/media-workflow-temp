@@ -13,6 +13,6 @@ from media_workflow.otel import instrument
 @instrument(skip=["image"])
 def imwrite(image: Image.Image) -> Path:
     """Write an image to a temporary file. Return the file path."""
-    path = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"])) / f"{uuid4()}.png"
+    path = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"])) / f"{uuid4()}.jpeg"
     image.save(path)
     return path
