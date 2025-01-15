@@ -120,7 +120,7 @@ class FileAnalysis:
     @instrument
     async def _image_detail(self, file, params):
         # convert image to jpeg
-        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
+        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file))
         # extract title, description, main/sub category, and tags
         main = await start(image_detail_main, ImageDetailMainParams(file=thumbnail, **params))
         # extract details from aspects derived from main/sub category
@@ -140,7 +140,7 @@ class FileAnalysis:
     @instrument
     async def _image_detail_basic(self, file, params):
         # convert image to jpeg
-        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1024, 1024)))
+        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file))
         # invoke LLM three times
         params = ImageDetailBasicParams(file=thumbnail, **params)
         main = start(image_detail_basic_main, params)
@@ -156,7 +156,7 @@ class FileAnalysis:
 
     @instrument
     async def _image_color_palette(self, file, params):
-        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file, size=(1000, 1000)))
+        thumbnail = await start(image_thumbnail, ImageThumbnailParams(file=file))
         return await start(image_color_palette, ImageColorPaletteParams(file=thumbnail, **params))
 
     @instrument
