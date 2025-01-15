@@ -6,7 +6,6 @@ from temporalio import workflow
 
 from media_workflow.activities.audio_waveform import AudioWaveformParams, audio_waveform
 from media_workflow.activities.color_calibrate import color_calibrate
-from media_workflow.activities.document_thumbnail import DocumentThumbnailParams, document_thumbnail
 from media_workflow.activities.document_to_pdf import DocumentToPdfParams, document_to_pdf
 from media_workflow.activities.download import DownloadParams, download
 from media_workflow.activities.font_detail import FontDetailParams, font_detail
@@ -26,6 +25,7 @@ from media_workflow.activities.image_detail_basic import (
     image_detail_basic_tags,
 )
 from media_workflow.activities.image_thumbnail import ImageThumbnailParams, image_thumbnail
+from media_workflow.activities.pdf_thumbnail import PdfThumbnailParams, pdf_thumbnail
 from media_workflow.activities.upload import UploadParams, upload
 from media_workflow.activities.video_metadata import VideoMetadataParams, video_metadata
 from media_workflow.activities.video_sprite import VideoSpriteParams, video_sprite
@@ -192,7 +192,7 @@ class FileAnalysis:
         # convert the document to PDF
         pdf = await start(document_to_pdf, DocumentToPdfParams(file=file))
         # extract thumbnails from pdf pages
-        images = await start(document_thumbnail, DocumentThumbnailParams(file=pdf, **params))
+        images = await start(pdf_thumbnail, PdfThumbnailParams(file=pdf, **params))
         # upload thumbnails
         return await asyncio.gather(
             *[start(upload, UploadParams(file=image, content_type="image/jpeg")) for image in images]

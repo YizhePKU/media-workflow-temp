@@ -4,7 +4,6 @@ from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 from media_workflow.activities.audio_waveform import audio_waveform
 from media_workflow.activities.color_calibrate import color_calibrate
-from media_workflow.activities.document_thumbnail import document_thumbnail
 from media_workflow.activities.document_to_pdf import document_to_pdf
 from media_workflow.activities.download import download
 from media_workflow.activities.font_detail import font_detail
@@ -21,6 +20,7 @@ from media_workflow.activities.image_detail_basic import (
     image_detail_basic_tags,
 )
 from media_workflow.activities.image_thumbnail import image_thumbnail
+from media_workflow.activities.pdf_thumbnail import pdf_thumbnail
 from media_workflow.activities.upload import upload
 from media_workflow.activities.video_metadata import video_metadata
 from media_workflow.activities.video_sprite import video_sprite
@@ -32,19 +32,19 @@ workflows = [FileAnalysis, ColorCalibrate]
 activities = [
     audio_waveform,
     color_calibrate,
-    document_thumbnail,
     document_to_pdf,
     download,
     font_detail,
     font_metadata,
     font_thumbnail,
     image_color_palette,
-    image_detail_details,
-    image_detail_main,
     image_detail_basic_details,
     image_detail_basic_main,
     image_detail_basic_tags,
+    image_detail_details,
+    image_detail_main,
     image_thumbnail,
+    pdf_thumbnail,
     upload,
     video_metadata,
     video_sprite,
