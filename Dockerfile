@@ -8,8 +8,8 @@ WORKDIR /app
 RUN apt-get update
 RUN apt-get install -y curl ffmpeg libreoffice fonts-recommended fonts-noto-cjk ghostscript libvips-dev
 
-# remove resource limit on ImageMagick to handle large PSD files
-RUN rm /etc/ImageMagick-6/policy.xml
+# adjust memory limit on ImageMagick to handle large PSD files (up to 1GiB)
+RUN sed -i 's/<policy domain="resource" name="memory" value="[^"]*"/<policy domain="resource" name="memory" value="1GiB"/' /etc/ImageMagick-6/policy.xml
 
 RUN curl -LsSf https://astral.sh/uv/0.5.11/install.sh | sh
 

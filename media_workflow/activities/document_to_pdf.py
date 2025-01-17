@@ -12,7 +12,7 @@ from media_workflow.otel import instrument
 
 # To run multiple instances of LibreOffice concurrently, they must have different profile directories.
 # We use a pool to limit the maximum concurrency, otherwise the worker can run out of memory.
-MAX_PROFILES = 4
+MAX_PROFILES = 2
 profiles = asyncio.Queue[Path](maxsize=MAX_PROFILES)
 
 # Initialize profiles.
