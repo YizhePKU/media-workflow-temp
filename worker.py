@@ -24,6 +24,7 @@ from media_workflow.activities.pdf_thumbnail import pdf_thumbnail
 from media_workflow.activities.upload import upload
 from media_workflow.activities.video_metadata import video_metadata
 from media_workflow.activities.video_sprite import video_sprite
+from media_workflow.activities.video_thumbnail import video_thumbnail
 from media_workflow.activities.video_transcode import video_transcode
 from media_workflow.client import connect
 from media_workflow.workflows import ColorCalibrate, FileAnalysis
@@ -48,6 +49,7 @@ activities = [
     upload,
     video_metadata,
     video_sprite,
+    video_thumbnail,
     video_transcode,
 ]
 

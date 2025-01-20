@@ -287,7 +287,9 @@ async def test_video_transcode(file):
         "file": file,
         "activities": ["video-transcode"],
     }
-    await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
+    _video = result["result"]["video-transcode"]["video"]
+    _thumbnail = result["result"]["video-transcode"]["thumbnail"]
 
 
 @pytest.mark.parametrize("file", audios)

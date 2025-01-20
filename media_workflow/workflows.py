@@ -29,6 +29,7 @@ from media_workflow.activities.pdf_thumbnail import PdfThumbnailParams, pdf_thum
 from media_workflow.activities.upload import UploadParams, upload
 from media_workflow.activities.video_metadata import VideoMetadataParams, video_metadata
 from media_workflow.activities.video_sprite import VideoSpriteParams, video_sprite
+from media_workflow.activities.video_thumbnail import VideoThumbnailParams, video_thumbnail
 from media_workflow.activities.video_transcode import VideoTranscodeParams, video_transcode
 from media_workflow.activities.webhook import WebhookParams, webhook
 from media_workflow.otel import instrument
@@ -179,9 +180,17 @@ class FileAnalysis:
 
     @instrument
     async def _video_transcode(self, file, params):
+        # transcode the video
         params = VideoTranscodeParams(file=file, **params)
         transcoded = await start(video_transcode, params, start_to_close_timeout=timedelta(minutes=30))
-        return await start(upload, UploadParams(file=transcoded, content_type=f"video/{params.container}"))
+        transcoded_url = await start(upload, UploadParams(file=transcoded, content_type=f"video/{params.container}"))
+        # make a thumbnail for it
+        thumbnail = await start(video_thumbnail, VideoThumbnailParams(file=transcoded))
+        thumbnail_url = await start(upload, UploadParams(file=thumbnail, content_type="image/jpeg"))
+        return {
+            "video": transcoded_url,
+            "thumbnail": thumbnail_url,
+        }
 
     @instrument
     async def _audio_waveform(self, file, params):

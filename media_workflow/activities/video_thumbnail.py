@@ -2,7 +2,6 @@ import asyncio
 import os
 from pathlib import Path
 from tempfile import mkdtemp
-from uuid import uuid4
 
 from pydantic import BaseModel
 from temporalio import activity
@@ -10,31 +9,25 @@ from temporalio import activity
 from media_workflow.otel import instrument
 
 
-class VideoTranscodeParams(BaseModel):
+class VideoThumbnailParams(BaseModel):
     file: Path
-    video_codec: str = "copy"
-    audio_codec: str = "copy"
-    container: str = "mp4"
 
 
 @instrument
 @activity.defn
-async def video_transcode(params: VideoTranscodeParams) -> Path:
+async def video_thumbnail(params: VideoThumbnailParams) -> Path:
     _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
-    output = _dir / f"{uuid4()}.{params.container}"
+    thumbnail = _dir / "thumbnail.jpeg"
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffmpeg",
         "-i",
         params.file,
-        "-codec:v",
-        params.video_codec,
-        "-codec:a",
-        params.audio_codec,
-        output,
+        "-vframes",
+        "1",
+        thumbnail,
         stderr=asyncio.subprocess.PIPE,
     )
     (_, stderr) = await process.communicate()
     if process.returncode != 0:
         raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
-    assert output.exists()
-    return output
+    return thumbnail
