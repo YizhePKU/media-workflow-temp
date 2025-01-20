@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -18,14 +17,7 @@ class DownloadParams(BaseModel):
 @activity.defn
 async def download(params: DownloadParams) -> Path:
     """Download a file from a URL. Return the file path."""
-    # If MEDIA_WORKFLOW_TEST_DATADIR is set, check that directory for filename matches.
-    path = Path(urlparse(params.url).path)
-    if test_datadir := os.environ.get("MEDIA_WORKFLOW_TEST_DATADIR"):
-        file = Path(test_datadir) / path.name
-        if file.exists():
-            return file
-
-    file = tempdir() / f"{path.name}"
+    file = tempdir() / f"{Path(urlparse(params.url).path).name}"
     timeout = aiohttp.ClientTimeout(total=1500, sock_read=30)
     async with aiohttp.ClientSession(timeout=timeout) as session:
         async with session.get(params.url) as response:

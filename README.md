@@ -39,10 +39,6 @@ OPENCV_IO_ENABLE_OPENEXR=
 # (Optional) Honeycomb ingest key.
 HONEYCOMB_KEY=
 
-# (Optional) Set this to the directory of test files to skip download during tests.
-MEDIA_WORKFLOW_TEST_DATADIR=
-# (Optional) Set this to 1 to skip upload during tests.
-MEDIA_WORKFLOW_TEST_SKIP_UPLOAD=
 # (Optional) Set this to 1 to only perform 1 test for each file category.
 MEDIA_WORKFLOW_TEST_SMALL=
 # (Optional) Set this to 1 to perform tests that are very slow.
