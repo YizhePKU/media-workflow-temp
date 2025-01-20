@@ -1,32 +1,17 @@
 import asyncio
 import os
-from contextlib import asynccontextmanager
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import AsyncGenerator
 
 from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.otel import instrument
 
-# To run multiple instances of LibreOffice concurrently, they must have different profile directories.
-# We use a pool to limit the maximum concurrency, otherwise the worker can run out of memory.
-MAX_PROFILES = 2
-profiles = asyncio.Queue[Path](maxsize=MAX_PROFILES)
-
-# Initialize profiles.
-for _ in range(MAX_PROFILES):
-    profiles.put_nowait(Path(mkdtemp()))
-
-
-@asynccontextmanager
-async def get_profile() -> AsyncGenerator[Path]:
-    profile = await profiles.get()
-    try:
-        yield profile
-    finally:
-        await profiles.put(profile)
+# To run multiple instances of LibreOffice concurrently, they must have different profile directories. We'll use a lock
+# to limit one instance of LibreOffice at a time. This might seem restricting, but LibreOffice takes a lot of memory, so
+# we couldn't run many of those anyways.
+LOCK = asyncio.Lock()
 
 
 class DocumentToPdfParams(BaseModel):
@@ -37,12 +22,11 @@ class DocumentToPdfParams(BaseModel):
 @activity.defn
 async def document_to_pdf(params: DocumentToPdfParams) -> Path:
     _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
-    async with get_profile() as profile:
-        # heartbeat so that we abort the operation if waiting for a profile took too long
+    async with LOCK:
+        # heartbeat so that we abort the operation in case the activity already timed out
         activity.heartbeat()
         process = await asyncio.subprocess.create_subprocess_exec(
             "soffice",
-            f"-env:UserInstallation=file://{profile}",
             "--convert-to",
             "pdf",
             "--outdir",
