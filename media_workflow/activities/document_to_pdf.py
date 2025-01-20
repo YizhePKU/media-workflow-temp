@@ -1,16 +1,15 @@
 import asyncio
-import os
 from pathlib import Path
-from tempfile import mkdtemp
 
 from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.otel import instrument
+from media_workflow.utils.fs import tempdir
 
 # To run multiple instances of LibreOffice concurrently, they must be configured to use different profile directories.
-# Instead, we'll use a lock to limit one instance of LibreOffice running at a time. This might seem restricting, but
-# LibreOffice takes a lot of memory, so we couldn't run many of them anyways.
+# Instead of trying to maintain a pool of profiles, we'll use a lock to limit one instance of LibreOffice running at a
+# time. This might seem restricting, but LibreOffice takes a lot of memory, so we couldn't run many of them anyways.
 LOCK = asyncio.Lock()
 
 
@@ -28,8 +27,7 @@ async def document_to_pdf(params: DocumentToPdfParams) -> Path:
 
 
 async def pandoc_to_pdf(file: Path) -> Path:
-    _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
-    output = _dir / f"{file.stem}.pdf"
+    output = tempdir() / f"{file.stem}.pdf"
     process = await asyncio.subprocess.create_subprocess_exec(
         "pandoc",
         "--pdf-engine=xelatex",
@@ -48,14 +46,16 @@ async def pandoc_to_pdf(file: Path) -> Path:
 
 
 async def libreoffice_to_pdf(file: Path) -> Path:
-    _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
+    outdir = tempdir()
     async with LOCK:
         # heartbeat so that we abort the operation in case the activity already timed out
         activity.heartbeat()
         process = await asyncio.subprocess.create_subprocess_exec(
             "soffice",
-            "--convert-to=pdf",
-            f"--outdir={_dir}",
+            "--convert-to",
+            "pdf",
+            "--outdir",
+            outdir,
             file,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
@@ -63,6 +63,6 @@ async def libreoffice_to_pdf(file: Path) -> Path:
         (stdout, stderr) = await process.communicate()
     if process.returncode != 0:
         raise RuntimeError(f"soffice failed: {stdout.decode()} {stderr.decode()}")
-    output = _dir / f"{Path(file).stem}.pdf"
+    output = outdir / f"{Path(file).stem}.pdf"
     assert output.exists()
     return output

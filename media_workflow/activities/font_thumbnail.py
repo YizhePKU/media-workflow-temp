@@ -8,7 +8,7 @@ from temporalio import activity
 
 from media_workflow.otel import instrument
 from media_workflow.utils.font import supports_chinese
-from media_workflow.utils.image import imwrite
+from media_workflow.utils.fs import tempdir
 
 CHINESE_SAMPLE = cleandoc(
     """
@@ -62,4 +62,6 @@ async def font_thumbnail(params: FontThumbnailParams) -> Path:
     )
     if params.size is not None:
         image.thumbnail(params.size, resample=Image.Resampling.LANCZOS)
-    return imwrite(image)
+    output = tempdir() / f"{params.file.stem}.jpeg"
+    image.save(output)
+    return output

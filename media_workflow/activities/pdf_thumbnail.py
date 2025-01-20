@@ -1,6 +1,4 @@
-import os
 from pathlib import Path
-from uuid import uuid4
 
 import pymupdf
 import pyvips
@@ -8,6 +6,7 @@ from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.otel import instrument
+from media_workflow.utils.fs import tempdir
 
 
 def page2image(page: pymupdf.Page, size: tuple[int, int]) -> Path:
@@ -15,7 +14,7 @@ def page2image(page: pymupdf.Page, size: tuple[int, int]) -> Path:
     image = pyvips.Image.new_from_memory(pix.samples, pix.width, pix.height, 3, pyvips.enums.BandFormat.UCHAR)
     image = image.thumbnail_image(size[0])  # type: ignore
 
-    path = Path(os.environ["MEDIA_WORKFLOW_DATADIR"]) / f"{uuid4()}.jpeg"
+    path = tempdir() / "page.jpeg"
     image.write_to_file(path)  # type: ignore
     return path
 

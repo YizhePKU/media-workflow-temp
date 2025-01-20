@@ -1,7 +1,4 @@
-import os
 from pathlib import Path
-from tempfile import mkdtemp
-from uuid import uuid4
 
 import pyvips
 from psd_tools import PSDImage
@@ -9,6 +6,7 @@ from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.otel import instrument
+from media_workflow.utils.fs import tempdir
 
 
 class ImageThumbnailParams(BaseModel):
@@ -19,7 +17,7 @@ class ImageThumbnailParams(BaseModel):
 @instrument
 @activity.defn
 async def image_thumbnail(params: ImageThumbnailParams) -> Path:
-    thumbnail = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"])) / f"{uuid4()}.jpeg"
+    thumbnail = tempdir() / f"{params.file.stem}.jpeg"
 
     # pyvips supports PSD via ImageMagick, but it uses too much memory when processing PSD with a lot of layers. We'll
     # use psd-tools instead, which can composite image layers much more efficiently (hopefully). On the other hand,

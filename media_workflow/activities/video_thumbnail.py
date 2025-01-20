@@ -1,12 +1,11 @@
 import asyncio
-import os
 from pathlib import Path
-from tempfile import mkdtemp
 
 from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.otel import instrument
+from media_workflow.utils.fs import tempdir
 
 
 class VideoThumbnailParams(BaseModel):
@@ -16,8 +15,7 @@ class VideoThumbnailParams(BaseModel):
 @instrument
 @activity.defn
 async def video_thumbnail(params: VideoThumbnailParams) -> Path:
-    _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
-    thumbnail = _dir / "thumbnail.jpeg"
+    thumbnail = tempdir() / "thumbnail.jpeg"
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffmpeg",
         "-i",

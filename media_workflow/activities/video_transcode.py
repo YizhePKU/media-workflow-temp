@@ -1,13 +1,11 @@
 import asyncio
-import os
 from pathlib import Path
-from tempfile import mkdtemp
-from uuid import uuid4
 
 from pydantic import BaseModel
 from temporalio import activity
 
 from media_workflow.otel import instrument
+from media_workflow.utils.fs import tempdir
 
 
 class VideoTranscodeParams(BaseModel):
@@ -20,8 +18,7 @@ class VideoTranscodeParams(BaseModel):
 @instrument
 @activity.defn
 async def video_transcode(params: VideoTranscodeParams) -> Path:
-    _dir = Path(mkdtemp(dir=os.environ["MEDIA_WORKFLOW_DATADIR"]))
-    output = _dir / f"{uuid4()}.{params.container}"
+    output = tempdir() / f"{params.file.stem}.{params.container}"
     process = await asyncio.subprocess.create_subprocess_exec(
         "ffmpeg",
         "-i",
