@@ -14,7 +14,7 @@ class VideoTranscodeParams(BaseModel):
     file: Path
     video_codec: str = "copy"
     audio_codec: str = "copy"
-    container: str = "mkv"
+    container: str = "mp4"
 
 
 @instrument
