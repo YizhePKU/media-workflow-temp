@@ -35,6 +35,14 @@ async def video_transcode(params: VideoTranscodeParams) -> Path:
     )
     (_, stderr) = await process.communicate()
     if process.returncode != 0:
+        if params.video_codec == "copy":
+            # We tried to avoid transcoding but it didn't work. Perhaps the container doesn't support the original
+            # codecs. Let's try again by transcoding to some sensible defaults codecs.
+            return await video_transcode(
+                VideoTranscodeParams(
+                    file=params.file, video_codec="h264", audio_codec="libopus", container=params.container
+                )
+            )
         raise RuntimeError(f"ffmpeg failed: {stderr.decode()}")
     assert output.exists()
     return output
