@@ -124,7 +124,7 @@ jobs:
         working-directory: /app
 
       - name: Run pytest
-        run: uv run pytest -v
+        run: uv run pytest -v -n 8
         working-directory: /app
 
   deploy:
