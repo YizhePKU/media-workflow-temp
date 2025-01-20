@@ -106,7 +106,6 @@ Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.p
 /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/c4d_server.py
 ```
 
-
 # CI/CD
 
 This project uses Github Actions for CI/CD. Commits pushed to the main branch are built, tested, and pushed to

@@ -61,8 +61,10 @@ documents = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/nova.key",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.ai",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.eps",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.md",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pdf",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pptx",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.tex",
 ]
 models = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
