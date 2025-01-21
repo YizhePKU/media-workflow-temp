@@ -7,7 +7,7 @@ ENV PATH="$PATH:$HOME/.local/bin"
 
 # Install system dependencies.
 RUN apt-get update
-RUN apt-get install -y curl ffmpeg libreoffice texlive fonts-recommended fonts-noto-cjk ghostscript libvips-dev
+RUN apt-get install -y curl ffmpeg libreoffice pandoc texlive fonts-recommended fonts-noto-cjk ghostscript libvips-dev
 
 # Install uv.
 RUN curl -LsSf https://astral.sh/uv/0.5.11/install.sh | sh
