@@ -32,6 +32,8 @@ async def pandoc_to_pdf(file: Path) -> Path:
         "pandoc",
         "--pdf-engine=xelatex",
         "--variable=CJKmainfont:Noto Sans CJK SC",
+        "--variable=documentclass=ctexart",
+        "--variable=fontsize=12pt",
         "--variable=geometry:margin=0mm",
         f"--output={output}",
         file,

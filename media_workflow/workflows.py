@@ -200,7 +200,9 @@ class FileAnalysis:
     async def _document_thumbnail(self, file, params):
         # convert the document to PDF
         pdf = await start(document_to_pdf, DocumentToPdfParams(file=file))
-        # extract thumbnails from pdf pages
+        # extract thumbnails from pdf pages (use more pixels by default)
+        if "size" not in params:
+            params["size"] = (2048, 2048)
         images = await start(pdf_thumbnail, PdfThumbnailParams(file=pdf, **params))
         # upload thumbnails
         return await asyncio.gather(
