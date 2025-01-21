@@ -9,10 +9,11 @@ from media_workflow.otel import instrument
 from media_workflow.utils.fs import tempdir
 
 
-def page2image(page: pymupdf.Page, size: tuple[int, int]) -> Path:
+def page2image(page: pymupdf.Page, size: tuple[int, int] | None) -> Path:
     pix = page.get_pixmap()  # type: ignore
     image = pyvips.Image.new_from_memory(pix.samples, pix.width, pix.height, 3, pyvips.enums.BandFormat.UCHAR)
-    image = image.thumbnail_image(size[0])  # type: ignore
+    if size is not None:
+        image = image.thumbnail_image(size[0])  # type: ignore
 
     path = tempdir() / "page.jpeg"
     image.write_to_file(path)  # type: ignore
@@ -22,7 +23,7 @@ def page2image(page: pymupdf.Page, size: tuple[int, int]) -> Path:
 class PdfThumbnailParams(BaseModel):
     file: Path
     pages: list[int] | None = None
-    size: tuple[int, int] = (1024, 1024)
+    size: tuple[int, int] | None = None
 
 
 @instrument

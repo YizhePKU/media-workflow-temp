@@ -11,7 +11,7 @@ from media_workflow.utils.fs import tempdir
 
 class ImageThumbnailParams(BaseModel):
     file: Path
-    size: tuple[int, int] = (1024, 1024)
+    size: tuple[int, int] | None = (1024, 1024)
 
 
 @instrument
@@ -25,7 +25,8 @@ async def image_thumbnail(params: ImageThumbnailParams) -> Path:
     if params.file.suffix in [".psd", ".psb"]:
         image = PSDImage.open(params.file).composite()
         assert image is not None
-        image.thumbnail(params.size)
+        if params.size is not None:
+            image.thumbnail(params.size)
         image.convert("RGB").save(thumbnail)
     else:
         pyvips.Image.thumbnail(params.file, params.size[0]).write_to_file(thumbnail)  # type: ignore
