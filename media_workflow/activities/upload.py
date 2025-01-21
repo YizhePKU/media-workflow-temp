@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from uuid import uuid4
 
 import aioboto3
 from botocore.config import Config
@@ -25,7 +26,7 @@ async def upload(params: UploadParams) -> str:
         config=Config(region_name=os.environ["S3_REGION"], signature_version="v4"),
     ) as s3:  # type: ignore
         with open(params.file, "rb") as file:
-            key = params.file.name
+            key = f"{uuid4()}{params.file.suffix}"
             data = file.read()
             await s3.put_object(
                 Bucket=os.environ["S3_BUCKET"],
