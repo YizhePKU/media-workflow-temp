@@ -67,7 +67,7 @@ jobs:
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
           images: |
-            ghcr.io/${{ github.event.repo.name }}
+            ghcr.io/${{ github.repository }}
             musecr.azurecr.cn/muse/muse-media-process-workflow
           tags: type=sha
 
@@ -91,7 +91,7 @@ jobs:
     # Skip testing if the commit message contains "hotfix:".
     if: ${{ !contains(github.event.head_commit.message, 'hotfix:') && !contains(github.event.pull_request.title, 'hotfix:') }}
     container:
-      image: ghcr.io/${{ github.event.repo.name }}:${{ needs.build.outputs.version }}
+      image: ghcr.io/${{ github.repository }}:${{ needs.build.outputs.version }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
