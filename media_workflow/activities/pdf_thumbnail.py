@@ -10,7 +10,8 @@ from media_workflow.utils.fs import tempdir
 
 
 def page2image(page: pymupdf.Page, size: tuple[int, int] | None) -> Path:
-    pix = page.get_pixmap()  # type: ignore
+    zoom = 2  # render images at higher DPI
+    pix = page.get_pixmap(matrix=pymupdf.Matrix(zoom, zoom))  # type: ignore
     image = pyvips.Image.new_from_memory(pix.samples, pix.width, pix.height, 3, pyvips.enums.BandFormat.UCHAR)
     if size is not None:
         image = image.thumbnail_image(size[0])  # type: ignore

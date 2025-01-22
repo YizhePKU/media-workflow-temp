@@ -20,8 +20,10 @@ class DocumentToPdfParams(BaseModel):
 @instrument
 @activity.defn
 async def document_to_pdf(params: DocumentToPdfParams) -> Path:
-    if params.file.suffix in [".md", ".tex", ".epub", ".html", ".csv"]:
+    if params.file.suffix in [".md", ".epub", ".html", ".csv"]:
         return await pandoc_to_pdf(params.file)
+    elif params.file.suffix == ".tex":
+        return await latex_to_pdf(params.file)
     else:
         return await libreoffice_to_pdf(params.file)
 
@@ -41,6 +43,23 @@ async def pandoc_to_pdf(file: Path) -> Path:
     (stdout, stderr) = await process.communicate()
     if process.returncode != 0:
         raise RuntimeError(f"pandoc failed: {stdout.decode()} {stderr.decode()}")
+    assert output.exists()
+    return output
+
+
+async def latex_to_pdf(file: Path) -> Path:
+    outdir = tempdir()
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "xelatex",
+        f"--output-dir={outdir}",
+        file,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    (stdout, stderr) = await process.communicate()
+    if process.returncode != 0:
+        raise RuntimeError(f"pandoc failed: {stdout.decode()} {stderr.decode()}")
+    output = outdir / f"{file.stem}.pdf"
     assert output.exists()
     return output
 

@@ -195,7 +195,6 @@ async def test_document_thumbnail(file):
         "activities": ["document-thumbnail"],
         "params": {
             "document-thumbnail": {
-                "size": [800, 600],
                 "pages": [0],
             }
         },
