@@ -29,6 +29,7 @@ async def document_to_pdf(params: DocumentToPdfParams) -> Path:
 
 
 async def pandoc_to_pdf(file: Path) -> Path:
+    """Convert markdown files to PDF using pandoc. Supports Chinese."""
     output = tempdir() / f"{file.stem}.pdf"
     process = await asyncio.subprocess.create_subprocess_exec(
         "pandoc",
@@ -48,6 +49,7 @@ async def pandoc_to_pdf(file: Path) -> Path:
 
 
 async def latex_to_pdf(file: Path) -> Path:
+    """Convert latex source to PDF."""
     outdir = tempdir()
     process = await asyncio.subprocess.create_subprocess_exec(
         "xelatex",
@@ -65,6 +67,7 @@ async def latex_to_pdf(file: Path) -> Path:
 
 
 async def libreoffice_to_pdf(file: Path) -> Path:
+    """Convert document to PDF using LibreOffice."""
     outdir = tempdir()
     async with LOCK:
         # heartbeat so that we abort the operation in case the activity already timed out

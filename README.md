@@ -102,14 +102,15 @@ Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.p
 /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/c4d_server.py
 ```
 
-# CI/CD
+# How to deploy
 
 This project uses Github Actions for CI/CD. Commits pushed to the main branch are built, tested, and pushed to
-production automatically. If the commit message contains `hotfix:`, the commit is deployed directly without testing (not
-recommended).
+production automatically. If the commit message contains `hotfix:`, the commit is deployed directly without testing, but
+this is not recommended. Pull requests against the main branch are also built and tested, but not deployed. Both x86_64
+and arm64 containers are built.
 
-If you want to build your code on CI without deploying it, you can push your commits to another branch and open a pull
-request to the main branch. The commits are built and tested, but won't be deployed until merged into the main branch.
+Environment variables are configured seperately (i.e. they're not pulled from Github Actions variables). Contact @XD if
+you need to add or modify an environment variable in production.
 
 # Project structure
 

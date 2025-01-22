@@ -35,8 +35,9 @@ async def video_metadata(params: VideoMetadataParams) -> dict:
 
     data = json.loads(stdout.decode())
     result = {}
-    result["duration"] = float(data["format"]["duration"])
     for stream in data["streams"]:
+        # Some audio files contain video streams to store a thumbnail, in which case most of these fields don't make
+        # sense. Ideally we would extract every field possible and skip the rest.
         try:
             if stream["codec_type"] == "video":
                 result["video_codec"] = stream["codec_name"]
@@ -60,5 +61,6 @@ async def video_metadata(params: VideoMetadataParams) -> dict:
         except Exception:
             print(f"warning: failed to extract audio metadata from {params.file}")
 
+    result["duration"] = float(data["format"]["duration"])
     result["size"] = os.path.getsize(params.file)
     return result

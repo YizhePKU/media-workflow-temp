@@ -10,8 +10,11 @@ from media_workflow.utils.fs import tempdir
 
 class VideoTranscodeParams(BaseModel):
     file: Path
+    # By default, we avoid transcoding the video and audio streams. This will help save computation cost.
     video_codec: str = "copy"
     audio_codec: str = "copy"
+    # MP4 is the universially supported container format, but it's really old. We would like to pick MKV , but Safari
+    # doesn't support it natively.
     container: str = "mp4"
 
 
