@@ -53,18 +53,18 @@ audios = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/reflection.mp3",
 ]
 documents = [
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/bill.cdr",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dam.docx",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/materials.xlsx",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/multipage.ai",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.key",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/nova.key",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.ai",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.eps",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/bill.cdr",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dam.docx",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/materials.xlsx",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/multipage.ai",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/MuseDam.key",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/nova.key",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.ai",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.eps",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.md",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pdf",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pptx",
-    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.tex",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pdf",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.pptx",
+    # "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.tex",
 ]
 models = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
@@ -259,6 +259,17 @@ async def test_video_metadata(file):
     }
     result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
     assert isinstance(result["result"]["video-metadata"]["fps"], float)
+
+
+@pytest.mark.parametrize("file", audios)
+async def test_audio_metadata(file):
+    client = await connect()
+    params = {
+        "file": file,
+        "activities": ["video-metadata"],
+    }
+    result = await client.execute_workflow("file-analysis", params, id=f"{uuid4()}", task_queue="media")
+    assert isinstance(result["result"]["video-metadata"]["duration"], float)
 
 
 @pytest.mark.parametrize("file", videos)

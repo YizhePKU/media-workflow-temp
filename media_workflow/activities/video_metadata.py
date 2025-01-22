@@ -37,21 +37,28 @@ async def video_metadata(params: VideoMetadataParams) -> dict:
     result = {}
     result["duration"] = float(data["format"]["duration"])
     for stream in data["streams"]:
-        if stream["codec_type"] == "video":
-            result["video_codec"] = stream["codec_name"]
-            result["width"] = int(stream["width"])
-            result["height"] = int(stream["height"])
-            numerator, denominator = map(int, stream["avg_frame_rate"].split("/"))
-            result["fps"] = float(numerator) / float(denominator)
-            result["pix_fmt"] = stream["pix_fmt"]
-            # bitrate info is not available in every video
-            result["bit_rate"] = int(stream.get("bit_rate", 0))
-            result["bits_per_raw_sample"] = int(stream.get("bits_per_raw_sample", 0))
-        if stream["codec_type"] == "audio":
-            result["audio_codec"] = stream["codec_name"]
-            result["sample_fmt"] = stream["sample_fmt"]
-            result["channel_layout"] = stream["channel_layout"]
-            result["sample_rate"] = int(stream["sample_rate"])
+        try:
+            if stream["codec_type"] == "video":
+                result["video_codec"] = stream["codec_name"]
+                result["width"] = int(stream["width"])
+                result["height"] = int(stream["height"])
+                numerator, denominator = map(int, stream["avg_frame_rate"].split("/"))
+                result["fps"] = float(numerator) / float(denominator)
+                result["pix_fmt"] = stream["pix_fmt"]
+                # bitrate info is not available in every video
+                result["bit_rate"] = int(stream.get("bit_rate", 0))
+                result["bits_per_raw_sample"] = int(stream.get("bits_per_raw_sample", 0))
+        except Exception:
+            print(f"warning: failed to extract video metadata from {params.file}")
+
+        try:
+            if stream["codec_type"] == "audio":
+                result["audio_codec"] = stream["codec_name"]
+                result["sample_fmt"] = stream["sample_fmt"]
+                result["channel_layout"] = stream["channel_layout"]
+                result["sample_rate"] = int(stream["sample_rate"])
+        except Exception:
+            print(f"warning: failed to extract audio metadata from {params.file}")
 
     result["size"] = os.path.getsize(params.file)
     return result
