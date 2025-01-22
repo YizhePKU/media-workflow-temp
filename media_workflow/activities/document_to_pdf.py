@@ -20,7 +20,7 @@ class DocumentToPdfParams(BaseModel):
 @instrument
 @activity.defn
 async def document_to_pdf(params: DocumentToPdfParams) -> Path:
-    if params.file.suffix in [".md", ".tex", ".epub", ".txt", ".html", ".csv"]:
+    if params.file.suffix in [".md", ".tex", ".epub", ".html", ".csv"]:
         return await pandoc_to_pdf(params.file)
     else:
         return await libreoffice_to_pdf(params.file)
@@ -33,8 +33,6 @@ async def pandoc_to_pdf(file: Path) -> Path:
         "--pdf-engine=xelatex",
         "--variable=CJKmainfont:Noto Sans CJK SC",
         "--variable=documentclass=ctexart",
-        "--variable=fontsize=12pt",
-        "--variable=geometry:margin=0mm",
         f"--output={output}",
         file,
         stdout=asyncio.subprocess.PIPE,
