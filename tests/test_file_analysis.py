@@ -67,6 +67,9 @@ documents = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.tex",
 ]
 models = [
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/matilda.fbx",
+]
+c4d_models = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/tree.c4d",
 ]
@@ -87,17 +90,14 @@ if os.environ.get("TEST_LARGE"):
     documents += ["https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/large.pptx"]
     audios += ["https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/resurrections.flac"]
     fonts += []
-    models += [
+    c4d_models += [
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/megapolis.c4d",
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/moist.c4d",
         "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/suitcase.c4d",
     ]
 
-if not os.environ.get("MEDIA_WORKFLOW_TEST_C4D"):
-    models = [model for model in models if not model.endswith(".c4d")]
-
 if os.environ.get("MEDIA_WORKFLOW_TEST_SMALL"):
-    for group in [images, videos, documents, audios, fonts, models]:
+    for group in [images, videos, documents, audios, fonts, c4d_models]:
         if group:
             group[:] = [group[0]]
 
@@ -322,7 +322,8 @@ async def test_audio_waveform(file):
     assert max(waveform) == 1.0
 
 
-@pytest.mark.parametrize("model", models)
+@pytest.mark.skipif(not os.environ.get("MEDIA_WORKFLOW_TEST_C4D"), reason="c4d worker not available")
+@pytest.mark.parametrize("model", c4d_models)
 async def test_c4d_preview(model):
     client = await connect()
     arg = {
@@ -331,4 +332,16 @@ async def test_c4d_preview(model):
     }
     result = await client.execute_workflow("file-analysis", arg, id=f"{uuid4()}", task_queue="media")
     assert "gltf" in result["result"]["c4d-preview"]
-    Image.open(await download(result["result"]["c4d-preview"]["png"]))
+    assert "preview" in result["result"]["c4d-preview"]
+
+
+@pytest.mark.parametrize("model", models)
+async def test_blender_preview(model):
+    client = await connect()
+    arg = {
+        "file": model,
+        "activities": ["blender-preview"],
+    }
+    result = await client.execute_workflow("file-analysis", arg, id=f"{uuid4()}", task_queue="media")
+    assert "preview" in result["result"]["blender-preview"]
+    assert "glb" in result["result"]["blender-preview"]

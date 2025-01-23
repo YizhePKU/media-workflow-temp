@@ -5,6 +5,7 @@ from datetime import timedelta
 from temporalio import workflow
 
 from media_workflow.activities.audio_waveform import AudioWaveformParams, audio_waveform
+from media_workflow.activities.blender_preview import BlenderPreviewParams, blender_preview
 from media_workflow.activities.color_calibrate import color_calibrate
 from media_workflow.activities.document_to_pdf import DocumentToPdfParams, document_to_pdf
 from media_workflow.activities.download import DownloadParams, download
@@ -67,6 +68,7 @@ class FileAnalysis:
         # Dispatch tasks to workflow code.
         activity2fn = {
             "audio-waveform": self._audio_waveform,
+            "blender-preview": self._blender_preview,
             "c4d-preview": self._c4d_preview,
             "document-thumbnail": self._document_thumbnail,
             "font-detail": self._font_detail,
@@ -228,6 +230,18 @@ class FileAnalysis:
             "supports_chinese": metadata["chinese"],
         }
         return await start(font_detail, FontDetailParams(file=image, basic_info=basic_info, **params))
+
+    @instrument
+    async def _blender_preview(self, file, params):
+        result = await start(blender_preview, BlenderPreviewParams(file=file, **params))
+        [preview_url, glb_url] = await asyncio.gather(
+            start(upload, UploadParams(file=result["preview"], content_type="image/jpeg")),
+            start(upload, UploadParams(file=result["glb"])),
+        )
+        return {
+            "preview": preview_url,
+            "glb": glb_url,
+        }
 
     @instrument
     async def _c4d_preview(self, file, params):

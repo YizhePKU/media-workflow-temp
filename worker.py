@@ -3,6 +3,7 @@ import asyncio
 from temporalio.worker import UnsandboxedWorkflowRunner, Worker
 
 from media_workflow.activities.audio_waveform import audio_waveform
+from media_workflow.activities.blender_preview import blender_preview
 from media_workflow.activities.color_calibrate import color_calibrate
 from media_workflow.activities.document_to_pdf import document_to_pdf
 from media_workflow.activities.download import download
@@ -32,6 +33,7 @@ from media_workflow.workflows import ColorCalibrate, FileAnalysis
 workflows = [FileAnalysis, ColorCalibrate]
 activities = [
     audio_waveform,
+    blender_preview,
     color_calibrate,
     document_to_pdf,
     download,
