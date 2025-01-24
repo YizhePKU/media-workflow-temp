@@ -102,6 +102,16 @@ Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.p
 /Applications/Maxon\ Cinema\ 4D\ 2025/c4dpy.app/Contents/MacOS/c4dpy /absolute/path/to/c4d_server.py
 ```
 
+# How to test locally
+
+1. set `TEMPORAL_SERVER_HOST=localhost:7233` and `TEMPORAL_NAMESPACE=default`
+2. start the temporal server: `temporal server start-dev`
+3. start a worker: `python worker.py`
+4. start pytest (run 8 tests concurrently for faster testing): `pytest -n 8`
+
+Test files are stored in OSS and downloaded by the worker as needed.
+
+
 # How to deploy
 
 This project uses Github Actions for CI/CD. Commits pushed to the main branch are built, tested, and pushed to
