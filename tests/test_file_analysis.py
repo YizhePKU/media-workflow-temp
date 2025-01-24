@@ -68,6 +68,7 @@ documents = [
 ]
 models = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/matilda.fbx",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/stray_droid.zip",
 ]
 c4d_models = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/chart.c4d",
