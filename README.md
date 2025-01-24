@@ -110,7 +110,7 @@ Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.p
 4. start pytest (run 8 tests concurrently for faster testing): `pytest -n 8`
 
 Test files are stored in OSS and downloaded by the worker as needed.
-
+You can upload new files by running `scripts/upload.py <file>`.
 
 # How to deploy
 
