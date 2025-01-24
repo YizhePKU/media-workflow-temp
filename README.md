@@ -111,6 +111,7 @@ Step 5: Run the server with `c4dpy`. You must specify full path to `c4d_server.p
 
 Test files are stored in OSS and downloaded by the worker as needed.
 You can upload new files by running `scripts/upload.py <file>`.
+You need to set `OSS_ACCESS_KEY_ID` and `OSS_ACCESS_KEY_SECRET` environment variable for the script to work.
 
 # How to deploy
 
