@@ -1,19 +1,19 @@
-FROM python:3.13.1-bookworm
+FROM debian:unstable-20250113
 
 WORKDIR /app
 ENV DEBIAN_FRONTEND=noninteractive
 ENV HOME=/root
-ENV PATH="$PATH:$HOME/.local/bin"
 
 # Install system dependencies.
 RUN apt-get update
-RUN apt-get install -y curl ffmpeg libreoffice python3-numpy blender pandoc texlive-xetex texlive-lang-chinese fonts-recommended fonts-noto-cjk libvips-dev
+RUN apt-get install -y ffmpeg blender libreoffice pandoc texlive-xetex texlive-lang-chinese fonts-recommended fonts-noto-cjk libvips-dev
 
 # Install uv.
-RUN curl -LsSf https://astral.sh/uv/0.5.11/install.sh | sh
+RUN curl -LsSf https://astral.sh/uv/0.5.24/install.sh | sh
+ENV PATH="$PATH:$HOME/.local/bin"
 
 # Install Python dependencies.
-COPY pyproject.toml uv.lock .python-version  .
+COPY pyproject.toml uv.lock .python-version .
 RUN uv sync
 
 COPY . .

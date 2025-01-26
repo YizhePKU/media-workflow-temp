@@ -10,7 +10,7 @@ def find_model(project: Path) -> Path:
     """Find the first model in a 3D project directory."""
     assert project.is_dir()
     for file in project.rglob("*"):
-        if file.suffix in [".obj", ".ply", ".stl", ".fbx", ".gltf", ".glb"]:
+        if file.suffix in [".obj", ".stl", ".fbx", ".gltf", ".glb"]:
             return file
     raise FileNotFoundError("No model file found in 3D project")
 
@@ -18,12 +18,16 @@ def find_model(project: Path) -> Path:
 def import_model(model: Path):
     """Import the model into Blender."""
     assert model.is_file()
-    if model.suffix == ".fbx":
+    if model.suffix == ".obj":
+        bpy.ops.wm.obj_import(filepath=str(model))
+    elif model.suffix == ".stl":
+        bpy.ops.wm.stl_import(filepath=str(model))
+    elif model.suffix == ".fbx":
         bpy.ops.import_scene.fbx(filepath=str(model))
     elif model.suffix == ".gltf" or file.suffix == ".glb":
         bpy.ops.import_scene.gltf(filepath=str(model))
     else:
-        raise NotImplementedError(f"{model} is not a recognized 3D model")
+        raise NotImplementedError(f"{model} is not in a recognized 3D model format")
 
 
 # Usage: blender --background --python-exit-code 1 --python scripts/blend.py -- <file>

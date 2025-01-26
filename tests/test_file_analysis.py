@@ -67,7 +67,11 @@ documents = [
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/sample.tex",
 ]
 models = [
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/bus.obj",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/dragon.stl",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/forest-house.zip",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/matilda.fbx",
+    "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/pistol.glb",
     "https://tezign-ai-models.oss-cn-beijing.aliyuncs.com/media-workflow/stray_droid.zip",
 ]
 c4d_models = [

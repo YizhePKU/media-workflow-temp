@@ -20,7 +20,7 @@ PreviewResult = TypedDict("PreviewResult", {"preview": Path, "glb": Path})
 @activity.defn
 async def blender_preview(params: BlenderPreviewParams) -> PreviewResult:
     assert params.file.exists()
-    assert params.file.suffix in [".zip", ".obj", ".ply", ".stl", ".fbx", ".gltf", ".glb"]
+    assert params.file.suffix in [".zip", ".obj", ".stl", ".fbx", ".gltf", ".glb"]
     blender = "/Applications/Blender.app/Contents/MacOS/Blender" if platform == "darwin" else "blender"
     process = await asyncio.subprocess.create_subprocess_exec(
         blender,
