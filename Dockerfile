@@ -7,7 +7,7 @@ ENV PATH="$PATH:$HOME/.local/bin"
 
 # Install system dependencies.
 RUN apt-get update
-RUN apt-get install -y python3-dev ffmpeg blender libreoffice pandoc texlive-xetex texlive-lang-chinese fonts-recommended fonts-noto-cjk libvips-dev
+RUN apt-get install -y python3-dev python3-numpy ffmpeg blender libreoffice pandoc texlive-xetex texlive-lang-chinese fonts-recommended fonts-noto-cjk libvips-dev
 
 # Install uv.
 RUN curl -LsSf https://astral.sh/uv/0.5.24/install.sh | sh
